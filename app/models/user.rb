@@ -6,7 +6,7 @@ class User < ApplicationRecord
   has_one_attached :image
 
   devise :database_authenticatable, :registerable,
-         :recoverable, :rememberable, :validatable
+         :recoverable, :rememberable, :validatable, :confirmable
 
   validates :role, presence: true
 
@@ -15,9 +15,17 @@ class User < ApplicationRecord
   has_many :quotations, dependent: :destroy
 
   after_initialize :set_default_role, if: :new_record?
+  after_create :set_confirmed
 
   def token_validation_response
     UserSerializer.new(self).as_json
+  end
+
+  def set_confirmed
+    self.confirmed_at = Time.current
+    save(validate: false)
+  rescue StandardError => e
+    Rails.logger.error("Failed to set confirmed_at for user #{id}: #{e.message}")
   end
 
   private
