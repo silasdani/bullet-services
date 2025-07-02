@@ -2,22 +2,23 @@
 
 class Api::V1::QuotationsController < Api::V1::BaseController
   before_action :set_quotation, only: [:show, :update, :destroy, :send_to_webflow]
-  before_action :check_employee_or_admin, only: [:create, :update, :destroy]
 
   def index
-    @quotations = Quotation.for_user(current_user)
-                           .includes([images_attachments: :blob])
-                           .order(created_at: :desc)
+    @quotations = policy_scope(Quotation)
+                    .includes([images_attachments: :blob])
+                    .order(created_at: :desc)
 
     render json: quotations_json(@quotations)
   end
 
   def show
+    authorize @quotation
     render json: quotation_json(@quotation)
   end
 
   def create
     @quotation = current_user.quotations.build(quotation_params)
+    authorize @quotation
 
     if @quotation.save
       attach_images if params[:images].present?
@@ -28,6 +29,7 @@ class Api::V1::QuotationsController < Api::V1::BaseController
   end
 
   def update
+    authorize @quotation
     if @quotation.update(quotation_params)
       attach_images if params[:images].present?
       render json: quotation_json(@quotation)
@@ -37,11 +39,13 @@ class Api::V1::QuotationsController < Api::V1::BaseController
   end
 
   def destroy
+    authorize @quotation
     @quotation.destroy
     head :no_content
   end
 
   def send_to_webflow
+    authorize @quotation, :send_to_webflow?
     WebflowService.new(@quotation).send_quotation
     render json: { message: 'Quotation sent to Webflow successfully' }
   rescue => e
@@ -51,18 +55,14 @@ class Api::V1::QuotationsController < Api::V1::BaseController
   private
 
   def set_quotation
-    @quotation = Quotation.for_user(current_user).find(params[:id])
+    @quotation = policy_scope(Quotation).find(params[:id])
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: 'Quotation not found' }, status: :not_found
   end
 
   def quotation_params
     params.require(:quotation).permit(:address, :details, :price, :status,
                                       :client_name, :client_phone, :client_email)
-  end
-
-  def check_employee_or_admin
-    unless current_user.employee? || current_user.admin?
-      render json: { error: 'Unauthorized' }, status: :forbidden
-    end
   end
 
   def attach_images
