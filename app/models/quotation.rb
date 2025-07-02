@@ -2,7 +2,7 @@ class Quotation < ApplicationRecord
   belongs_to :user
   has_many_attached :images
 
-  enum status: { pending: 0, approved: 1, rejected: 2, completed: 3 }
+  enum :status, pending: 0, approved: 1, rejected: 2, completed: 3
 
   validates :address, presence: true
   validates :price, presence: true, numericality: { greater_than: 0 }
