@@ -9,9 +9,9 @@ Rails.application.routes.draw do
         end
       end
 
-      resources :users, only: [:index, :show, :update] do
-        member do
-          patch :update_role
+      resources :users do
+        collection do
+          get :me
         end
       end
     end

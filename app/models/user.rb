@@ -3,6 +3,7 @@
 class User < ApplicationRecord
   extend Devise::Models
   include DeviseTokenAuth::Concerns::User
+  has_one_attached :image
 
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :validatable

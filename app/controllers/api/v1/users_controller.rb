@@ -5,7 +5,7 @@ class Api::V1::UsersController < Api::V1::BaseController
 
   def index
     authorize User
-    @users = User.includes([avatar_attachment: :blob]).order(created_at: :desc)
+    @users = User.includes([image_attachment: :blob]).order(created_at: :desc)
     render json: users_json(@users)
   end
 
@@ -18,7 +18,7 @@ class Api::V1::UsersController < Api::V1::BaseController
     @user = User.new(user_params)
     authorize @user
     if @user.save
-      attach_avatar if params[:avatar].present?
+      attach_image if params[:image].present?
       render json: user_json(@user), status: :created
     else
       render json: { errors: @user.errors.full_messages }, status: :unprocessable_entity
@@ -28,7 +28,7 @@ class Api::V1::UsersController < Api::V1::BaseController
   def update
     authorize @user
     if @user.update(user_params)
-      attach_avatar if params[:avatar].present?
+      attach_image if params[:image].present?
       render json: user_json(@user)
     else
       render json: { errors: @user.errors.full_messages }, status: :unprocessable_entity
@@ -58,8 +58,8 @@ class Api::V1::UsersController < Api::V1::BaseController
     params.require(:user).permit(:email, :name, :nickname, :role, :password, :password_confirmation)
   end
 
-  def attach_avatar
-    @user.avatar.attach(params[:avatar])
+  def attach_image
+    @user.image.attach(params[:image])
   end
 
   def users_json(users)
@@ -75,10 +75,10 @@ class Api::V1::UsersController < Api::V1::BaseController
       role: user.role,
       created_at: user.created_at,
       updated_at: user.updated_at,
-      avatar: user.avatar.attached? ? {
-        id: user.avatar.id,
-        url: url_for(user.avatar),
-        filename: user.avatar.filename
+      image: user.image.attached? ? {
+        id: user.image.id,
+        url: url_for(user.image),
+        filename: user.image.filename
       } : nil
     }
   end

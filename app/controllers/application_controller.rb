@@ -1,5 +1,5 @@
 class ApplicationController < ActionController::API
-  include Pundit
+  include Pundit::Authorization
   include DeviseTokenAuth::Concerns::SetUserByToken
   before_action :configure_permitted_parameters, if: :devise_controller?
 
@@ -8,8 +8,8 @@ class ApplicationController < ActionController::API
   protected
 
   def configure_permitted_parameters
-    devise_parameter_sanitizer.permit(:sign_up, keys: [:name, :nickname, :role])
-    devise_parameter_sanitizer.permit(:account_update, keys: [:name, :nickname, :role])
+    devise_parameter_sanitizer.permit(:sign_up, keys: [:name, :nickname, :role, :avatar])
+    devise_parameter_sanitizer.permit(:account_update, keys: [:name, :nickname, :role, :avatar])
   end
 
   private
