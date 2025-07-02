@@ -1,9 +1,24 @@
 # frozen_string_literal: true
 
-class User < ActiveRecord::Base
-  # Include default devise modules. Others available are:
-  # :confirmable, :lockable, :timeoutable, :trackable and :omniauthable
+class User < ApplicationRecord
+  extend Devise::Models
+  include DeviseTokenAuth::Concerns::User
+
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :validatable
-  include DeviseTokenAuth::Concerns::User
+
+  validates :role, presence: true
+
+  enum :role, client: 0, employee: 1, admin: 2
+
+  has_many :quotations, dependent: :destroy
+
+
+  after_initialize :set_default_role, if: :new_record?
+
+  private
+
+  def set_default_role
+    self.role ||= :client
+  end
 end

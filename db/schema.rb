@@ -10,9 +10,24 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_01_232316) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_01_235027) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "quotations", force: :cascade do |t|
+    t.text "address", null: false
+    t.text "details"
+    t.decimal "price", precision: 10, scale: 2
+    t.bigint "user_id", null: false
+    t.integer "status", default: 0
+    t.string "client_name"
+    t.string "client_phone"
+    t.string "client_email"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["status"], name: "index_quotations_on_status"
+    t.index ["user_id"], name: "index_quotations_on_user_id"
+  end
 
   create_table "users", force: :cascade do |t|
     t.string "provider", default: "email", null: false
@@ -33,9 +48,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_01_232316) do
     t.json "tokens"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "role", default: 0, null: false
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
     t.index ["uid", "provider"], name: "index_users_on_uid_and_provider", unique: true
   end
+
+  add_foreign_key "quotations", "users"
 end

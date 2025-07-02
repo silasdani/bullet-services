@@ -39,6 +39,7 @@ gem 'devise'
 gem 'devise_token_auth'
 gem 'aws-sdk-s3', require: false
 gem 'httparty'
+gem 'dotenv-rails'
 
 group :development, :test do
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
