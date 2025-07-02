@@ -14,8 +14,11 @@ class User < ApplicationRecord
 
   has_many :quotations, dependent: :destroy
 
-
   after_initialize :set_default_role, if: :new_record?
+
+  def token_validation_response
+    UserSerializer.new(self).as_json
+  end
 
   private
 

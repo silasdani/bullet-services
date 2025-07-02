@@ -8,12 +8,12 @@ class Api::V1::QuotationsController < Api::V1::BaseController
                     .includes([images_attachments: :blob])
                     .order(created_at: :desc)
 
-    render json: quotations_json(@quotations)
+    render json: @quotations
   end
 
   def show
     authorize @quotation
-    render json: quotation_json(@quotation)
+    render json: @quotation
   end
 
   def create
@@ -22,7 +22,7 @@ class Api::V1::QuotationsController < Api::V1::BaseController
 
     if @quotation.save
       attach_images if params[:images].present?
-      render json: quotation_json(@quotation), status: :created
+      render json: @quotation, status: :created
     else
       render json: { errors: @quotation.errors.full_messages }, status: :unprocessable_entity
     end
@@ -32,7 +32,7 @@ class Api::V1::QuotationsController < Api::V1::BaseController
     authorize @quotation
     if @quotation.update(quotation_params)
       attach_images if params[:images].present?
-      render json: quotation_json(@quotation)
+      render json: @quotation
     else
       render json: { errors: @quotation.errors.full_messages }, status: :unprocessable_entity
     end
@@ -69,36 +69,5 @@ class Api::V1::QuotationsController < Api::V1::BaseController
     params[:images].each do |image|
       @quotation.images.attach(image)
     end
-  end
-
-  def quotations_json(quotations)
-    quotations.map { |q| quotation_json(q) }
-  end
-
-  def quotation_json(quotation)
-    {
-      id: quotation.id,
-      address: quotation.address,
-      details: quotation.details,
-      price: quotation.price,
-      status: quotation.status,
-      client_name: quotation.client_name,
-      client_phone: quotation.client_phone,
-      client_email: quotation.client_email,
-      created_at: quotation.created_at,
-      updated_at: quotation.updated_at,
-      images: quotation.images.map do |image|
-        {
-          id: image.id,
-          url: url_for(image),
-          filename: image.filename
-        }
-      end,
-      user: {
-        id: quotation.user.id,
-        email: quotation.user.email,
-        role: quotation.user.role
-      }
-    }
   end
 end

@@ -41,6 +41,7 @@ gem 'aws-sdk-s3', require: false
 gem 'httparty'
 gem 'dotenv-rails'
 gem 'pundit'
+gem 'active_model_serializers', '~> 0.10.0'
 
 group :development, :test do
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
