@@ -30,6 +30,7 @@ Rails.application.configure do
   config.active_storage.service = :local
 
   # Don't care if the mailer can't send.
+  config.action_mailer.perform_deliveries = false
   config.action_mailer.raise_delivery_errors = false
 
   # Make template changes take effect immediately.
