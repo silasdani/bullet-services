@@ -1,8 +1,13 @@
 class UserSerializer < ActiveModel::Serializer
-  attributes :id, :email, :name, :nickname, :role, :created_at, :updated_at, :image_url
+  include Rails.application.routes.url_helpers
+  attributes :id, :email, :name, :nickname, :role, :created_at, :updated_at
 
+  attribute :image_url, if: :image_attached?
   def image_url
-    return nil unless object.image.attached?
-    Rails.application.routes.url_helpers.url_for(object.image)
+    url_for(object.image)
+  end
+
+  def image_attached?
+    object.image.attached?
   end
 end
