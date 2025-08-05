@@ -9,8 +9,7 @@
 
 # Ignore all environment files.
 /.env*
-/.idea/*
-/.idea*
+.idea/
 
 # Ignore all logfiles and tempfiles.
 /log/*
