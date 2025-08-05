@@ -9,7 +9,7 @@ class WebflowService
   RATE_LIMIT_PER_MINUTE = 60
 
   def initialize
-    @api_key = Rails.application.credentials["WEBFLOW_TOKEN"]
+    @api_key = Rails.application.credentials.webflow_token
     @rate_limit_requests = []
   end
 
