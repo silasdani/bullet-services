@@ -158,6 +158,98 @@ Images are handled via Active Storage and can be configured for:
 
 ## Webflow Integration
 
+This application includes a comprehensive Webflow REST API v2 integration that provides access to all Webflow features:
+
+### Features
+- **Sites Management**: List and manage Webflow sites
+- **Collections & Items**: Full CRUD operations for collections and items
+- **Forms & Submissions**: Handle form submissions and form management
+- **Assets Management**: Upload, update, and manage assets
+- **User Accounts**: Manage Webflow user accounts
+- **Comments**: Handle comments and discussions
+- **Rate Limiting**: Automatic rate limiting (60 requests/minute)
+- **Error Handling**: Comprehensive error handling with custom error classes
+
+### Quick Start
+
+1. **Configure Credentials**
+   ```bash
+   rails credentials:edit
+   ```
+   
+   Add your Webflow configuration:
+   ```yaml
+   webflow_token: "your_webflow_api_token"
+   webflow_site_id: "your_site_id"
+   webflow_collection_id: "your_collection_id"
+   ```
+
+2. **Test Connection**
+   ```bash
+   rake webflow:test_connection
+   ```
+
+3. **List Sites**
+   ```bash
+   rake webflow:list_sites
+   ```
+
+4. **Send Quotation to Webflow**
+   ```bash
+   rake webflow:send_test_quotation[quotation_id]
+   ```
+
+### API Endpoints
+
+The integration provides REST API endpoints for all Webflow operations:
+
+- **Sites**: `/api/v1/webflow/sites`
+- **Collections**: `/api/v1/webflow/sites/:site_id/collections`
+- **Items**: `/api/v1/webflow/sites/:site_id/collections/:collection_id/items`
+- **Forms**: `/api/v1/webflow/sites/:site_id/forms`
+- **Assets**: `/api/v1/webflow/sites/:site_id/assets`
+- **Users**: `/api/v1/webflow/sites/:site_id/users`
+- **Comments**: `/api/v1/webflow/sites/:site_id/comments`
+
+### Usage Examples
+
+```ruby
+# Initialize the service
+webflow = WebflowService.new
+
+# List all sites
+sites = webflow.list_sites
+
+# Create a new item
+item_data = {
+  fieldData: {
+    name: "Item Name",
+    description: "Item description"
+  },
+  isArchived: false,
+  isDraft: false
+}
+item = webflow.create_item("site_id", "collection_id", item_data)
+
+# Send a quotation to Webflow
+quotation = Quotation.find(1)
+WebflowService.new.send_quotation(quotation)
+```
+
+### Available Rake Tasks
+
+- `rake webflow:test_connection` - Test API connection
+- `rake webflow:list_sites` - List all sites
+- `rake webflow:list_collections[site_id]` - List collections for a site
+- `rake webflow:list_items[site_id,collection_id]` - List items in a collection
+- `rake webflow:send_test_quotation[quotation_id]` - Send test quotation
+- `rake webflow:check_credentials` - Check credentials configuration
+- `rake webflow:endpoints` - Show all available endpoints
+
+### Documentation
+
+For detailed documentation, see [docs/webflow_integration.md](docs/webflow_integration.md).
+
 The API automatically syncs quotation data to your Webflow CMS collection when:
 
 - A new quotation is created

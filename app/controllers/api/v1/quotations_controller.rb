@@ -46,8 +46,10 @@ class Api::V1::QuotationsController < Api::V1::BaseController
 
   def send_to_webflow
     authorize @quotation, :send_to_webflow?
-    WebflowService.new(@quotation).send_quotation
+    WebflowService.new.send_quotation(@quotation)
     render json: { message: 'Quotation sent to Webflow successfully' }
+  rescue WebflowApiError => e
+    render json: { error: e.message, status_code: e.status_code }, status: :unprocessable_entity
   rescue => e
     render json: { error: e.message }, status: :unprocessable_entity
   end
