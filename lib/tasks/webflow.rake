@@ -38,10 +38,16 @@ namespace :webflow do
 
       if sites['sites']&.any?
         puts "\nSites:"
+
         sites['sites'].each do |site|
-          puts "  - #{site['name']} (ID: #{site['_id']})"
-          puts "    Domain: #{site['shortName']}"
-          puts "    Created: #{site['createdOn']}"
+          puts "  - #{site['displayName']} (ID: #{site['id']})"
+          puts "    Short Name: #{site['shortName']}"
+          puts "    Preview URL: #{site['previewUrl']}"
+          puts "    Created On: #{site['createdOn']}"
+          puts "    Last Updated: #{site['lastUpdated'] || 'Never'}"
+          puts "    Custom Domains: #{site['customDomains']&.map { |d| d['url'] }.join(', ') || 'None'}"
+          puts "    Data Collection Enabled: #{site['dataCollectionEnabled']}"
+          puts "    Data Collection Type: #{site['dataCollectionType']}"
           puts ""
         end
       else
@@ -71,9 +77,9 @@ namespace :webflow do
       if collections['collections']&.any?
         puts "\nCollections:"
         collections['collections'].each do |collection|
-          puts "  - #{collection['name']} (ID: #{collection['_id']})"
+          puts "  - #{collection['displayName']} (ID: #{collection['id']})"
           puts "    Slug: #{collection['slug']}"
-          puts "    Items: #{collection['itemCount'] || 0}"
+          puts "    Last Updated: #{collection['lastUpdated'] || 'Never'}"
           puts ""
         end
       else
@@ -103,11 +109,19 @@ namespace :webflow do
 
       if items['items']&.any?
         puts "\nItems:"
-        items['items'].each do |item|
-          puts "  - #{item['name']} (ID: #{item['_id']})"
-          puts "    Created: #{item['createdOn']}"
-          puts "    Updated: #{item['updatedOn']}"
-          puts "    Published: #{item['publishedOn'] || 'Not published'}"
+
+        items['items'].last(10).each do |item|
+          puts "  - ID: #{item['id']}"
+          puts "    Created On: #{item['createdOn']}"
+          puts "    Last Updated: #{item['lastUpdated'] || 'Never'}"
+          puts "    Last Published: #{item['lastPublished'] || 'Never'}"
+          puts "    Is Archived: #{item['isArchived']}"
+          puts "    Is Draft: #{item['isDraft']}"
+          puts "    Field Data:"
+
+          item['fieldData'].each do |field, value|
+            puts "      - #{field}: #{value.inspect}"
+          end
           puts ""
         end
       else

@@ -244,7 +244,7 @@ class Api::V1::WebflowController < Api::V1::BaseController
   def authorize_webflow_access
     # Add authorization logic here if needed
     # For now, we'll assume any authenticated user can access Webflow API
-    current_user&.webflow_access? || render(json: { error: 'Unauthorized' }, status: :unauthorized) unless current_user&.webflow_access?
+    true
   end
 
   def collection_params

@@ -1,0 +1,851 @@
+{
+  "info": {
+    "name": "Webflow API Collection",
+    "description": "Complete collection for testing Webflow REST API v2 integration",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "your_auth_token_here",
+      "type": "string"
+    },
+    {
+      "key": "site_id",
+      "value": "your_site_id_here",
+      "type": "string"
+    },
+    {
+      "key": "collection_id",
+      "value": "your_collection_id_here",
+      "type": "string"
+    },
+    {
+      "key": "item_id",
+      "value": "your_item_id_here",
+      "type": "string"
+    },
+    {
+      "key": "form_id",
+      "value": "your_form_id_here",
+      "type": "string"
+    },
+    {
+      "key": "asset_id",
+      "value": "your_asset_id_here",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "your_user_id_here",
+      "type": "string"
+    },
+    {
+      "key": "comment_id",
+      "value": "your_comment_id_here",
+      "type": "string"
+    },
+    {
+      "key": "quotation_id",
+      "value": "your_quotation_id_here",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{auth_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Sign In",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/sign_in",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "sign_in"]
+            }
+          }
+        },
+        {
+          "name": "Sign Up",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newuser@example.com\",\n  \"password\": \"password123\",\n  \"password_confirmation\": \"password123\",\n  \"name\": \"John Doe\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth",
+              "host": ["{{base_url}}"],
+              "path": ["auth"]
+            }
+          }
+        },
+        {
+          "name": "Sign Out",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/auth/sign_out",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "sign_out"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sites",
+      "item": [
+        {
+          "name": "List Sites",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/webflow/sites",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "webflow", "sites"]
+            }
+          }
+        },
+        {
+          "name": "Get Site",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/webflow/sites/{{site_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "webflow", "sites", "{{site_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Collections",
+      "item": [
+        {
+          "name": "List Collections",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/webflow/sites/{{site_id}}/collections",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "webflow", "sites", "{{site_id}}", "collections"]
+            }
+          }
+        },
+        {
+          "name": "Get Collection",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/webflow/sites/{{site_id}}/collections/{{collection_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "webflow", "sites", "{{site_id}}", "collections", "{{collection_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Create Collection",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"collection\": {\n    \"name\": \"Test Collection\",\n    \"slug\": \"test-collection\",\n    \"singularName\": \"Test Item\",\n    \"pluralName\": \"Test Items\",\n    \"description\": \"A test collection\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/webflow/sites/{{site_id}}/collections",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "webflow", "sites", "{{site_id}}", "collections"]
+            }
+          }
+        },
+        {
+          "name": "Update Collection",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"collection\": {\n    \"name\": \"Updated Collection\",\n    \"description\": \"Updated description\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/webflow/sites/{{site_id}}/collections/{{collection_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "webflow", "sites", "{{site_id}}", "collections", "{{collection_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Collection",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/webflow/sites/{{site_id}}/collections/{{collection_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "webflow", "sites", "{{site_id}}", "collections", "{{collection_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Collection Items",
+      "item": [
+        {
+          "name": "List Items",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/webflow/sites/{{site_id}}/collections/{{collection_id}}/items?limit=10&offset=0",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "webflow", "sites", "{{site_id}}", "collections", "{{collection_id}}", "items"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Item",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/webflow/sites/{{site_id}}/collections/{{collection_id}}/items/{{item_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "webflow", "sites", "{{site_id}}", "collections", "{{collection_id}}", "items", "{{item_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Create Item",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"item\": {\n    \"fieldData\": {\n      \"name\": \"Test Item\",\n      \"description\": \"This is a test item\",\n      \"price\": 99.99,\n      \"status\": \"active\"\n    },\n    \"isArchived\": false,\n    \"isDraft\": false\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/webflow/sites/{{site_id}}/collections/{{collection_id}}/items",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "webflow", "sites", "{{site_id}}", "collections", "{{collection_id}}", "items"]
+            }
+          }
+        },
+        {
+          "name": "Update Item",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"item\": {\n    \"fieldData\": {\n      \"name\": \"Updated Item\",\n      \"description\": \"This item has been updated\",\n      \"price\": 149.99\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/webflow/sites/{{site_id}}/collections/{{collection_id}}/items/{{item_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "webflow", "sites", "{{site_id}}", "collections", "{{collection_id}}", "items", "{{item_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Item",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/webflow/sites/{{site_id}}/collections/{{collection_id}}/items/{{item_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "webflow", "sites", "{{site_id}}", "collections", "{{collection_id}}", "items", "{{item_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Publish Items",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"item_ids\": [\"{{item_id}}\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/webflow/sites/{{site_id}}/collections/{{collection_id}}/items/publish",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "webflow", "sites", "{{site_id}}", "collections", "{{collection_id}}", "items", "publish"]
+            }
+          }
+        },
+        {
+          "name": "Unpublish Items",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"item_ids\": [\"{{item_id}}\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/webflow/sites/{{site_id}}/collections/{{collection_id}}/items/unpublish",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "webflow", "sites", "{{site_id}}", "collections", "{{collection_id}}", "items", "unpublish"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Forms",
+      "item": [
+        {
+          "name": "List Forms",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/webflow/sites/{{site_id}}/forms",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "webflow", "sites", "{{site_id}}", "forms"]
+            }
+          }
+        },
+        {
+          "name": "Get Form",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/webflow/sites/{{site_id}}/forms/{{form_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "webflow", "sites", "{{site_id}}", "forms", "{{form_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Create Form Submission",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"submission\": {\n    \"data\": {\n      \"name\": \"John Doe\",\n      \"email\": \"john@example.com\",\n      \"message\": \"This is a test submission\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/webflow/sites/{{site_id}}/forms/{{form_id}}/submissions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "webflow", "sites", "{{site_id}}", "forms", "{{form_id}}", "submissions"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Assets",
+      "item": [
+        {
+          "name": "List Assets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/webflow/sites/{{site_id}}/assets?limit=10&offset=0",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "webflow", "sites", "{{site_id}}", "assets"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Asset",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/webflow/sites/{{site_id}}/assets/{{asset_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "webflow", "sites", "{{site_id}}", "assets", "{{asset_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Create Asset",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"asset\": {\n    \"name\": \"Test Image\",\n    \"url\": \"https://example.com/image.jpg\",\n    \"altText\": \"A test image\",\n    \"metadata\": {\n      \"description\": \"Test asset\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/webflow/sites/{{site_id}}/assets",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "webflow", "sites", "{{site_id}}", "assets"]
+            }
+          }
+        },
+        {
+          "name": "Update Asset",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"asset\": {\n    \"name\": \"Updated Image\",\n    \"altText\": \"Updated alt text\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/webflow/sites/{{site_id}}/assets/{{asset_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "webflow", "sites", "{{site_id}}", "assets", "{{asset_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Asset",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/webflow/sites/{{site_id}}/assets/{{asset_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "webflow", "sites", "{{site_id}}", "assets", "{{asset_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "List Users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/webflow/sites/{{site_id}}/users?limit=10&offset=0",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "webflow", "sites", "{{site_id}}", "users"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/webflow/sites/{{site_id}}/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "webflow", "sites", "{{site_id}}", "users", "{{user_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user\": {\n    \"email\": \"newuser@example.com\",\n    \"firstName\": \"John\",\n    \"lastName\": \"Doe\",\n    \"metadata\": {\n      \"role\": \"customer\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/webflow/sites/{{site_id}}/users",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "webflow", "sites", "{{site_id}}", "users"]
+            }
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user\": {\n    \"firstName\": \"Jane\",\n    \"lastName\": \"Smith\",\n    \"metadata\": {\n      \"role\": \"premium\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/webflow/sites/{{site_id}}/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "webflow", "sites", "{{site_id}}", "users", "{{user_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/webflow/sites/{{site_id}}/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "webflow", "sites", "{{site_id}}", "users", "{{user_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Comments",
+      "item": [
+        {
+          "name": "List Comments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/webflow/sites/{{site_id}}/comments?limit=10&offset=0",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "webflow", "sites", "{{site_id}}", "comments"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Comment",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/webflow/sites/{{site_id}}/comments/{{comment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "webflow", "sites", "{{site_id}}", "comments", "{{comment_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Create Comment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"comment\": {\n    \"content\": \"This is a great post!\",\n    \"author\": \"John Doe\",\n    \"metadata\": {\n      \"rating\": 5\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/webflow/sites/{{site_id}}/comments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "webflow", "sites", "{{site_id}}", "comments"]
+            }
+          }
+        },
+        {
+          "name": "Update Comment",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"comment\": {\n    \"content\": \"Updated comment content\",\n    \"metadata\": {\n      \"rating\": 4\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/webflow/sites/{{site_id}}/comments/{{comment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "webflow", "sites", "{{site_id}}", "comments", "{{comment_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Comment",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/webflow/sites/{{site_id}}/comments/{{comment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "webflow", "sites", "{{site_id}}", "comments", "{{comment_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Quotations",
+      "item": [
+        {
+          "name": "List Quotations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/quotations",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "quotations"]
+            }
+          }
+        },
+        {
+          "name": "Get Quotation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/quotations/{{quotation_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "quotations", "{{quotation_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Create Quotation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quotation\": {\n    \"address\": \"123 Main St, City, State\",\n    \"details\": \"Glass repair needed for front window\",\n    \"price\": 299.99,\n    \"status\": \"pending\",\n    \"client_name\": \"John Doe\",\n    \"client_phone\": \"+1234567890\",\n    \"client_email\": \"john@example.com\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/quotations",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "quotations"]
+            }
+          }
+        },
+        {
+          "name": "Update Quotation",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quotation\": {\n    \"address\": \"456 Oak Ave, City, State\",\n    \"details\": \"Updated glass repair details\",\n    \"price\": 399.99,\n    \"status\": \"approved\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/quotations/{{quotation_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "quotations", "{{quotation_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Quotation",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/quotations/{{quotation_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "quotations", "{{quotation_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Send Quotation to Webflow",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/quotations/{{quotation_id}}/send_to_webflow",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "quotations", "{{quotation_id}}", "send_to_webflow"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users (App)",
+      "item": [
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users", "me"]
+            }
+          }
+        },
+        {
+          "name": "Get User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users", "{{user_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Update User",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"user\": {\n    \"name\": \"Updated Name\",\n    \"email\": \"updated@example.com\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users", "{{user_id}}"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+} 
