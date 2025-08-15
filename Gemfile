@@ -42,7 +42,6 @@ gem 'httparty'
 gem 'dotenv-rails'
 gem 'pundit'
 gem 'active_model_serializers', '~> 0.10.0'
-gem 'activeadmin', '~> 3.1'
 
 group :development, :test do
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
