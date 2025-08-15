@@ -40,9 +40,9 @@ class WebflowServiceTest < ActiveSupport::TestCase
     assert_equal '', query_string
   end
 
-  test 'quotation_data formats data correctly' do
-    quotation = quotations(:one)
-    data = @webflow_service.send(:quotation_data, quotation)
+  test 'window_schedule_repair_data formats data correctly' do
+    window_schedule_repair = window_schedule_repairs(:one)
+    data = @webflow_service.send(:window_schedule_repair_data, window_schedule_repair)
 
     assert_includes data.keys, :fieldData
     assert_includes data.keys, :isArchived
@@ -94,13 +94,13 @@ class WebflowServiceTest < ActiveSupport::TestCase
     end
   end
 
-  test 'legacy send_quotation method works' do
-    quotation = quotations(:one)
+  test 'legacy send_window_schedule_repair method works' do
+    window_schedule_repair = window_schedule_repairs(:one)
 
     # Mock the create_item method to avoid actual API calls
     @webflow_service.stubs(:create_item).returns({ id: 'test_id' })
 
-    result = @webflow_service.send_quotation(quotation)
+    result = @webflow_service.send_window_schedule_repair(window_schedule_repair)
 
     assert_equal({ id: 'test_id' }, result)
   end

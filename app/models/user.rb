@@ -12,7 +12,8 @@ class User < ApplicationRecord
 
   enum :role, client: 0, employee: 1, admin: 2
 
-  has_many :quotations, dependent: :destroy
+  has_many :window_schedule_repairs, dependent: :destroy
+  has_many :windows, through: :window_schedule_repairs
 
   after_initialize :set_default_role, if: :new_record?
   after_create :set_confirmed

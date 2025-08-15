@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_05_171551) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_15_011115) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -42,21 +42,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_05_171551) do
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
-  create_table "quotations", force: :cascade do |t|
-    t.text "address", null: false
-    t.text "details"
-    t.decimal "price", precision: 10, scale: 2
-    t.bigint "user_id", null: false
-    t.integer "status", default: 0
-    t.string "client_name"
-    t.string "client_phone"
-    t.string "client_email"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["status"], name: "index_quotations_on_status"
-    t.index ["user_id"], name: "index_quotations_on_user_id"
-  end
-
   create_table "users", force: :cascade do |t|
     t.string "provider", default: "email", null: false
     t.string "uid", default: "", null: false
@@ -84,7 +69,38 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_05_171551) do
     t.index ["uid", "provider"], name: "index_users_on_uid_and_provider", unique: true
   end
 
+  create_table "window_schedule_repairs", force: :cascade do |t|
+    t.string "name"
+    t.string "slug"
+    t.string "flat_number"
+    t.string "reference_number"
+    t.string "address"
+    t.integer "total_vat_included_price"
+    t.integer "total_vat_excluded_price"
+    t.string "status_color"
+    t.integer "status"
+    t.boolean "sitemap_on"
+    t.string "webflow_item_id"
+    t.string "webflow_collection_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.text "details"
+    t.decimal "grand_total", precision: 10, scale: 2
+    t.index ["user_id"], name: "index_window_schedule_repairs_on_user_id"
+  end
+
+  create_table "windows", force: :cascade do |t|
+    t.string "image"
+    t.string "location"
+    t.bigint "window_schedule_repair_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["window_schedule_repair_id"], name: "index_windows_on_window_schedule_repair_id"
+  end
+
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
-  add_foreign_key "quotations", "users"
+  add_foreign_key "window_schedule_repairs", "users"
+  add_foreign_key "windows", "window_schedule_repairs"
 end

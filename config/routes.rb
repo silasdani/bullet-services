@@ -5,11 +5,14 @@ Rails.application.routes.draw do
 
   namespace :api do
     namespace :v1 do
-      resources :quotations do
+      resources :window_schedule_repairs do
         member do
           post :send_to_webflow
         end
+        resources :windows, only: [:index, :create]
       end
+
+      resources :windows, only: [:show, :update, :destroy]
 
       resources :users do
         collection do

@@ -1,0 +1,20 @@
+one:
+  email: "user@example.com"
+  encrypted_password: <%= User.new.send(:password_digest, 'password') %>
+  name: "Test User"
+  role: 0
+  confirmed_at: <%= Time.current %>
+
+admin:
+  email: "admin@example.com"
+  encrypted_password: <%= User.new.send(:password_digest, 'password') %>
+  name: "Admin User"
+  role: 2
+  confirmed_at: <%= Time.current %>
+
+employee:
+  email: "employee@example.com"
+  encrypted_password: <%= User.new.send(:password_digest, 'password') %>
+  name: "Employee User"
+  role: 1
+  confirmed_at: <%= Time.current %>

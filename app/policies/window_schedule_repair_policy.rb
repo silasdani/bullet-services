@@ -1,4 +1,4 @@
-class QuotationPolicy < ApplicationPolicy
+class WindowScheduleRepairPolicy < ApplicationPolicy
   def index?
     user.present?
   end
@@ -8,7 +8,7 @@ class QuotationPolicy < ApplicationPolicy
   end
 
   def create?
-    user.employee? || user.admin?
+    user.present?
   end
 
   def update?
@@ -16,11 +16,7 @@ class QuotationPolicy < ApplicationPolicy
   end
 
   def destroy?
-    user.employee? || user.admin?
-  end
-
-  def send_to_webflow?
-    user.employee? || user.admin?
+    user.present? && (user.admin? || record.user == user)
   end
 
   class Scope < Scope
@@ -28,7 +24,7 @@ class QuotationPolicy < ApplicationPolicy
       if user.admin?
         scope.all
       elsif user.employee?
-        scope.all
+        scope.where(user: user)
       else
         scope.where(user: user)
       end

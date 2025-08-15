@@ -133,28 +133,28 @@ namespace :webflow do
     end
   end
 
-  desc 'Send a test quotation to Webflow'
-  task :send_test_quotation, [:quotation_id] => :environment do |task, args|
-    quotation_id = args[:quotation_id]
+  desc 'Send a test window schedule repair to Webflow'
+  task :send_test_window_schedule_repair, [:window_schedule_repair_id] => :environment do |task, args|
+    window_schedule_repair_id = args[:window_schedule_repair_id]
 
-    unless quotation_id
-      puts "Please provide a quotation ID: rake webflow:send_test_quotation[quotation_id]"
+    unless window_schedule_repair_id
+      puts "Please provide a window schedule repair ID: rake webflow:send_test_window_schedule_repair[window_schedule_repair_id]"
       exit 1
     end
 
     begin
-      quotation = Quotation.find(quotation_id)
-      puts "Sending quotation #{quotation.id} to Webflow..."
+      window_schedule_repair = WindowScheduleRepair.find(window_schedule_repair_id)
+      puts "Sending window schedule repair #{window_schedule_repair.id} to Webflow..."
 
       webflow = WebflowService.new
-      result = webflow.send_quotation(quotation)
+      result = webflow.send_window_schedule_repair(window_schedule_repair)
 
-      puts "✅ Quotation sent successfully!"
+      puts "✅ Window schedule repair sent successfully!"
       puts "Item ID: #{result['_id']}"
       puts "Created: #{result['createdOn']}"
 
     rescue ActiveRecord::RecordNotFound
-      puts "❌ Quotation with ID #{quotation_id} not found."
+      puts "❌ Window schedule repair with ID #{window_schedule_repair_id} not found."
     rescue WebflowApiError => e
       puts "❌ Webflow API Error: #{e.message}"
       puts "Status Code: #{e.status_code}"

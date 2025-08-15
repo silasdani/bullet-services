@@ -155,11 +155,11 @@ class WebflowService
   end
 
   # Legacy method for backward compatibility
-  def send_quotation(quotation)
+  def send_window_schedule_repair(window_schedule_repair)
     site_id = Rails.application.credentials.webflow_site_id
     collection_id = Rails.application.credentials.webflow_collection_id
 
-    create_item(site_id, collection_id, quotation_data(quotation))
+    create_item(site_id, collection_id, window_schedule_repair_data(window_schedule_repair))
   end
 
   private
@@ -242,18 +242,21 @@ class WebflowService
     raise WebflowApiError.new(error_message, response.code, response.body)
   end
 
-  def quotation_data(quotation)
+  def window_schedule_repair_data(window_schedule_repair)
     {
       fieldData: {
-        name: quotation.address,
-        address: quotation.address,
-        details: quotation.details,
-        price: quotation.price.to_f,
-        status: quotation.status,
-        'client-name': quotation.client_name,
-        'client-phone': quotation.client_phone,
-        'client-email': quotation.client_email,
-        images: quotation.images.map { |img| Rails.application.routes.url_helpers.url_for(img) }
+        name: window_schedule_repair.name,
+        slug: window_schedule_repair.slug,
+        'reference-number': window_schedule_repair.reference_number,
+        address: window_schedule_repair.address,
+        'flat-number': window_schedule_repair.flat_number,
+        details: window_schedule_repair.details,
+        'total-vat-included-price': window_schedule_repair.total_vat_included_price,
+        'total-vat-excluded-price': window_schedule_repair.total_vat_excluded_price,
+        status: window_schedule_repair.status,
+        'status-color': window_schedule_repair.status_color,
+        'grand-total': window_schedule_repair.grand_total,
+        images: window_schedule_repair.images.map { |img| Rails.application.routes.url_helpers.url_for(img) }
       },
       isArchived: false,
       isDraft: false
