@@ -42,6 +42,7 @@ gem 'httparty'
 gem 'dotenv-rails'
 gem 'pundit'
 gem 'active_model_serializers', '~> 0.10.0'
+gem 'rails_admin'
 
 group :development, :test do
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
@@ -49,3 +50,4 @@ group :development, :test do
   gem "rubocop-rails-omakase", require: false
   gem 'pry-rails'
 end
+gem "sassc-rails"
