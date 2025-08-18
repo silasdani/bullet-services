@@ -1,6 +1,5 @@
 class ApplicationController < ActionController::Base
   include Pundit::Authorization
-  include DeviseTokenAuth::Concerns::SetUserByToken
 
   # Skip CSRF verification for Devise Token Auth routes
   skip_before_action :verify_authenticity_token, if: :auth_request?

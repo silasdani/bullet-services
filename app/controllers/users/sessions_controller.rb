@@ -11,14 +11,14 @@ class Users::SessionsController < Devise::SessionsController
       redirect_to new_user_session_path and return
     end
 
-    unless user.admin?
+    unless user.is_admin?
       flash[:alert] = "Access denied. This portal is restricted to administrators only."
       redirect_to new_user_session_path and return
     end
   end
 
   def after_sign_in_path_for(resource)
-    if resource.admin?
+    if resource.is_admin?
       rails_admin_path
     else
       root_path

@@ -1,45 +1,51 @@
 class DashboardPolicy < ApplicationPolicy
   def dashboard?
-    user.admin?
+    user.is_admin?
   end
 
   def index?
-    user.admin?
+    user.is_admin?
   end
 
   def show?
-    user.admin?
+    user.is_admin?
   end
 
   def new?
-    user.admin?
+    user.is_admin?
   end
 
   def create?
-    user.admin?
+    user.is_admin?
   end
 
   def edit?
-    user.admin?
+    user.is_admin?
   end
 
   def update?
-    user.admin?
+    user.is_admin?
   end
 
   def destroy?
-    user.admin?
+    user.is_admin?
   end
 
   def export?
-    user.admin?
+    user.is_admin?
   end
 
   def history?
-    user.admin?
+    user.is_admin?
   end
 
   def show_in_app?
-    user.admin?
+    user.is_admin?
+  end
+
+  class Scope < Scope
+    def resolve
+      scope.all
+    end
   end
 end

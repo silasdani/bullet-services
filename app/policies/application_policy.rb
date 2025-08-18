@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ApplicationPolicy
   attr_reader :user, :record
 
@@ -8,47 +10,47 @@ class ApplicationPolicy
 
   # RailsAdmin specific methods
   def dashboard?
-    user.present? && user.admin?
+    user.present? && user.is_admin?
   end
 
   def index?
-    user.present? && user.admin?
+    user.present? && user.is_admin?
   end
 
   def show?
-    user.present? && user.admin?
+    user.present? && user.is_admin?
   end
 
   def new?
-    user.present? && user.admin?
+    user.present? && user.is_admin?
   end
 
   def create?
-    user.present? && user.admin?
+    user.present? && user.is_admin?
   end
 
   def edit?
-    user.present? && user.admin?
+    user.present? && user.is_admin?
   end
 
   def update?
-    user.present? && user.admin?
+    user.present? && user.is_admin?
   end
 
   def destroy?
-    user.present? && user.admin?
+    user.present? && user.is_admin?
   end
 
   def export?
-    user.present? && user.admin?
+    user.present? && user.is_admin?
   end
 
   def history?
-    user.present? && user.admin?
+    user.present? && user.is_admin?
   end
 
   def show_in_app?
-    user.present? && user.admin?
+    user.present? && user.is_admin?
   end
 
   class Scope

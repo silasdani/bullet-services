@@ -4,7 +4,7 @@ class WindowScheduleRepairPolicy < ApplicationPolicy
   end
 
   def show?
-    user.present? && (user.admin? || user.employee? || record.user == user)
+    user.present? && (user.is_admin? || user.is_employee? || record.user == user)
   end
 
   def create?
@@ -12,35 +12,35 @@ class WindowScheduleRepairPolicy < ApplicationPolicy
   end
 
   def update?
-    user.present? && (user.admin? || user.employee? || record.user == user)
+    user.present? && (user.is_admin? || user.is_employee? || record.user == user)
   end
 
   def destroy?
-    user.present? && (user.admin? || record.user == user)
+    user.present? && (user.is_admin? || record.user == user)
   end
 
   # RailsAdmin specific methods
   def dashboard?
-    user.admin?
+    user.is_admin?
   end
 
   def export?
-    user.admin?
+    user.is_admin?
   end
 
   def history?
-    user.admin?
+    user.is_admin?
   end
 
   def show_in_app?
-    user.admin?
+    user.is_admin?
   end
 
   class Scope < Scope
     def resolve
-      if user.admin?
+      if user.is_admin?
         scope.all
-      elsif user.employee?
+      elsif user.is_employee?
         scope.where(user: user)
       else
         scope.where(user: user)

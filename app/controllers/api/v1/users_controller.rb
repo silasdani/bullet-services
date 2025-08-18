@@ -42,8 +42,14 @@ class Api::V1::UsersController < Api::V1::BaseController
   end
 
   def me
-    authorize current_user, :me?
-    render json: current_user
+    Rails.logger.info "Current user: #{current_user.inspect}"
+    Rails.logger.info "User authenticated: #{user_signed_in?}"
+
+    if current_user
+      render json: current_user
+    else
+      render json: { error: 'Not authenticated' }, status: :unauthorized
+    end
   end
 
   private

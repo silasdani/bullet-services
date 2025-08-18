@@ -25,12 +25,16 @@ class User < ApplicationRecord
   end
 
   # Role helper methods
-  def admin?
-    role == 'admin'
+  def is_admin?
+    role == 'admin' || role == 2
   end
 
-  def super_admin?
-    role == 'admin' # You can extend this later if you add super_admin role
+  def is_employee?
+    role == 'employee' || role == 1
+  end
+
+  def is_super_admin?
+    role == 'admin' || role == 2 # You can extend this later if you add super_admin role
   end
 
   def token_validation_response

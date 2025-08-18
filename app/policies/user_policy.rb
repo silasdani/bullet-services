@@ -1,4 +1,7 @@
-class AdminPolicy < ApplicationPolicy
+# frozen_string_literal: true
+
+# UserPolicy for managing user access permissions
+class UserPolicy < ApplicationPolicy
   def index?
     user.is_admin?
   end
@@ -19,25 +22,9 @@ class AdminPolicy < ApplicationPolicy
     user.is_admin?
   end
 
+  # Custom action for getting current user profile
   def me?
     user.present?
-  end
-
-  # RailsAdmin specific methods
-  def dashboard?
-    user.is_admin?
-  end
-
-  def export?
-    user.is_admin?
-  end
-
-  def history?
-    user.is_admin?
-  end
-
-  def show_in_app?
-    user.is_admin?
   end
 
   class Scope < Scope

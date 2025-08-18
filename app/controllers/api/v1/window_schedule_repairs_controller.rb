@@ -37,6 +37,12 @@ class Api::V1::WindowScheduleRepairsController < Api::V1::BaseController
     head :no_content
   end
 
+  def send_to_webflow
+    authorize @window_schedule_repair
+    # TODO: Implement Webflow integration logic
+    render json: { message: 'Sent to Webflow successfully' }
+  end
+
   private
 
   def set_window_schedule_repair

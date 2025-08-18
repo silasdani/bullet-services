@@ -51,7 +51,7 @@ Rails.application.routes.draw do
       # Assets
       get "webflow/sites/:site_id/assets", to: "webflow#assets"
       get "webflow/sites/:site_id/assets/:asset_id", to: "webflow#asset"
-      post "webflow/sites/:site_id/assets", to: "webflow#create_asset"
+      post "webflow/sites/:site_id/assets/:asset_id", to: "webflow#create_asset"
       patch "webflow/sites/:site_id/assets/:asset_id", to: "webflow#update_asset"
       delete "webflow/sites/:site_id/assets/:asset_id", to: "webflow#delete_asset"
 
