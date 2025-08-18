@@ -1,4 +1,4 @@
-class ApplicationController < ActionController::API
+class ApplicationController < ActionController::Base
   include Pundit::Authorization
   include DeviseTokenAuth::Concerns::SetUserByToken
 
@@ -10,4 +10,3 @@ class ApplicationController < ActionController::API
     render json: { error: exception.policy.class.to_s.underscore + "." + exception.query }, status: :forbidden
   end
 end
-

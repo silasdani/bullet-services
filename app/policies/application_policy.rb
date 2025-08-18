@@ -6,6 +6,51 @@ class ApplicationPolicy
     @record = record
   end
 
+  # RailsAdmin specific methods
+  def dashboard?
+    user.present? && user.admin?
+  end
+
+  def index?
+    user.present? && user.admin?
+  end
+
+  def show?
+    user.present? && user.admin?
+  end
+
+  def new?
+    user.present? && user.admin?
+  end
+
+  def create?
+    user.present? && user.admin?
+  end
+
+  def edit?
+    user.present? && user.admin?
+  end
+
+  def update?
+    user.present? && user.admin?
+  end
+
+  def destroy?
+    user.present? && user.admin?
+  end
+
+  def export?
+    user.present? && user.admin?
+  end
+
+  def history?
+    user.present? && user.admin?
+  end
+
+  def show_in_app?
+    user.present? && user.admin?
+  end
+
   class Scope
     attr_reader :user, :scope
 

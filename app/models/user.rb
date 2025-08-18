@@ -18,6 +18,21 @@ class User < ApplicationRecord
   after_initialize :set_default_role, if: :new_record?
   after_create :set_confirmed
 
+  rails_admin do
+    object_label_method do
+      :email
+    end
+  end
+
+  # Role helper methods
+  def admin?
+    role == 'admin'
+  end
+
+  def super_admin?
+    role == 'admin' # You can extend this later if you add super_admin role
+  end
+
   def token_validation_response
     UserSerializer.new(self).as_json
   end

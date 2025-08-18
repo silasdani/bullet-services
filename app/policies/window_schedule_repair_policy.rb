@@ -19,6 +19,23 @@ class WindowScheduleRepairPolicy < ApplicationPolicy
     user.present? && (user.admin? || record.user == user)
   end
 
+  # RailsAdmin specific methods
+  def dashboard?
+    user.admin?
+  end
+
+  def export?
+    user.admin?
+  end
+
+  def history?
+    user.admin?
+  end
+
+  def show_in_app?
+    user.admin?
+  end
+
   class Scope < Scope
     def resolve
       if user.admin?

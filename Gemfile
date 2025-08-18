@@ -50,4 +50,11 @@ group :development, :test do
   gem "rubocop-rails-omakase", require: false
   gem 'pry-rails'
 end
+
+# Asset pipeline gems
 gem "sassc-rails"
+gem "sprockets-rails"
+gem "jquery-rails"
+gem "turbolinks"
+gem "coffee-rails"
+gem "uglifier"

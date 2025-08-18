@@ -4,4 +4,10 @@ class Window < ApplicationRecord
 
   validates :location, presence: true
   validates :image, presence: true
+
+  rails_admin do
+    object_label_method do
+      :location
+    end
+  end
 end

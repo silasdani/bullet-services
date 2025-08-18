@@ -1,0 +1,27 @@
+class Users::SessionsController < Devise::SessionsController
+  before_action :check_admin_access, only: [:create]
+
+  private
+
+  def check_admin_access
+    user = User.find_by(email: params[:user][:email])
+
+    if user.nil?
+      # Don't set flash message here - let Devise handle authentication errors
+      redirect_to new_user_session_path and return
+    end
+
+    unless user.admin?
+      flash[:alert] = "Access denied. This portal is restricted to administrators only."
+      redirect_to new_user_session_path and return
+    end
+  end
+
+  def after_sign_in_path_for(resource)
+    if resource.admin?
+      rails_admin_path
+    else
+      root_path
+    end
+  end
+end

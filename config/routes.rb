@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  mount RailsAdmin::Engine => '/admin', as: 'rails_admin'
+  devise_for :admins, skip: [:registrations]
   mount_devise_token_auth_for "User", at: "auth", controllers: {
     registrations: "users/registrations"
   }
@@ -56,14 +58,14 @@ Rails.application.routes.draw do
       # Users
       get "webflow/sites/:site_id/users", to: "webflow#users"
       get "webflow/sites/:site_id/users/:user_id", to: "webflow#user"
-      post "webflow/sites/:site_id/users", to: "webflow#create_user"
+      post "webflow/sites/:site_id/users/:user_id", to: "webflow#create_user"
       patch "webflow/sites/:site_id/users/:user_id", to: "webflow#update_user"
       delete "webflow/sites/:site_id/users/:user_id", to: "webflow#delete_user"
 
       # Comments
       get "webflow/sites/:site_id/comments", to: "webflow#comments"
       get "webflow/sites/:site_id/comments/:comment_id", to: "webflow#comment"
-      post "webflow/sites/:site_id/comments", to: "webflow#create_comment"
+      post "webflow/sites/:site_id/comments/:comment_id", to: "webflow#create_comment"
       patch "webflow/sites/:site_id/comments/:comment_id", to: "webflow#update_comment"
       delete "webflow/sites/:site_id/comments/:comment_id", to: "webflow#delete_comment"
     end

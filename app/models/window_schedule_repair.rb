@@ -20,4 +20,10 @@ class WindowScheduleRepair < ApplicationRecord
       where(user: user)
     end
   }
+
+  rails_admin do
+    object_label_method do
+      :name
+    end
+  end
 end
