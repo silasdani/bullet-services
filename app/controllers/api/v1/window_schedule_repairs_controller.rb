@@ -24,7 +24,13 @@ class Api::V1::WindowScheduleRepairsController < Api::V1::BaseController
           {
             id: window.id,
             location: window.location,
-            image: window.image.attached? ? window.image.url : nil,
+            image: window.image.attached? ? {
+              url: Rails.application.routes.url_helpers.rails_blob_url(window.image),
+              filename: window.image.filename,
+              content_type: window.image.content_type,
+              byte_size: window.image.byte_size,
+              attached: true
+            } : nil,
             created_at: window.created_at,
             updated_at: window.updated_at,
             tools: window.tools.map do |tool|
@@ -64,7 +70,13 @@ class Api::V1::WindowScheduleRepairsController < Api::V1::BaseController
         {
           id: window.id,
           location: window.location,
-          image: window.image.attached? ? window.image.url : nil,
+          image: window.image.attached? ? {
+            url: Rails.application.routes.url_helpers.rails_blob_url(window.image),
+            filename: window.image.filename,
+            content_type: window.image.content_type,
+            byte_size: window.image.byte_size,
+            attached: true
+          } : nil,
           created_at: window.created_at,
           updated_at: window.updated_at,
           tools: window.tools.map do |tool|
@@ -121,7 +133,13 @@ class Api::V1::WindowScheduleRepairsController < Api::V1::BaseController
           {
             id: window.id,
             location: window.location,
-            image: window.image.attached? ? window.image.url : nil,
+            image: window.image.attached? ? {
+              url: Rails.application.routes.url_helpers.rails_blob_url(window.image),
+              filename: window.image.filename,
+              content_type: window.image.content_type,
+              byte_size: window.image.byte_size,
+              attached: true
+            } : nil,
             created_at: window.created_at,
             updated_at: window.updated_at,
             tools: window.tools.map do |tool|
