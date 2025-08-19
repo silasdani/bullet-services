@@ -5,4 +5,27 @@ class WindowScheduleRepairSerializer < ActiveModel::Serializer
 
   belongs_to :user
   has_many :windows, serializer: WindowSerializer
+
+  # Ensure windows are loaded properly
+  def windows
+    begin
+      return [] unless object.respond_to?(:windows)
+      return [] unless object.windows.any?
+      object.windows
+    rescue => e
+      Rails.logger.error "Error loading windows in serializer: #{e.message}"
+      []
+    end
+  end
+
+  # Ensure user is loaded
+  def user
+    begin
+      return nil unless object.respond_to?(:user)
+      object.user
+    rescue => e
+      Rails.logger.error "Error loading user in serializer: #{e.message}"
+      nil
+    end
+  end
 end
