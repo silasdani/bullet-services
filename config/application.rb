@@ -14,6 +14,14 @@ module BulletServices
     config.autoload_lib(ignore: %w[assets tasks])
     config.action_mailer.deliver_later_queue_name = 'mailers'
 
+    # Set global default URL options for all environments
+    config.after_initialize do
+      Rails.application.routes.default_url_options = {
+        host: ENV.fetch('DEFAULT_URL_HOST', 'localhost'),
+        port: ENV.fetch('DEFAULT_URL_PORT', 3000)
+      }
+    end
+
     # Configuration for the application, engines, and railties goes here.
     #
     # These settings can be overridden in specific environments using the files

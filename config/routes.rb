@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  root 'application#index'
+
   mount RailsAdmin::Engine => '/admin', as: 'rails_admin'
   devise_for :admins, skip: [:registrations]
   mount_devise_token_auth_for "User", at: "auth", controllers: {
