@@ -51,8 +51,8 @@
       "type": "string"
     },
     {
-      "key": "quotation_id",
-      "value": "your_quotation_id_here",
+      "key": "wrs_id",
+      "value": "your_wrs_id_here",
       "type": "string"
     }
   ],
@@ -711,9 +711,9 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/quotations",
+              "raw": "{{base_url}}/api/v1/wrs",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "quotations"]
+              "path": ["api", "v1", "wrs"]
             }
           }
         },
@@ -723,9 +723,9 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/quotations/{{quotation_id}}",
+              "raw": "{{base_url}}/api/v1/wrs/{{wrs_id}}",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "quotations", "{{quotation_id}}"]
+              "path": ["api", "v1", "wrs", "{{wrs_id}}"]
             }
           }
         },
@@ -741,12 +741,12 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"quotation\": {\n    \"address\": \"123 Main St, City, State\",\n    \"details\": \"Glass repair needed for front window\",\n    \"price\": 299.99,\n    \"status\": \"pending\",\n    \"client_name\": \"John Doe\",\n    \"client_phone\": \"+1234567890\",\n    \"client_email\": \"john@example.com\"\n  }\n}"
+              "raw": "{\n  \"wrs\": {\n    \"address\": \"123 Main St, City, State\",\n    \"details\": \"Glass repair needed for front window\",\n    \"price\": 299.99,\n    \"status\": \"pending\",\n    \"client_name\": \"John Doe\",\n    \"client_phone\": \"+1234567890\",\n    \"client_email\": \"john@example.com\"\n  }\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/quotations",
+              "raw": "{{base_url}}/api/v1/wrs",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "quotations"]
+              "path": ["api", "v1", "wrs"]
             }
           }
         },
@@ -762,12 +762,12 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"quotation\": {\n    \"address\": \"456 Oak Ave, City, State\",\n    \"details\": \"Updated glass repair details\",\n    \"price\": 399.99,\n    \"status\": \"approved\"\n  }\n}"
+              "raw": "{\n  \"wrs\": {\n    \"address\": \"456 Oak Ave, City, State\",\n    \"details\": \"Updated glass repair details\",\n    \"price\": 399.99,\n    \"status\": \"approved\"\n  }\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/quotations/{{quotation_id}}",
+              "raw": "{{base_url}}/api/v1/wrs/{{wrs_id}}",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "quotations", "{{quotation_id}}"]
+              "path": ["api", "v1", "wrs", "{{wrs_id}}"]
             }
           }
         },
@@ -777,9 +777,9 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/quotations/{{quotation_id}}",
+              "raw": "{{base_url}}/api/v1/wrs/{{wrs_id}}",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "quotations", "{{quotation_id}}"]
+              "path": ["api", "v1", "wrs", "{{wrs_id}}"]
             }
           }
         },
@@ -789,9 +789,9 @@
             "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/quotations/{{quotation_id}}/send_to_webflow",
+              "raw": "{{base_url}}/api/v1/wrs/{{wrs_id}}/send_to_webflow",
               "host": ["{{base_url}}"],
-              "path": ["api", "v1", "quotations", "{{quotation_id}}", "send_to_webflow"]
+              "path": ["api", "v1", "wrs", "{{wrs_id}}", "send_to_webflow"]
             }
           }
         }

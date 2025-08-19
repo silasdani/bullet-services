@@ -36,7 +36,7 @@ After importing, you need to configure the collection variables:
      "asset_id": "your_asset_id_here",
      "user_id": "your_user_id_here",
      "comment_id": "your_comment_id_here",
-     "quotation_id": "your_quotation_id_here"
+     "wrs_id": "your_wrs_id_here"
    }
    ```
 
@@ -125,13 +125,13 @@ rake webflow:list_items[your_site_id,your_collection_id]
 6. **Delete Comment** - Test deleting a comment
 
 ### Step 9: Quotations
-1. **List Quotations** - Get all quotations
-2. **Create Quotation** - Test creating a new quotation
-3. **Update Variables** - Set the `quotation_id` variable
-4. **Get Quotation** - Test getting a specific quotation
-5. **Update Quotation** - Test updating a quotation
-6. **Send to Webflow** - Test sending quotation to Webflow
-7. **Delete Quotation** - Test deleting a quotation
+1. **List Quotations** - Get all wrs
+2. **Create Quotation** - Test creating a new wrs
+3. **Update Variables** - Set the `wrs_id` variable
+4. **Get Quotation** - Test getting a specific wrs
+5. **Update Quotation** - Test updating a wrs
+6. **Send to Webflow** - Test sending wrs to Webflow
+7. **Delete Quotation** - Test deleting a wrs
 
 ## 🔧 Troubleshooting
 
@@ -211,7 +211,7 @@ Content-Type: application/json
 ### Send Quotation to Webflow
 ```bash
 # Send Quotation
-POST {{base_url}}/api/v1/quotations/{{quotation_id}}/send_to_webflow
+POST {{base_url}}/api/v1/wrs/{{wrs_id}}/send_to_webflow
 ```
 
 ## 🚀 Quick Start

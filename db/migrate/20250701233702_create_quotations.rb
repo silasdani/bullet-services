@@ -1,6 +1,6 @@
 class CreateQuotations < ActiveRecord::Migration[8.0]
   def change
-    create_table :quotations do |t|
+    create_table :wrs do |t|
       t.text :address, null: false
       t.text :details
       t.decimal :price, precision: 10, scale: 2
@@ -13,6 +13,6 @@ class CreateQuotations < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    add_index :quotations, :status
+    add_index :wrs, :status
   end
 end

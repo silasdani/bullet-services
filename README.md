@@ -1,6 +1,6 @@
 # Bullet Services
 
-A Ruby on Rails API backend for managing glass repair quotations, with user authentication (Devise Token Auth), image uploads, and integration with Webflow CMS. Designed for use with a React Native frontend.
+A Ruby on Rails API backend for managing glass repair wrs, with user authentication (Devise Token Auth), image uploads, and integration with Webflow CMS. Designed for use with a React Native frontend.
 
 ## Table of Contents
 
@@ -128,12 +128,12 @@ rspec
 
 ### Quotations
 
-- `GET /api/v1/quotations` — List quotations (filtered by user role)
-- `POST /api/v1/quotations` — Create quotation (with images)
-- `GET /api/v1/quotations/:id` — Show quotation details
-- `PUT /api/v1/quotations/:id` — Update quotation
-- `DELETE /api/v1/quotations/:id` — Delete quotation
-- `POST /api/v1/quotations/:id/send_to_webflow` — Send quotation to Webflow
+- `GET /api/v1/wrs` — List wrs (filtered by user role)
+- `POST /api/v1/wrs` — Create wrs (with images)
+- `GET /api/v1/wrs/:id` — Show wrs details
+- `PUT /api/v1/wrs/:id` — Update wrs
+- `DELETE /api/v1/wrs/:id` — Delete wrs
+- `POST /api/v1/wrs/:id/send_to_webflow` — Send wrs to Webflow
 
 ### Users
 
@@ -143,9 +143,9 @@ rspec
 
 ## User Roles
 
-- **Admin:** Full access to all quotations and user management
-- **Employee:** Can create, edit, and manage quotations
-- **Client:** Can view only their own quotations
+- **Admin:** Full access to all wrs and user management
+- **Employee:** Can create, edit, and manage wrs
+- **Client:** Can view only their own wrs
 
 ## Image Upload
 
@@ -196,7 +196,7 @@ This application includes a comprehensive Webflow REST API v2 integration that p
 
 4. **Send Quotation to Webflow**
    ```bash
-   rake webflow:send_test_quotation[quotation_id]
+   rake webflow:send_test_wrs[wrs_id]
    ```
 
 ### API Endpoints
@@ -231,9 +231,9 @@ item_data = {
 }
 item = webflow.create_item("site_id", "collection_id", item_data)
 
-# Send a quotation to Webflow
-quotation = Quotation.find(1)
-WebflowService.new.send_quotation(quotation)
+# Send a wrs to Webflow
+wrs = Quotation.find(1)
+WebflowService.new.send_wrs(wrs)
 ```
 
 ### Available Rake Tasks
@@ -242,7 +242,7 @@ WebflowService.new.send_quotation(quotation)
 - `rake webflow:list_sites` - List all sites
 - `rake webflow:list_collections[site_id]` - List collections for a site
 - `rake webflow:list_items[site_id,collection_id]` - List items in a collection
-- `rake webflow:send_test_quotation[quotation_id]` - Send test quotation
+- `rake webflow:send_test_wrs[wrs_id]` - Send test wrs
 - `rake webflow:check_credentials` - Check credentials configuration
 - `rake webflow:endpoints` - Show all available endpoints
 
@@ -250,9 +250,9 @@ WebflowService.new.send_quotation(quotation)
 
 For detailed documentation, see [docs/webflow_integration.md](docs/webflow_integration.md).
 
-The API automatically syncs quotation data to your Webflow CMS collection when:
+The API automatically syncs wrs data to your Webflow CMS collection when:
 
-- A new quotation is created
+- A new wrs is created
 - Manual sync is triggered via the `/send_to_webflow` endpoint
 
 ## License

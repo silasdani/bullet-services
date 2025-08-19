@@ -187,12 +187,12 @@ The service implements automatic rate limiting:
 
 ## Legacy Integration
 
-The existing quotation integration has been preserved for backward compatibility:
+The existing wrs integration has been preserved for backward compatibility:
 
 ```ruby
-# Send a quotation to Webflow
-quotation = Quotation.find(1)
-WebflowService.new.send_quotation(quotation)
+# Send a wrs to Webflow
+wrs = Quotation.find(1)
+WebflowService.new.send_wrs(wrs)
 ```
 
 This method uses the configured `webflow_site_id` and `webflow_collection_id` from credentials.
