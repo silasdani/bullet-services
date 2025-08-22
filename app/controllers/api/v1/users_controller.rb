@@ -61,7 +61,11 @@ class Api::V1::UsersController < Api::V1::BaseController
   end
 
   def user_params
-    params.require(:user).permit(:email, :name, :nickname, :role, :password, :password_confirmation, :image)
+    if params[:user].present?
+      params.require(:user).permit(:email, :name, :nickname, :role, :password, :password_confirmation)
+    else
+      {}
+    end
   end
 
   def attach_image
