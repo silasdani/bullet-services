@@ -20,6 +20,12 @@ module BulletServices
         host: ENV.fetch('DEFAULT_URL_HOST', 'localhost'),
         port: ENV.fetch('DEFAULT_URL_PORT', 3000)
       }
+
+      # Set ActiveStorage::Current.url_options globally
+      ActiveStorage::Current.url_options = {
+        host: ENV.fetch('DEFAULT_URL_HOST', 'localhost'),
+        port: ENV.fetch('DEFAULT_URL_PORT', 3000)
+      }
     end
 
     # Configure Active Storage

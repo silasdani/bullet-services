@@ -9,15 +9,8 @@ class WindowSerializer < ActiveModel::Serializer
 
     begin
       if object.image.attached?
-        {
-          url: Rails.application.routes.url_helpers.rails_blob_url(object.image),
-          filename: object.image.filename,
-          content_type: object.image.content_type,
-          byte_size: object.image.byte_size,
-          attached: true,
-          image_name: object.image_name,
-          image_url: object.image_url
-        }
+        ActiveStorage::Current.url_options ||= { host: 'localhost', port: 3000 }
+        object.image.url
       else
         nil
       end

@@ -28,37 +28,6 @@ namespace :webflow do
     end
   end
 
-  desc 'List all sites'
-  task list_sites: :environment do
-    puts "Fetching Webflow sites..."
-
-    begin
-      webflow = WebflowService.new
-      sites = webflow.list_sites
-
-      if sites['sites']&.any?
-        puts "\nSites:"
-
-        sites['sites'].each do |site|
-          puts "  - #{site['displayName']} (ID: #{site['id']})"
-          puts "    Short Name: #{site['shortName']}"
-          puts "    Preview URL: #{site['previewUrl']}"
-          puts "    Created On: #{site['createdOn']}"
-          puts "    Last Updated: #{site['lastUpdated'] || 'Never'}"
-          puts "    Custom Domains: #{site['customDomains']&.map { |d| d['url'] }.join(', ') || 'None'}"
-          puts "    Data Collection Enabled: #{site['dataCollectionEnabled']}"
-          puts "    Data Collection Type: #{site['dataCollectionType']}"
-          puts ""
-        end
-      else
-        puts "No sites found."
-      end
-
-    rescue WebflowApiError => e
-      puts "❌ Error: #{e.message}"
-    end
-  end
-
   desc 'List collections for a site'
   task :list_collections, [:site_id] => :environment do |task, args|
     site_id = args[:site_id]
@@ -193,55 +162,5 @@ namespace :webflow do
     puts "webflow_token: 'your_webflow_api_token'"
     puts "webflow_site_id: 'your_site_id'"
     puts "webflow_collection_id: 'your_collection_id'"
-  end
-
-  desc 'Show Webflow API endpoints'
-  task endpoints: :environment do
-    puts "Webflow API Endpoints:"
-    puts "\nSites:"
-    puts "  GET  /api/v1/webflow/sites"
-    puts "  GET  /api/v1/webflow/sites/:site_id"
-
-    puts "\nCollections:"
-    puts "  GET    /api/v1/webflow/sites/:site_id/collections"
-    puts "  GET    /api/v1/webflow/sites/:site_id/collections/:collection_id"
-    puts "  POST   /api/v1/webflow/sites/:site_id/collections"
-    puts "  PATCH  /api/v1/webflow/sites/:site_id/collections/:collection_id"
-    puts "  DELETE /api/v1/webflow/sites/:site_id/collections/:collection_id"
-
-    puts "\nCollection Items:"
-    puts "  GET    /api/v1/webflow/sites/:site_id/collections/:collection_id/items"
-    puts "  GET    /api/v1/webflow/sites/:site_id/collections/:collection_id/items/:item_id"
-    puts "  POST   /api/v1/webflow/sites/:site_id/collections/:collection_id/items"
-    puts "  PATCH  /api/v1/webflow/sites/:site_id/collections/:collection_id/items/:item_id"
-    puts "  DELETE /api/v1/webflow/sites/:site_id/collections/:collection_id/items/:item_id"
-    puts "  POST   /api/v1/webflow/sites/:site_id/collections/:collection_id/items/publish"
-    puts "  POST   /api/v1/webflow/sites/:site_id/collections/:collection_id/items/unpublish"
-
-    puts "\nForms:"
-    puts "  GET  /api/v1/webflow/sites/:site_id/forms"
-    puts "  GET  /api/v1/webflow/sites/:site_id/forms/:form_id"
-    puts "  POST /api/v1/webflow/sites/:site_id/forms/:form_id/submissions"
-
-    puts "\nAssets:"
-    puts "  GET    /api/v1/webflow/sites/:site_id/assets"
-    puts "  GET    /api/v1/webflow/sites/:site_id/assets/:asset_id"
-    puts "  POST   /api/v1/webflow/sites/:site_id/assets"
-    puts "  PATCH  /api/v1/webflow/sites/:site_id/assets/:asset_id"
-    puts "  DELETE /api/v1/webflow/sites/:site_id/assets/:asset_id"
-
-    puts "\nUsers:"
-    puts "  GET    /api/v1/webflow/sites/:site_id/users"
-    puts "  GET    /api/v1/webflow/sites/:site_id/users/:user_id"
-    puts "  POST   /api/v1/webflow/sites/:site_id/users"
-    puts "  PATCH  /api/v1/webflow/sites/:site_id/users/:user_id"
-    puts "  DELETE /api/v1/webflow/sites/:site_id/users/:user_id"
-
-    puts "\nComments:"
-    puts "  GET    /api/v1/webflow/sites/:site_id/comments"
-    puts "  GET    /api/v1/webflow/sites/:site_id/comments/:comment_id"
-    puts "  POST   /api/v1/webflow/sites/:site_id/comments"
-    puts "  PATCH  /api/v1/webflow/sites/:site_id/comments/:comment_id"
-    puts "  DELETE /api/v1/webflow/sites/:site_id/comments/:comment_id"
   end
 end

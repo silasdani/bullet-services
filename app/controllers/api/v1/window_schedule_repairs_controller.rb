@@ -8,13 +8,13 @@ class Api::V1::WindowScheduleRepairsController < Api::V1::BaseController
 
   def show
     authorize @window_schedule_repair
-    render json: @window_schedule_repair
+    render json: WindowScheduleRepairSerializer.new(@window_schedule_repair).as_json
   end
 
   def create
     authorize WindowScheduleRepair
 
-    service = WrsCreationService.new(current_user, params)
+    service = WrsCreationService.new(current_user, window_schedule_repair_params)
     result = service.create
 
     if result[:success]
@@ -33,7 +33,7 @@ class Api::V1::WindowScheduleRepairsController < Api::V1::BaseController
   def update
     authorize @window_schedule_repair
 
-    service = WrsCreationService.new(current_user, params)
+    service = WrsCreationService.new(current_user, window_schedule_repair_params)
     result = service.update(@window_schedule_repair.id)
 
     if result[:success]

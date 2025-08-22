@@ -7,6 +7,9 @@ Rails.application.routes.draw do
     registrations: "users/registrations"
   }
 
+  # Add ActiveStorage routes for file serving
+  mount ActiveStorage::Engine => "/active_storage"
+
   namespace :api do
     namespace :v1 do
       resources :window_schedule_repairs do
@@ -22,6 +25,7 @@ Rails.application.routes.draw do
       resources :images, only: [] do
         collection do
           post :upload_window_image
+          post :upload_window_image_for_wrs
           post :upload_multiple_images
         end
       end

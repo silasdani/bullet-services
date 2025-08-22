@@ -39,6 +39,17 @@ Rails.application.configure do
   # Set localhost to be used by links generated in mailer templates.
   config.action_mailer.default_url_options = { host: "localhost", port: 3000 }
 
+  # Set ActiveStorage URL options for local disk service
+  config.active_storage.default_url_options = { host: "localhost", port: 3000 }
+
+  # Set routes default URL options for ActiveStorage
+  config.after_initialize do
+    Rails.application.routes.default_url_options = { host: "localhost", port: 3000 }
+
+    # Set ActiveStorage::Current.url_options directly
+    ActiveStorage::Current.url_options = { host: "localhost", port: 3000 }
+  end
+
   # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log
 

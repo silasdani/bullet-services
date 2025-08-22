@@ -14,6 +14,34 @@ class Api::V1::ImagesController < Api::V1::BaseController
     end
   end
 
+  def upload_window_image_for_wrs
+    # This method is for uploading images during WRS creation when windows don't exist yet
+    @window_schedule_repair = WindowScheduleRepair.find(params[:window_schedule_repair_id])
+    authorize @window_schedule_repair, :update?
+
+    if params[:image].blank?
+      render json: { error: 'No image provided' }, status: :unprocessable_entity
+      return
+    end
+
+    begin
+      # Create a temporary window to handle the image upload
+      temp_window = @window_schedule_repair.windows.build(location: 'Temporary')
+
+      service = WindowImageUploadService.new(temp_window)
+      result = service.upload_image(params[:image])
+
+      if result[:success]
+        render json: result
+      else
+        render json: { error: result[:errors].join(', ') }, status: :unprocessable_entity
+      end
+    rescue => e
+      Rails.logger.error "Window image upload for WRS error: #{e.message}"
+      render json: { error: 'Failed to upload image' }, status: :internal_server_error
+    end
+  end
+
   def upload_multiple_images
     @window_schedule_repair = WindowScheduleRepair.find(params[:window_schedule_repair_id])
     authorize @window_schedule_repair, :update?
