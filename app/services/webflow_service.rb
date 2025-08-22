@@ -13,15 +13,6 @@ class WebflowService
     @rate_limit_requests = []
   end
 
-  # Sites
-  def list_sites
-    make_request(:get, "/sites")
-  end
-
-  def get_site(site_id)
-    make_request(:get, "/sites/#{site_id}")
-  end
-
   # Collections
   def list_collections(site_id)
     make_request(:get, "/sites/#{site_id}/collections")
@@ -31,22 +22,10 @@ class WebflowService
     make_request(:get, "/sites/#{site_id}/collections/#{collection_id}")
   end
 
-  def create_collection(site_id, collection_data)
-    make_request(:post, "/sites/#{site_id}/collections", body: collection_data)
-  end
-
-  def update_collection(site_id, collection_id, collection_data)
-    make_request(:patch, "/sites/#{site_id}/collections/#{collection_id}", body: collection_data)
-  end
-
-  def delete_collection(site_id, collection_id)
-    make_request(:delete, "/sites/#{site_id}/collections/#{collection_id}")
-  end
-
   # Collection Items
   def list_items(site_id, collection_id, params = {})
     query_params = build_query_params(params)
-    make_request(:get, "/sites/#{site_id}/collections/#{collection_id}/items#{query_params}")
+    make_request(:get, "/sites/#{site_id}/collections/#{collection_id}/items/live#{query_params}")
   end
 
   def get_item(site_id, collection_id, item_id)
@@ -75,85 +54,6 @@ class WebflowService
                  body: { itemIds: item_ids })
   end
 
-  # Forms
-  def list_forms(site_id)
-    make_request(:get, "/sites/#{site_id}/forms")
-  end
-
-  def get_form(site_id, form_id)
-    make_request(:get, "/sites/#{site_id}/forms/#{form_id}")
-  end
-
-  def create_form_submission(site_id, form_id, submission_data)
-    make_request(:post, "/sites/#{site_id}/forms/#{form_id}/submissions", body: submission_data)
-  end
-
-  # Assets
-  def list_assets(site_id, params = {})
-    query_params = build_query_params(params)
-    make_request(:get, "/sites/#{site_id}/assets#{query_params}")
-  end
-
-  def get_asset(site_id, asset_id)
-    make_request(:get, "/sites/#{site_id}/assets/#{asset_id}")
-  end
-
-  def create_asset(site_id, asset_data)
-    make_request(:post, "/sites/#{site_id}/assets", body: asset_data)
-  end
-
-  def update_asset(site_id, asset_id, asset_data)
-    make_request(:patch, "/sites/#{site_id}/assets/#{asset_id}", body: asset_data)
-  end
-
-  def delete_asset(site_id, asset_id)
-    make_request(:delete, "/sites/#{site_id}/assets/#{asset_id}")
-  end
-
-  # Users
-  def list_users(site_id, params = {})
-    query_params = build_query_params(params)
-    make_request(:get, "/sites/#{site_id}/users#{query_params}")
-  end
-
-  def get_user(site_id, user_id)
-    make_request(:get, "/sites/#{site_id}/users/#{user_id}")
-  end
-
-  def create_user(site_id, user_data)
-    make_request(:post, "/sites/#{site_id}/users", body: user_data)
-  end
-
-  def update_user(site_id, user_id, user_data)
-    make_request(:patch, "/sites/#{site_id}/users/#{user_id}", body: user_data)
-  end
-
-  def delete_user(site_id, user_id)
-    make_request(:delete, "/sites/#{site_id}/users/#{user_id}")
-  end
-
-  # Comments
-  def list_comments(site_id, params = {})
-    query_params = build_query_params(params)
-    make_request(:get, "/sites/#{site_id}/comments#{query_params}")
-  end
-
-  def get_comment(site_id, comment_id)
-    make_request(:get, "/sites/#{site_id}/comments/#{comment_id}")
-  end
-
-  def create_comment(site_id, comment_data)
-    make_request(:post, "/sites/#{site_id}/comments", body: comment_data)
-  end
-
-  def update_comment(site_id, comment_id, comment_data)
-    make_request(:patch, "/sites/#{site_id}/comments/#{comment_id}", body: comment_data)
-  end
-
-  def delete_comment(site_id, comment_id)
-    make_request(:delete, "/sites/#{site_id}/comments/#{comment_id}")
-  end
-
   # Legacy method for backward compatibility
   def send_window_schedule_repair(window_schedule_repair)
     site_id = Rails.application.credentials.webflow_site_id
@@ -167,10 +67,21 @@ class WebflowService
   def make_request(method, path, options = {})
     check_rate_limit
 
+    request_options = options.dup
+
+    if request_options[:body].is_a?(Hash)
+      request_options[:body] = request_options[:body].to_json
+    end
+
+    # Log the request body if present (log JSON string when available)
+    if request_options[:body]
+      log_request_body(method, path, request_options[:body])
+    end
+
     response = self.class.send(
       method,
       path,
-      options.merge(
+      request_options.merge(
         headers: headers,
         timeout: 30
       )
@@ -188,7 +99,7 @@ class WebflowService
   def headers
     {
       "Authorization" => "Bearer #{@api_key}",
-      "accept-version" => "1.0.0",
+      "accept-version" => "2.0.0",
       "Content-Type" => "application/json"
     }
   end
@@ -196,7 +107,7 @@ class WebflowService
   def build_query_params(params)
     return "" if params.empty?
 
-    query_string = params.map { |key, value| "#{key}=#{CGI.escape(value.to_s)}" }.join("&")
+    query_string = params.to_h.entries.map { |key, value| "#{key}=#{CGI.escape(value.to_s)}" }.join("&")
     "?#{query_string}"
   end
 
@@ -219,6 +130,10 @@ class WebflowService
     if response.code >= 400
       Rails.logger.error "Webflow API Error: #{response.body}"
     end
+  end
+
+  def log_request_body(method, path, body)
+    Rails.logger.info "Webflow API #{method.upcase} #{path} - Request Body: #{body.is_a?(String) ? body : body.inspect}"
   end
 
   def handle_error_response(response)

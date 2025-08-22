@@ -25,51 +25,19 @@ Rails.application.routes.draw do
       end
 
       # Webflow API routes
-      # Sites
-      get "webflow/sites", to: "webflow#sites"
-      get "webflow/sites/:site_id", to: "webflow#site"
 
       # Collections
-      get "webflow/sites/:site_id/collections", to: "webflow#collections"
-      get "webflow/sites/:site_id/collections/:collection_id", to: "webflow#collection"
-      post "webflow/sites/:site_id/collections", to: "webflow#create_collection"
-      patch "webflow/sites/:site_id/collections/:collection_id", to: "webflow#update_collection"
-      delete "webflow/sites/:site_id/collections/:collection_id", to: "webflow#delete_collection"
+      get "webflow/collections", to: "webflow#collections"
+      get "webflow/collections/:collection_id", to: "webflow#collection"
 
       # Collection Items
-      get "webflow/sites/:site_id/collections/:collection_id/items", to: "webflow#items"
-      get "webflow/sites/:site_id/collections/:collection_id/items/:item_id", to: "webflow#item"
-      post "webflow/sites/:site_id/collections/:collection_id/items", to: "webflow#create_item"
-      patch "webflow/sites/:site_id/collections/:collection_id/items/:item_id", to: "webflow#update_item"
-      delete "webflow/sites/:site_id/collections/:collection_id/items/:item_id", to: "webflow#delete_item"
-      post "webflow/sites/:site_id/collections/:collection_id/items/publish", to: "webflow#publish_items"
-      post "webflow/sites/:site_id/collections/:collection_id/items/unpublish", to: "webflow#unpublish_items"
-
-      # Forms
-      get "webflow/sites/:site_id/forms", to: "webflow#forms"
-      get "webflow/sites/:site_id/forms/:form_id", to: "webflow#form"
-      post "webflow/sites/:site_id/forms/:form_id/submissions", to: "webflow#create_form_submission"
-
-      # Assets
-      get "webflow/sites/:site_id/assets", to: "webflow#assets"
-      get "webflow/sites/:site_id/assets/:asset_id", to: "webflow#asset"
-      post "webflow/sites/:site_id/assets/:asset_id", to: "webflow#create_asset"
-      patch "webflow/sites/:site_id/assets/:asset_id", to: "webflow#update_asset"
-      delete "webflow/sites/:site_id/assets/:asset_id", to: "webflow#delete_asset"
-
-      # Users
-      get "webflow/sites/:site_id/users", to: "webflow#users"
-      get "webflow/sites/:site_id/users/:user_id", to: "webflow#user"
-      post "webflow/sites/:site_id/users/:user_id", to: "webflow#create_user"
-      patch "webflow/sites/:site_id/users/:user_id", to: "webflow#update_user"
-      delete "webflow/sites/:site_id/users/:user_id", to: "webflow#delete_user"
-
-      # Comments
-      get "webflow/sites/:site_id/comments", to: "webflow#comments"
-      get "webflow/sites/:site_id/comments/:comment_id", to: "webflow#comment"
-      post "webflow/sites/:site_id/comments/:comment_id", to: "webflow#create_comment"
-      patch "webflow/sites/:site_id/comments/:comment_id", to: "webflow#update_comment"
-      delete "webflow/sites/:site_id/comments/:comment_id", to: "webflow#delete_comment"
+      get "webflow/collections/:collection_id/items", to: "webflow#items"
+      get "webflow/collections/:collection_id/items/:item_id", to: "webflow#item"
+      post "webflow/collections/:collection_id/items", to: "webflow#create_item"
+      patch "webflow/collections/:collection_id/items/:item_id", to: "webflow#update_item"
+      delete "webflow/collections/:collection_id/items/:item_id", to: "webflow#delete_item"
+      post "webflow/collections/:collection_id/items/publish", to: "webflow#publish_items"
+      post "webflow/collections/:collection_id/items/unpublish", to: "webflow#unpublish_items"
     end
   end
 end
