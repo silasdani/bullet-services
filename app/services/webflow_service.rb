@@ -158,24 +158,7 @@ class WebflowService
   end
 
   def window_schedule_repair_data(window_schedule_repair)
-    {
-      fieldData: {
-        name: window_schedule_repair.name,
-        slug: window_schedule_repair.slug,
-        'reference-number': window_schedule_repair.reference_number,
-        address: window_schedule_repair.address,
-        'flat-number': window_schedule_repair.flat_number,
-        details: window_schedule_repair.details,
-        'total-vat-included-price': window_schedule_repair.total_vat_included_price,
-        'total-vat-excluded-price': window_schedule_repair.total_vat_excluded_price,
-        status: window_schedule_repair.status,
-        'status-color': window_schedule_repair.status_color,
-        'grand-total': window_schedule_repair.grand_total,
-        images: window_schedule_repair.images.map { |img| Rails.application.routes.url_helpers.url_for(img) }
-      },
-      isArchived: false,
-      isDraft: false
-    }
+    WebflowCollectionMapperService.to_webflow(window_schedule_repair)
   end
 end
 

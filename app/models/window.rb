@@ -27,6 +27,26 @@ class Window < ApplicationRecord
     end
   end
 
+  def image_name
+    return nil unless image.attached?
+
+    window_number = window_schedule_repair.windows.order(:created_at).index(self) + 1
+    "window-#{window_number}-image"
+  end
+
+  def image_url
+    return nil unless image.attached?
+    Rails.application.routes.url_helpers.url_for(image)
+  end
+
+  def tools_list
+    tools.map(&:name).join(', ')
+  end
+
+  def tools_prices_list
+    tools.map(&:price).join(', ')
+  end
+
   rails_admin do
     object_label_method do
       :location

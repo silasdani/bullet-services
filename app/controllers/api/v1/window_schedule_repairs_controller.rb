@@ -12,30 +12,35 @@ class Api::V1::WindowScheduleRepairsController < Api::V1::BaseController
   end
 
   def create
-    @window_schedule_repair = current_user.window_schedule_repairs.build(window_schedule_repair_params)
-    authorize @window_schedule_repair
+    authorize WindowScheduleRepair
 
-    if @window_schedule_repair.save
-      # Return minimal response to avoid serialization issues
+    service = WrsCreationService.new(current_user, params)
+    result = service.create
+
+    if result[:success]
       render json: {
         success: true,
         message: 'WRS created successfully',
-        id: @window_schedule_repair.id,
-        name: @window_schedule_repair.name,
-        address: @window_schedule_repair.address
+        id: service.wrs.id,
+        name: service.wrs.name,
+        address: service.wrs.address
       }, status: :created
     else
-      render json: { errors: @window_schedule_repair.errors }, status: :unprocessable_entity
+      render json: { errors: result[:errors] }, status: :unprocessable_entity
     end
   end
 
   def update
     authorize @window_schedule_repair
-    if @window_schedule_repair.update(window_schedule_repair_params)
+
+    service = WrsCreationService.new(current_user, params)
+    result = service.update(@window_schedule_repair.id)
+
+    if result[:success]
       @window_schedule_repair.reload
       render json: @window_schedule_repair
     else
-      render json: { errors: @window_schedule_repair.errors }, status: :unprocessable_entity
+      render json: { errors: result[:errors] }, status: :unprocessable_entity
     end
   end
 

@@ -156,6 +156,67 @@ Images are handled via Active Storage and can be configured for:
 - Google Cloud Storage
 - Azure Storage
 
+### Image Upload Endpoints
+
+The API provides endpoints for uploading images to windows and window schedule repairs:
+
+#### Upload Window Image
+```
+POST /api/v1/images/upload_window_image
+Content-Type: multipart/form-data
+
+Parameters:
+- window_id: ID of the window
+- image: Image file (JPEG, PNG, etc.)
+
+Response:
+{
+  "success": true,
+  "message": "Image uploaded successfully",
+  "image_url": "https://s3.amazonaws.com/bucket/image.jpg",
+  "image_name": "window-1-image"
+}
+```
+
+#### Upload Multiple Images to WRS
+```
+POST /api/v1/images/upload_multiple_images
+Content-Type: multipart/form-data
+
+Parameters:
+- window_schedule_repair_id: ID of the WRS
+- images[]: Array of image files
+
+Response:
+{
+  "success": true,
+  "message": "Images uploaded successfully",
+  "image_count": 2,
+  "image_urls": ["url1", "url2"]
+}
+```
+
+### Image Naming Convention
+
+Window images are automatically named using the pattern `window-{number}-image` where the number represents the order of the window within the WRS.
+
+### S3 Configuration
+
+For production, configure your AWS credentials:
+
+```bash
+rails credentials:edit
+```
+
+Add:
+```yaml
+aws:
+  access_key_id: your_access_key
+  secret_access_key: your_secret_key
+```
+
+Images are stored in the `bullet-services` S3 bucket and are publicly accessible for Webflow integration.
+
 ## Webflow Integration
 
 This application includes a comprehensive Webflow REST API v2 integration that provides access to all Webflow features:

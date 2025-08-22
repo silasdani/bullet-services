@@ -58,4 +58,3 @@ gem "jquery-rails"
 gem "turbolinks"
 gem "coffee-rails"
 gem "uglifier"
-gem 'aws-sdk-s3', require: false

@@ -12,7 +12,7 @@ amazon:
   secret_access_key: <%= Rails.application.credentials.dig(:aws, :secret_access_key) %>
   region: eu-north-1
   bucket: bullet-services
-  public: false  # Makes uploaded files publicly accessible
+  public: true  # Makes uploaded files publicly accessible for Webflow
 
 # Remember not to checkin your GCS keyfile to a repository
 # google:

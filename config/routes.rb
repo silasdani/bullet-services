@@ -18,6 +18,14 @@ Rails.application.routes.draw do
 
       resources :windows, only: [:show, :update, :destroy]
 
+      # Image upload routes
+      resources :images, only: [] do
+        collection do
+          post :upload_window_image
+          post :upload_multiple_images
+        end
+      end
+
       resources :users do
         collection do
           get :me

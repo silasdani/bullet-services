@@ -1,0 +1,113 @@
+{
+  "info": {
+    "name": "Image Upload API",
+    "description": "Collection for testing image upload functionality in the Bullet Services API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Upload Window Image",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "window_id",
+              "value": "1",
+              "type": "text"
+            },
+            {
+              "key": "image",
+              "type": "file",
+              "src": []
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/images/upload_window_image",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "images", "upload_window_image"]
+        },
+        "description": "Upload an image to a specific window. The image will be automatically named 'window-{number}-image' based on the window's position in the WRS."
+      }
+    },
+    {
+      "name": "Upload Multiple Images to WRS",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "window_schedule_repair_id",
+              "value": "1",
+              "type": "text"
+            },
+            {
+              "key": "images[]",
+              "type": "file",
+              "src": []
+            },
+            {
+              "key": "images[]",
+              "type": "file",
+              "src": []
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/images/upload_multiple_images",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "images", "upload_multiple_images"]
+        },
+        "description": "Upload multiple images to a window schedule repair. These images will be stored at the WRS level."
+      }
+    },
+    {
+      "name": "Get Window with Image",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{auth_token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/windows/1",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "windows", "1"]
+        },
+        "description": "Retrieve a window with its attached image information, including the generated image name and URL."
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "your_auth_token_here",
+      "type": "string"
+    }
+  ]
+}
