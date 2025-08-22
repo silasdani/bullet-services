@@ -11,7 +11,7 @@ class WebflowItemBuilderService
     {
       fieldData: build_field_data_hash,
       isArchived: false,
-      isDraft: false
+      isDraft: true
     }
   end
 
