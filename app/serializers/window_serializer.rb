@@ -3,14 +3,13 @@ class WindowSerializer < ActiveModel::Serializer
 
   has_many :tools, serializer: ToolSerializer
 
-  # Handle image attachment properly with error handling
+  # Handle image properly with error handling
   def image
     return nil unless object.respond_to?(:image)
 
     begin
-      if object.image.attached?
-        ActiveStorage::Current.url_options ||= { host: 'localhost', port: 3000 }
-        object.image.url
+      if object.image.present?
+        object.image_url
       else
         nil
       end

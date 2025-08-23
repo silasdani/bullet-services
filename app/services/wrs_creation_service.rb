@@ -130,14 +130,14 @@ class WrsCreationService
           Rails.logger.error "Error backtrace: #{e.backtrace.first(5).join("\n")}"
         end
 
-        # Verify the image is attached
-        if window.image.attached?
-          # Reload the window to ensure the attachment is properly persisted
+        # Verify the image is present
+        if window.image.present?
+          # Reload the window to ensure the image is properly persisted
           window.reload
           # Re-enable image validation for future operations
           window.skip_image_validation = false
         else
-          Rails.logger.error "Image attachment failed for window #{index}"
+          Rails.logger.error "Image upload failed for window #{index}"
         end
       else
         # Re-enable image validation even if no image was provided
@@ -170,8 +170,9 @@ class WrsCreationService
         # Handle image if provided
         if window_attrs[:image].present? && window_attrs[:image].respond_to?(:content_type)
           # This is a file upload, replace the existing image
-          window.image.purge if window.image.attached?
-          window.image.attach(window_attrs[:image])
+          # For now, just store the filename - you'll need to implement S3 upload logic
+          filename = "window-#{window.id}-image#{File.extname(window_attrs[:image].original_filename)}"
+          window.update(image: filename)
         end
       else
         # Create new window
@@ -187,9 +188,11 @@ class WrsCreationService
           raise "Failed to save new window: #{window.errors.full_messages}"
         end
 
-        # Now attach the image to the saved window
+        # Now handle the image for the saved window
         if window_attrs[:image].present? && window_attrs[:image].respond_to?(:content_type)
-          window.image.attach(window_attrs[:image])
+          # For now, just store the filename - you'll need to implement S3 upload logic
+          filename = "window-#{window.id}-image#{File.extname(window_attrs[:image].original_filename)}"
+          window.update(image: filename)
           # Re-enable image validation
           window.skip_image_validation = false
         else

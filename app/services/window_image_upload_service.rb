@@ -10,15 +10,12 @@ class WindowImageUploadService
     return { success: false, errors: ['No image provided'] } unless image_file.present?
 
     begin
-      # Remove existing image
-      @window.image.purge if @window.image.attached?
-
-      # Attach new image
-      @window.image.attach(image_file)
-
       # Generate proper filename
-      filename = generate_image_filename
-      @window.image.blob.update(filename: filename)
+      filename = generate_image_filename(image_file)
+
+      # For now, just store the filename in the image field
+      # You'll need to implement actual S3 upload logic here
+      @window.update(image: filename)
 
       # Sync to Webflow if needed
       sync_to_webflow if should_sync_to_webflow?
@@ -37,10 +34,10 @@ class WindowImageUploadService
 
   private
 
-  def generate_image_filename
+  def generate_image_filename(image_file)
     window_number = get_window_number
-    extension = @window.image.blob.filename.extension
-    "window-#{window_number}-image.#{extension}"
+    extension = File.extname(image_file.original_filename)
+    "window-#{window_number}-image#{extension}"
   end
 
   def get_window_number

@@ -1,7 +1,7 @@
 class Window < ApplicationRecord
   belongs_to :window_schedule_repair
   has_many :tools, dependent: :destroy
-  has_one_attached :image
+  # Removed: has_one_attached :image
 
   accepts_nested_attributes_for :tools, allow_destroy: true, reject_if: :all_blank
 
@@ -17,10 +17,26 @@ class Window < ApplicationRecord
   attr_accessor :skip_image_validation
 
   def image_name
-    return nil unless image.attached?
+    return nil unless image.present?
 
     window_number = window_schedule_repair.windows.order(:created_at).index(self) + 1
     "window-#{window_number}-image"
+  end
+
+  # Generate public S3 URL for the image
+  def image_url
+    return nil unless image.present?
+
+    # If image is already a full URL, return it
+    return image if image.start_with?('http')
+
+    # Generate S3 public URL
+    "https://bullet-services.s3.eu-north-1.amazonaws.com/#{image}"
+  end
+
+  # Check if image is attached (for compatibility)
+  def image_attached?
+    image.present?
   end
 
   def tools_list
@@ -58,14 +74,14 @@ class Window < ApplicationRecord
     return if skip_image_validation
     return unless persisted? # Skip on creation
 
-    # Only require image if it was previously attached and now missing
-    if image_was_attached? && !image.attached?
+    # Only require image if it was previously present and now missing
+    if image_was_present? && !image.present?
       errors.add(:image, 'must be present')
     end
   end
 
-  def image_was_attached?
-    # Check if image was previously attached (for updates)
-    respond_to?(:image_attachment_was) && image_attachment_was.present?
+  def image_was_present?
+    # Check if image was previously present (for updates)
+    respond_to?(:image_was) && image_was.present?
   end
 end

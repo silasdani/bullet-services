@@ -70,10 +70,10 @@ module Wrs
 
   def window_image_url(window_number)
     window = windows.order(:created_at)[window_number - 1]
-    return nil unless window&.image&.attached?
+    return nil unless window&.image&.present?
 
-    # Return the image URL or blob key for Webflow
-    window.image.url if window.image.respond_to?(:url)
+    # Return the image URL for Webflow
+    window.image_url
   end
 
   def window_items_list(window_number)
