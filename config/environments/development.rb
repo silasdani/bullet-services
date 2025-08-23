@@ -45,7 +45,7 @@ Rails.application.configure do
   # Set routes default URL options for ActiveStorage
   # Note: ActiveStorage URL options are now handled in config/initializers/active_storage.rb
 
-  # Print deprecation notices to the Rails logger.
+  # Print deprecatio    n notices to the Rails logger.
   config.active_support.deprecation = :log
 
   # Raise an error on page load if there are pending migrations.

@@ -118,6 +118,13 @@ class WrsCreationService
       if window_attrs[:image].present? && window_attrs[:image].respond_to?(:content_type)
         begin
           window.image.attach(window_attrs[:image])
+          file = window_attrs[:image]   # ActionDispatch::Http::UploadedFile
+          blob = ActiveStorage::Blob.create_and_upload!(
+            io: file.tempfile,
+            filename: file.original_filename,
+            content_type: file.content_type
+          )
+          window.image.attach(blob)
         rescue => e
           Rails.logger.error "Error attaching image to window #{index}: #{e.message}"
           Rails.logger.error "Error backtrace: #{e.backtrace.first(5).join("\n")}"
