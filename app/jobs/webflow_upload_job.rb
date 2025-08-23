@@ -10,7 +10,7 @@ class WebflowUploadJob < ApplicationJob
       if window_schedule_repair.webflow_item_id.present?
         # Update existing item
         webflow_service.update_item(
-          Rails.application.credentials.webflow_site_id,
+          ENV.fetch("WEBFLOW_SITE_ID"),
           window_schedule_repair.webflow_collection_id,
           window_schedule_repair.webflow_item_id,
           webflow_service.send(:window_schedule_repair_data, window_schedule_repair)
@@ -18,7 +18,7 @@ class WebflowUploadJob < ApplicationJob
       else
         # Create new item
         response = webflow_service.create_item(
-          Rails.application.credentials.webflow_site_id,
+          ENV.fetch("WEBFLOW_SITE_ID"),
           window_schedule_repair.webflow_collection_id,
           webflow_service.send(:window_schedule_repair_data, window_schedule_repair)
         )

@@ -9,7 +9,7 @@ class WebflowService
   RATE_LIMIT_PER_MINUTE = 60
 
   def initialize
-    @api_key = Rails.application.credentials.webflow_token
+    @api_key = ENV.fetch("WEBFLOW_TOKEN")
     @rate_limit_requests = []
   end
 
@@ -56,8 +56,8 @@ class WebflowService
 
   # Legacy method for backward compatibility
   def send_window_schedule_repair(window_schedule_repair)
-    site_id = Rails.application.credentials.webflow_site_id
-    collection_id = Rails.application.credentials.webflow_wrs_collection_id
+    site_id = ENV.fetch("WEBFLOW_SITE_ID")
+    collection_id = ENV.fetch("WEBFLOW_WRS_COLLECTION_ID")
 
     create_item(site_id, collection_id, window_schedule_repair_data(window_schedule_repair))
   end

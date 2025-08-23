@@ -136,21 +136,23 @@ namespace :webflow do
   task check_credentials: :environment do
     puts "Checking Webflow credentials configuration..."
 
-    credentials = Rails.application.credentials
+    token = ENV.fetch("WEBFLOW_TOKEN")
+    site_id = ENV.fetch("WEBFLOW_SITE_ID")
+    collection_id = ENV.fetch("WEBFLOW_COLLECTION_ID")
 
-    if credentials.webflow_token
+    if token
       puts "✅ WEBFLOW_TOKEN is configured"
     else
       puts "❌ WEBFLOW_TOKEN is not configured"
     end
 
-    if credentials.webflow_site_id
+    if site_id
       puts "✅ WEBFLOW_SITE_ID is configured"
     else
       puts "❌ WEBFLOW_SITE_ID is not configured"
     end
 
-    if credentials.webflow_collection_id
+    if collection_id
       puts "✅ WEBFLOW_COLLECTION_ID is configured"
     else
       puts "❌ WEBFLOW_COLLECTION_ID is not configured"
@@ -159,8 +161,8 @@ namespace :webflow do
     puts "\nTo configure credentials, run:"
     puts "rails credentials:edit"
     puts "\nAdd the following:"
-    puts "webflow_token: 'your_webflow_api_token'"
-    puts "webflow_site_id: 'your_site_id'"
-    puts "webflow_collection_id: 'your_collection_id'"
+    puts "WEBFLOW_TOKEN: 'your_webflow_api_token'"
+    puts "WEBFLOW_SITE_ID: 'your_site_id'"
+    puts "WEBFLOW_COLLECTION_ID: 'your_collection_id'"
   end
 end

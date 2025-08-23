@@ -240,9 +240,9 @@ This application includes a comprehensive Webflow REST API v2 integration that p
    
    Add your Webflow configuration:
    ```yaml
-   webflow_token: "your_webflow_api_token"
-   webflow_site_id: "your_site_id"
-   webflow_collection_id: "your_collection_id"
+   WEBFLOW_TOKEN: "your_webflow_api_token"
+   WEBFLOW_SITE_ID: "your_site_id"
+   WEBFLOW_COLLECTION_ID: "your_collection_id"
    ```
 
 2. **Test Connection**

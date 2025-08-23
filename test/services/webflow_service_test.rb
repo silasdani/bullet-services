@@ -132,8 +132,8 @@ class WebflowServiceTest < ActiveSupport::TestCase
   end
 
   test 'validates required credentials' do
-    # Test that the service requires webflow_token in credentials
-    assert_not_nil Rails.application.credentials.webflow_token
+    # Test that the service requires WEBFLOW_TOKEN in credentials
+    assert_not_nil ENV.fetch("WEBFLOW_TOKEN")
   end
 
   test 'supports all major Webflow API operations' do

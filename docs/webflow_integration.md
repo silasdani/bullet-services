@@ -33,9 +33,9 @@ rails credentials:edit
 ```
 
 ```yaml
-webflow_token: "your_webflow_api_token_here"
-webflow_site_id: "your_site_id_here"
-webflow_collection_id: "your_collection_id_here"
+WEBFLOW_TOKEN: "your_webflow_api_token_here"
+WEBFLOW_SITE_ID: "your_site_id_here"
+WEBFLOW_COLLECTION_ID: "your_collection_id_here"
 ```
 
 ## Service Class
