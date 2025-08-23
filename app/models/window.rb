@@ -1,7 +1,7 @@
 class Window < ApplicationRecord
   belongs_to :window_schedule_repair
   has_many :tools, dependent: :destroy
-  # Removed: has_one_attached :image
+  has_one_attached :image
 
   accepts_nested_attributes_for :tools, allow_destroy: true, reject_if: :all_blank
 
