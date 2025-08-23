@@ -13,7 +13,12 @@ amazon:
   secret_access_key: <%= ENV.fetch("AWS_SECRET_ACCESS_KEY") %>
   region: eu-north-1
   bucket: bullet-services
-  public: true  # Makes uploaded files publicly accessible for Webflow
+  # Modern S3 buckets don't support ACLs - use bucket policies instead
+  public: false
+  # Remove ACL-related settings that cause errors
+  # upload:
+  #   acl: false
+  # public_read: false
 
 # Remember not to checkin your GCS keyfile to a repository
 # google:
