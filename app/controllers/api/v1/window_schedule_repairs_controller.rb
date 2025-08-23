@@ -52,39 +52,9 @@ class Api::V1::WindowScheduleRepairsController < Api::V1::BaseController
 
   def send_to_webflow
     authorize @window_schedule_repair
-    # TODO: Implement Webflow integration logic
 
-    #             "slug": "reference-number",
-    #             "slug": "project-summary",
-    #             "slug": "flat-number",
-    #             "slug": "main-project-image",
-    #             "slug": "window-location",
-    #             "slug": "window-1-items-2",
-    #             "slug": "window-1-items-prices-3",
-    #             "slug": "window-2-location",
-    #             "slug": "window-2",
-    #             "slug": "window-2-items-2",
-    #             "slug": "window-2-items-prices-3",
-    #             "slug": "window-3-location",
-    #             "slug": "window-3-image",
-    #             "slug": "window-3-items",
-    #             "slug": "window-3-items-prices",
-    #             "slug": "total-incl-vat",
-    #             "type": "Number",
-    #             "slug": "total-exc-vat",
-    #             "slug": "window-4-location",
-    #             "slug": "window-4-image",
-    #             "slug": "window-4-items",
-    #             "slug": "window-4-items-prices",
-    #             "slug": "window-5-location",
-    #             "slug": "window-5-image",
-    #             "slug": "window-5-items",
-    #             "slug": "window-5-items-prices",
-    #             "slug": "accepted-declined",
-    #             "slug": "grand-total",
-    #             "slug": "accepted-decline",
-    #             "slug": "name",
-    #             "slug": "slug",
+    service = WebflowService.new
+    service.send_window_schedule_repair(@window_schedule_repair)
 
     render json: { message: "Sent to Webflow successfully" }
   end
