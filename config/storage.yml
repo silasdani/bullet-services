@@ -14,7 +14,7 @@ amazon:
   region: eu-north-1
   bucket: bullet-services
   # Modern S3 buckets don't support ACLs - use bucket policies instead
-  public: false
+  public: true
   # Remove ACL-related settings that cause errors
   # upload:
   #   acl: false
