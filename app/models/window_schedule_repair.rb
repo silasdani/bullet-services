@@ -1,4 +1,6 @@
 class WindowScheduleRepair < ApplicationRecord
+  include Wrs
+
   belongs_to :user
   has_many :windows, dependent: :destroy
   has_many :tools, through: :windows
@@ -84,6 +86,21 @@ class WindowScheduleRepair < ApplicationRecord
     rescue => e
       Rails.logger.error "Error calculating VAT amount: #{e.message}"
       0
+    end
+  end
+
+  def status_color
+    case status
+    when 'pending'
+      '#FFA500' # Orange for pending
+    when 'approved'
+      '#00FF00' # Green for approved
+    when 'rejected'
+      '#FF0000' # Red for rejected
+    when 'completed'
+      '#0000FF' # Blue for completed
+    else
+      '#FFA500' # Default orange for pending
     end
   end
 

@@ -10,7 +10,7 @@ class Api::V1::ImagesController < Api::V1::BaseController
     if result[:success]
       render json: result
     else
-      render json: { error: result[:errors].join(', ') }, status: :unprocessable_entity
+      render json: { error: result[:errors].join(', ') }, status: :unprocessable_content
     end
   end
 
@@ -20,7 +20,7 @@ class Api::V1::ImagesController < Api::V1::BaseController
     authorize @window_schedule_repair, :update?
 
     if params[:image].blank?
-      render json: { error: 'No image provided' }, status: :unprocessable_entity
+      render json: { error: 'No image provided' }, status: :unprocessable_content
       return
     end
 
@@ -34,7 +34,7 @@ class Api::V1::ImagesController < Api::V1::BaseController
       if result[:success]
         render json: result
       else
-        render json: { error: result[:errors].join(', ') }, status: :unprocessable_entity
+        render json: { error: result[:errors].join(', ') }, status: :unprocessable_content
       end
     rescue => e
       Rails.logger.error "Window image upload for WRS error: #{e.message}"
@@ -47,7 +47,7 @@ class Api::V1::ImagesController < Api::V1::BaseController
     authorize @window_schedule_repair, :update?
 
     if params[:images].blank?
-      render json: { error: 'No images provided' }, status: :unprocessable_entity
+      render json: { error: 'No images provided' }, status: :unprocessable_content
       return
     end
 

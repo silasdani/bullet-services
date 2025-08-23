@@ -20,13 +20,13 @@ class Api::V1::WindowScheduleRepairsController < Api::V1::BaseController
     if result[:success]
       render json: {
         success: true,
-        message: 'WRS created successfully',
+        message: "WRS created successfully",
         id: service.wrs.id,
         name: service.wrs.name,
         address: service.wrs.address
       }, status: :created
     else
-      render json: { errors: result[:errors] }, status: :unprocessable_entity
+      render json: { errors: result[:errors] }, status: :unprocessable_content
     end
   end
 
@@ -40,7 +40,7 @@ class Api::V1::WindowScheduleRepairsController < Api::V1::BaseController
       @window_schedule_repair.reload
       render json: @window_schedule_repair
     else
-      render json: { errors: result[:errors] }, status: :unprocessable_entity
+      render json: { errors: result[:errors] }, status: :unprocessable_content
     end
   end
 
@@ -53,7 +53,40 @@ class Api::V1::WindowScheduleRepairsController < Api::V1::BaseController
   def send_to_webflow
     authorize @window_schedule_repair
     # TODO: Implement Webflow integration logic
-    render json: { message: 'Sent to Webflow successfully' }
+
+    #             "slug": "reference-number",
+    #             "slug": "project-summary",
+    #             "slug": "flat-number",
+    #             "slug": "main-project-image",
+    #             "slug": "window-location",
+    #             "slug": "window-1-items-2",
+    #             "slug": "window-1-items-prices-3",
+    #             "slug": "window-2-location",
+    #             "slug": "window-2",
+    #             "slug": "window-2-items-2",
+    #             "slug": "window-2-items-prices-3",
+    #             "slug": "window-3-location",
+    #             "slug": "window-3-image",
+    #             "slug": "window-3-items",
+    #             "slug": "window-3-items-prices",
+    #             "slug": "total-incl-vat",
+    #             "type": "Number",
+    #             "slug": "total-exc-vat",
+    #             "slug": "window-4-location",
+    #             "slug": "window-4-image",
+    #             "slug": "window-4-items",
+    #             "slug": "window-4-items-prices",
+    #             "slug": "window-5-location",
+    #             "slug": "window-5-image",
+    #             "slug": "window-5-items",
+    #             "slug": "window-5-items-prices",
+    #             "slug": "accepted-declined",
+    #             "slug": "grand-total",
+    #             "slug": "accepted-decline",
+    #             "slug": "name",
+    #             "slug": "slug",
+
+    render json: { message: "Sent to Webflow successfully" }
   end
 
   private
@@ -64,7 +97,7 @@ class Api::V1::WindowScheduleRepairsController < Api::V1::BaseController
 
   def window_schedule_repair_params
     # Handle both JSON and FormData
-    if request.content_type&.include?('multipart/form-data')
+    if request.content_type&.include?("multipart/form-data")
       # FormData parameters
       params.permit(
         :name, :slug, :webflow_collection_id, :webflow_item_id, :reference_number,

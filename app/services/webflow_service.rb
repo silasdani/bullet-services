@@ -57,7 +57,7 @@ class WebflowService
   # Legacy method for backward compatibility
   def send_window_schedule_repair(window_schedule_repair)
     site_id = Rails.application.credentials.webflow_site_id
-    collection_id = Rails.application.credentials.webflow_collection_id
+    collection_id = Rails.application.credentials.webflow_wrs_collection_id
 
     create_item(site_id, collection_id, window_schedule_repair_data(window_schedule_repair))
   end
@@ -158,7 +158,8 @@ class WebflowService
   end
 
   def window_schedule_repair_data(window_schedule_repair)
-    WebflowCollectionMapperService.to_webflow(window_schedule_repair)
+    # Use the instance method from the WRS concern for better encapsulation
+    window_schedule_repair.to_webflow_formatted
   end
 end
 

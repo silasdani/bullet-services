@@ -18,7 +18,7 @@ class Api::V1::WindowsController < Api::V1::BaseController
     if @window.save
       render json: @window, status: :created
     else
-      render json: { errors: @window.errors }, status: :unprocessable_entity
+      render json: { errors: @window.errors }, status: :unprocessable_content
     end
   end
 
@@ -27,7 +27,7 @@ class Api::V1::WindowsController < Api::V1::BaseController
     if @window.update(window_params)
       render json: @window
     else
-      render json: { errors: @window.errors }, status: :unprocessable_entity
+      render json: { errors: @window.errors }, status: :unprocessable_content
     end
   end
 
