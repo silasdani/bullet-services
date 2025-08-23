@@ -21,13 +21,14 @@ Rails.application.config.after_initialize do
     # Configure Active Storage to not use ACLs
     Rails.application.config.active_storage.service_urls_expire_in = 1.hour
 
-    # Ensure no ACLs are set
-    ActiveStorage::Blob.service.class_eval do
-      def upload(key, io, **options)
-        # Remove any ACL-related options
-        options.delete(:acl)
-        options.delete(:public_read)
-        super(key, io, **options)
+    # Monkey patch the S3 service to remove ACL options
+    if defined?(ActiveStorage::Service::S3Service)
+      ActiveStorage::Service::S3Service.class_eval do
+        def upload(key, io, **options)
+          # Remove ACL-related options that cause issues with modern S3 buckets
+          options = options.except(:acl, :public_read, :cache_control, :content_disposition)
+          super(key, io, **options)
+        end
       end
     end
   end
