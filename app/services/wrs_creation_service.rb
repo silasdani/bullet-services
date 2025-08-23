@@ -10,8 +10,6 @@ class WrsCreationService
 
   def create
     ActiveRecord::Base.transaction do
-      Rails.logger.info "Starting WRS creation for user #{@user.id}"
-
       # Create the WRS first (this will generate the slug)
       @wrs = @user.window_schedule_repairs.build(
         name: @params[:name],
@@ -20,40 +18,29 @@ class WrsCreationService
         details: @params[:details]
       )
 
-      Rails.logger.info "WRS built with name: #{@wrs.name}, address: #{@wrs.address}"
-
       # Save the WRS first to generate slug and pass validations
       unless @wrs.save
-        Rails.logger.error "Failed to save WRS: #{@wrs.errors.full_messages}"
         @errors = @wrs.errors.full_messages
         return { success: false, errors: @errors }
       end
 
-      Rails.logger.info "WRS saved successfully with ID: #{@wrs.id}"
-
       # Create windows with their tools (this will save them individually)
       create_windows_and_tools
-
-      Rails.logger.info "Windows and tools created, calculating totals"
 
       # Calculate totals after windows and tools are created
       @wrs.calculate_totals
 
       # Save the WRS again with the calculated totals
       if @wrs.save
-        Rails.logger.info "WRS updated with totals successfully"
         # Sync to Webflow if collection ID is provided
         sync_to_webflow if @wrs.webflow_collection_id.present?
 
         { success: true, wrs: @wrs }
       else
-        Rails.logger.error "Failed to update WRS with totals: #{@wrs.errors.full_messages}"
         @errors = @wrs.errors.full_messages
         { success: false, errors: @errors }
       end
     rescue => e
-      Rails.logger.error "Exception during WRS creation: #{e.message}"
-      Rails.logger.error e.backtrace.join("\n")
       @errors << "Failed to create WRS: #{e.message}"
       { success: false, errors: @errors }
     end
@@ -124,7 +111,6 @@ class WrsCreationService
 
       # Save the window first (without image)
       unless window.save
-        Rails.logger.error "Failed to save window #{index}: #{window.errors.full_messages}"
         raise "Failed to save window #{index}: #{window.errors.full_messages}"
       end
 
@@ -171,7 +157,6 @@ class WrsCreationService
 
         # Save the updated window
         unless window.save
-          Rails.logger.error "Failed to save updated window: #{window.errors.full_messages}"
           raise "Failed to save updated window: #{window.errors.full_messages}"
         end
 
@@ -192,7 +177,6 @@ class WrsCreationService
 
         # Save the new window first
         unless window.save
-          Rails.logger.error "Failed to save new window: #{window.errors.full_messages}"
           raise "Failed to save new window: #{window.errors.full_messages}"
         end
 

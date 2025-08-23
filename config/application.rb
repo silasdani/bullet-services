@@ -29,7 +29,7 @@ module BulletServices
     end
 
     # Configure Active Storage
-    config.active_storage.resolve_model_to_route = :rails_storage_proxy
+    # config.active_storage.resolve_model_to_route = :rails_storage_proxy
 
     # Configuration for the application, engines, and railties goes here.
     #

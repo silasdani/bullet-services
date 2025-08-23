@@ -11,7 +11,7 @@ class Window < ApplicationRecord
   end
 
   validates :location, presence: true
-  validate :image_presence, unless: :skip_image_validation
+  validate :image_presence, unless: :skip_image_validation, on: :update, if: :persisted?
 
   # Attribute to skip image validation during creation
   attr_accessor :skip_image_validation
@@ -54,8 +54,18 @@ class Window < ApplicationRecord
   private
 
   def image_presence
-    unless image.attached?
+    # Only validate if this is an update and we're not skipping validation
+    return if skip_image_validation
+    return unless persisted? # Skip on creation
+
+    # Only require image if it was previously attached and now missing
+    if image_was_attached? && !image.attached?
       errors.add(:image, 'must be present')
     end
+  end
+
+  def image_was_attached?
+    # Check if image was previously attached (for updates)
+    respond_to?(:image_attachment_was) && image_attachment_was.present?
   end
 end
