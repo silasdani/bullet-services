@@ -15,10 +15,10 @@ amazon:
   bucket: bullet-services
   # Modern S3 buckets don't support ACLs - use bucket policies instead
   public: true
-  # Remove ACL-related settings that cause errors
-  # upload:
-  #   acl: false
-  # public_read: false
+  # Disable ACLs for modern S3 buckets
+  upload:
+    acl: false
+    public_read: false
 
 # Remember not to checkin your GCS keyfile to a repository
 # google:

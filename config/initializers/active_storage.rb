@@ -14,3 +14,21 @@ Rails.application.config.after_initialize do
 
   puts "ActiveStorage URL options configured: #{ActiveStorage::Current.url_options.inspect}"
 end
+
+# Disable ACLs for modern S3 buckets
+Rails.application.config.after_initialize do
+  if Rails.env.production?
+    # Configure Active Storage to not use ACLs
+    Rails.application.config.active_storage.service_urls_expire_in = 1.hour
+
+    # Ensure no ACLs are set
+    ActiveStorage::Blob.service.class_eval do
+      def upload(key, io, **options)
+        # Remove any ACL-related options
+        options.delete(:acl)
+        options.delete(:public_read)
+        super(key, io, **options)
+      end
+    end
+  end
+end
