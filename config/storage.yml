@@ -6,7 +6,6 @@ local:
   service: Disk
   root: <%= Rails.root.join("storage") %>
   public: true
-  url: <%= Rails.application.routes.default_url_options[:host] %>:<%= Rails.application.routes.default_url_options[:port] %>
 
 amazon:
   service: S3
