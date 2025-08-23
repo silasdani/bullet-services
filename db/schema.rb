@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_18_222354) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_23_211204) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -100,7 +100,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_18_222354) do
   end
 
   create_table "windows", force: :cascade do |t|
-    t.string "image"
     t.string "location"
     t.bigint "window_schedule_repair_id", null: false
     t.datetime "created_at", null: false

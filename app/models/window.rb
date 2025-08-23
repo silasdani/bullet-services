@@ -23,15 +23,15 @@ class Window < ApplicationRecord
     "window-#{window_number}-image"
   end
 
-  # Generate public S3 URL for the image
+  # Generate public URL for the image
   def image_url
     return nil unless image.present?
 
-    # If image is already a full URL, return it
-    return image if image.start_with?('http')
-
-    # Generate S3 public URL
-    "https://bullet-services.s3.eu-north-1.amazonaws.com/#{image}"
+    # Return the ActiveStorage URL
+    Rails.application.routes.url_helpers.rails_blob_url(image, only_path: false)
+  rescue => e
+    Rails.logger.error "Error generating image URL: #{e.message}"
+    nil
   end
 
   # Check if image is attached (for compatibility)
