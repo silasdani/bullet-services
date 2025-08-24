@@ -9,7 +9,7 @@ class WindowSerializer < ActiveModel::Serializer
 
     begin
       if object.image.present?
-        object.image_url
+        object.image.url
       else
         nil
       end
