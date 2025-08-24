@@ -13,7 +13,8 @@ amazon:
   secret_access_key: <%= ENV.fetch("AWS_SECRET_ACCESS_KEY") %>
   region: eu-north-1
   bucket: bullet-services
-  public: true
+  upload:
+    acl: public-read
 
 # Remember not to checkin your GCS keyfile to a repository
 # google:
