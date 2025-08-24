@@ -13,8 +13,11 @@ amazon:
   secret_access_key: <%= ENV.fetch("AWS_SECRET_ACCESS_KEY") %>
   region: eu-north-1
   bucket: bullet-services
+  # Modern S3 buckets with public access blocked - use private objects
+  public: false
+  # Configure upload settings for private objects
   upload:
-    acl: public-read
+    acl: private
 
 # Remember not to checkin your GCS keyfile to a repository
 # google:
