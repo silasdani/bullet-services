@@ -79,13 +79,13 @@ module Wrs
     window = windows.order(:created_at)[window_number - 1]
     return nil unless window
 
-    window.tools.map(&:name).join('\n')
+    window.tools.map(&:name).join("\n")
   end
 
   def window_items_prices_list(window_number)
     window = windows.order(:created_at)[window_number - 1]
     return nil unless window
 
-    window.tools.map(&:price).join('\n')
+    window.tools.map(&:price).join("\n")
   end
 end
