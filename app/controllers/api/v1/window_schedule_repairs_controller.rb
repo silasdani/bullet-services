@@ -1,5 +1,5 @@
 class Api::V1::WindowScheduleRepairsController < Api::V1::BaseController
-  before_action :set_window_schedule_repair, only: [:show, :update, :destroy]
+  before_action :set_window_schedule_repair, only: [:show, :update, :destroy, :send_to_webflow]
 
   def index
     @window_schedule_repairs = policy_scope(WindowScheduleRepair).includes(:user, :windows, windows: [:tools, :image_attachment])
