@@ -72,8 +72,7 @@ module Wrs
     window = windows.order(:created_at)[window_number - 1]
     return nil unless window&.image&.present?
 
-    # Return the image URL for Webflow
-    window.image_url
+    window.image.url
   end
 
   def window_items_list(window_number)

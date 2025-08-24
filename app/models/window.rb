@@ -27,8 +27,7 @@ class Window < ApplicationRecord
   def image_url
     return nil unless image.present?
 
-    # Return the ActiveStorage URL
-    Rails.application.routes.url_helpers.rails_blob_url(image, only_path: false)
+    image.url
   rescue => e
     Rails.logger.error "Error generating image URL: #{e.message}"
     nil
