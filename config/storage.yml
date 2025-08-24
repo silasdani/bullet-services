@@ -13,12 +13,7 @@ amazon:
   secret_access_key: <%= ENV.fetch("AWS_SECRET_ACCESS_KEY") %>
   region: eu-north-1
   bucket: bullet-services
-  # Modern S3 buckets don't support ACLs - use bucket policies instead
   public: true
-  # Disable ACLs for modern S3 buckets
-  upload:
-    acl: false
-    public_read: false
 
 # Remember not to checkin your GCS keyfile to a repository
 # google:
