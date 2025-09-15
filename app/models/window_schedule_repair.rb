@@ -110,6 +110,15 @@ class WindowScheduleRepair < ApplicationRecord
     self.slug = "#{name.parameterize}-#{SecureRandom.hex(4)}" if slug.blank?
   end
 
+  # Ransack configuration for filtering
+  def self.ransackable_attributes(auth_object = nil)
+    %w[name slug flat_number reference_number address details status created_at updated_at total_vat_included_price total_vat_excluded_price grand_total]
+  end
+
+  def self.ransackable_associations(auth_object = nil)
+    %w[user windows tools]
+  end
+
   rails_admin do
     object_label_method do
       :name

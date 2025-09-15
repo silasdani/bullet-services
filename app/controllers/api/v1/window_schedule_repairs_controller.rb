@@ -2,8 +2,20 @@ class Api::V1::WindowScheduleRepairsController < Api::V1::BaseController
   before_action :set_window_schedule_repair, only: [:show, :update, :destroy, :send_to_webflow]
 
   def index
-    @window_schedule_repairs = policy_scope(WindowScheduleRepair).includes(:user, :windows, windows: [:tools, :image_attachment])
-    render json: @window_schedule_repairs
+    @q = policy_scope(WindowScheduleRepair).includes(:user, :windows, windows: [:tools, :image_attachment]).ransack(params[:q])
+    @window_schedule_repairs = @q.result.page(params[:page]).per(params[:per_page] || 20)
+
+    render json: {
+      data: @window_schedule_repairs,
+      meta: {
+        current_page: @window_schedule_repairs.current_page,
+        total_pages: @window_schedule_repairs.total_pages,
+        total_count: @window_schedule_repairs.total_count,
+        per_page: @window_schedule_repairs.limit_value,
+        has_next_page: @window_schedule_repairs.next_page.present?,
+        has_prev_page: @window_schedule_repairs.prev_page.present?
+      }
+    }
   end
 
   def show
