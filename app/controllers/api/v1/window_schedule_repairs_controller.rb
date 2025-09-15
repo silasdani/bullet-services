@@ -6,7 +6,7 @@ class Api::V1::WindowScheduleRepairsController < Api::V1::BaseController
     @window_schedule_repairs = @q.result.page(params[:page]).per(params[:per_page] || 20)
 
     render json: {
-      data: @window_schedule_repairs,
+      data: @window_schedule_repairs.map { |wrs| WindowScheduleRepairSerializer.new(wrs).as_json },
       meta: {
         current_page: @window_schedule_repairs.current_page,
         total_pages: @window_schedule_repairs.total_pages,
