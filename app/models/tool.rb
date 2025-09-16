@@ -2,7 +2,7 @@ class Tool < ApplicationRecord
   belongs_to :window
 
   validates :name, presence: true
-  validates :price, presence: true, numericality: { greater_than: 0 }
+  validates :price, presence: true
 
   rails_admin do
     object_label_method do
