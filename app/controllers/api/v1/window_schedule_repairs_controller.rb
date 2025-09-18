@@ -3,7 +3,7 @@ class Api::V1::WindowScheduleRepairsController < Api::V1::BaseController
 
   def index
     @q = policy_scope(WindowScheduleRepair).includes(:user, :windows, windows: [:tools, :image_attachment]).ransack(params[:q])
-    @window_schedule_repairs = @q.result.page(params[:page]).per(params[:per_page] || 20)
+    @window_schedule_repairs = @q.result.page(params[:page]).per(params[:per_page] || 100)
 
     render json: {
       data: @window_schedule_repairs.map { |wrs| WindowScheduleRepairSerializer.new(wrs).as_json },
