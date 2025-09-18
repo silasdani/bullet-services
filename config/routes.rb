@@ -12,6 +12,7 @@ Rails.application.routes.draw do
       resources :window_schedule_repairs do
         member do
           post :send_to_webflow
+          post :restore
         end
         resources :windows, only: [:index, :create]
       end

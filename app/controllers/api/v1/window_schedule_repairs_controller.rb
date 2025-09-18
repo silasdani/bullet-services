@@ -1,5 +1,5 @@
 class Api::V1::WindowScheduleRepairsController < Api::V1::BaseController
-  before_action :set_window_schedule_repair, only: [:show, :update, :destroy, :send_to_webflow]
+  before_action :set_window_schedule_repair, only: [:show, :update, :destroy, :send_to_webflow, :restore]
 
   def index
     @q = policy_scope(WindowScheduleRepair).includes(:user, :windows, windows: [:tools, :image_attachment]).ransack(params[:q])
@@ -58,8 +58,22 @@ class Api::V1::WindowScheduleRepairsController < Api::V1::BaseController
 
   def destroy
     authorize @window_schedule_repair
-    @window_schedule_repair.destroy
-    head :no_content
+    @window_schedule_repair.soft_delete!
+    render json: {
+      success: true,
+      message: "WRS deleted successfully",
+      deleted_at: @window_schedule_repair.deleted_at
+    }
+  end
+
+  def restore
+    authorize @window_schedule_repair
+    @window_schedule_repair.restore!
+    render json: {
+      success: true,
+      message: "WRS restored successfully",
+      data: WindowScheduleRepairSerializer.new(@window_schedule_repair).as_json
+    }
   end
 
   def send_to_webflow
@@ -74,7 +88,12 @@ class Api::V1::WindowScheduleRepairsController < Api::V1::BaseController
   private
 
   def set_window_schedule_repair
-    @window_schedule_repair = WindowScheduleRepair.includes(:user, :windows, windows: [:tools, :image_attachment]).find(params[:id])
+    # For restore action, we need to find deleted records too
+    if action_name == 'restore'
+      @window_schedule_repair = WindowScheduleRepair.with_deleted.includes(:user, :windows, windows: [:tools, :image_attachment]).find(params[:id])
+    else
+      @window_schedule_repair = WindowScheduleRepair.includes(:user, :windows, windows: [:tools, :image_attachment]).find(params[:id])
+    end
   end
 
   def window_schedule_repair_params

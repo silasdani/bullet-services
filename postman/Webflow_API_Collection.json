@@ -772,7 +772,7 @@
           }
         },
         {
-          "name": "Delete Quotation",
+          "name": "Delete Quotation (Soft Delete)",
           "request": {
             "method": "DELETE",
             "header": [],
@@ -780,6 +780,18 @@
               "raw": "{{base_url}}/api/v1/wrs/{{wrs_id}}",
               "host": ["{{base_url}}"],
               "path": ["api", "v1", "wrs", "{{wrs_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Restore Quotation",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/wrs/{{wrs_id}}/restore",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "wrs", "{{wrs_id}}", "restore"]
             }
           }
         },

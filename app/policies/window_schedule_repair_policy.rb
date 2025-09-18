@@ -19,6 +19,10 @@ class WindowScheduleRepairPolicy < ApplicationPolicy
     user.present? && (user.is_admin? || record.user == user)
   end
 
+  def restore?
+    user.present? && (user.is_admin? || record.user == user)
+  end
+
   def send_to_webflow?
     user.present? && (user.is_admin? || user.is_employee? || record.user == user)
   end

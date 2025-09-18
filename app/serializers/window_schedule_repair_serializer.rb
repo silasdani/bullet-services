@@ -1,7 +1,8 @@
 class WindowScheduleRepairSerializer < ActiveModel::Serializer
   attributes :id, :name, :slug, :address, :flat_number, :details,
              :total_vat_included_price, :total_vat_excluded_price,
-             :status, :status_color, :grand_total, :created_at, :updated_at
+             :status, :status_color, :grand_total, :created_at, :updated_at,
+             :deleted_at, :deleted, :active
 
   belongs_to :user
   has_many :windows, serializer: WindowSerializer
@@ -27,5 +28,14 @@ class WindowScheduleRepairSerializer < ActiveModel::Serializer
       Rails.logger.error "Error loading user in serializer: #{e.message}"
       nil
     end
+  end
+
+  # Soft delete status methods
+  def deleted
+    object.deleted?
+  end
+
+  def active
+    object.active?
   end
 end

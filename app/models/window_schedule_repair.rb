@@ -8,6 +8,28 @@ class WindowScheduleRepair < ApplicationRecord
 
   accepts_nested_attributes_for :windows, allow_destroy: true, reject_if: :all_blank
 
+  # Soft delete functionality
+  default_scope { where(deleted_at: nil) }
+  scope :active, -> { where(deleted_at: nil) }
+  scope :deleted, -> { unscoped.where.not(deleted_at: nil) }
+  scope :with_deleted, -> { unscoped }
+
+  def soft_delete!
+    update!(deleted_at: Time.current)
+  end
+
+  def restore!
+    update!(deleted_at: nil)
+  end
+
+  def deleted?
+    deleted_at.present?
+  end
+
+  def active?
+    deleted_at.nil?
+  end
+
   # Add safety for nested attributes
   def windows_attributes=(attributes)
     super(attributes.reject { |_, v| v.blank? })
@@ -112,7 +134,7 @@ class WindowScheduleRepair < ApplicationRecord
 
   # Ransack configuration for filtering
   def self.ransackable_attributes(auth_object = nil)
-    %w[name slug flat_number reference_number address details status created_at updated_at total_vat_included_price total_vat_excluded_price grand_total]
+    %w[name slug flat_number reference_number address details status created_at updated_at total_vat_included_price total_vat_excluded_price grand_total deleted_at]
   end
 
   def self.ransackable_associations(auth_object = nil)
