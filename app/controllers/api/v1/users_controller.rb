@@ -37,7 +37,7 @@ class Api::V1::UsersController < Api::V1::BaseController
 
   def destroy
     authorize @user
-    @user.destroy
+    @user.soft_delete!
     head :no_content
   end
 

@@ -12,8 +12,14 @@ class User < ApplicationRecord
 
   enum :role, client: 0, employee: 1, admin: 2
 
-  has_many :window_schedule_repairs, dependent: :destroy
+  has_many :window_schedule_repairs, dependent: :restrict_with_error
   has_many :windows, through: :window_schedule_repairs
+
+  # Soft delete functionality
+  default_scope { where(deleted_at: nil) }
+  scope :active, -> { where(deleted_at: nil) }
+  scope :deleted, -> { unscoped.where.not(deleted_at: nil) }
+  scope :with_deleted, -> { unscoped }
 
   after_initialize :set_default_role, if: :new_record?
   after_create :set_confirmed
@@ -39,6 +45,22 @@ class User < ApplicationRecord
 
   def token_validation_response
     UserSerializer.new(self).as_json
+  end
+
+  def soft_delete!
+    update!(deleted_at: Time.current)
+  end
+
+  def restore!
+    update!(deleted_at: nil)
+  end
+
+  def deleted?
+    deleted_at.present?
+  end
+
+  def active?
+    deleted_at.nil?
   end
 
   def set_confirmed
