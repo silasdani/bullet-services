@@ -19,22 +19,6 @@ class WindowPolicy < ApplicationPolicy
     user.present? && (user.is_admin? || record.window_schedule_repair.user == user)
   end
 
-  # RailsAdmin specific methods
-  def dashboard?
-    user.is_admin?
-  end
-
-  def export?
-    user.is_admin?
-  end
-
-  def history?
-    user.is_admin?
-  end
-
-  def show_in_app?
-    user.is_admin?
-  end
 
   class Scope < Scope
     def resolve

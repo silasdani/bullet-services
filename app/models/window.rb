@@ -60,11 +60,6 @@ class Window < ApplicationRecord
     end
   end
 
-  rails_admin do
-    object_label_method do
-      :location
-    end
-  end
 
   private
 

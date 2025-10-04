@@ -141,9 +141,4 @@ class WindowScheduleRepair < ApplicationRecord
     %w[user windows tools]
   end
 
-  rails_admin do
-    object_label_method do
-      :name
-    end
-  end
 end

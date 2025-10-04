@@ -42,7 +42,6 @@ gem 'httparty'
 gem 'dotenv-rails'
 gem 'pundit'
 gem 'active_model_serializers', '~> 0.10.0'
-gem 'rails_admin'
 gem 'ransack'
 gem 'kaminari'
 
