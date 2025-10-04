@@ -1,33 +1,6 @@
 # frozen_string_literal: true
 
 namespace :webflow do
-  desc 'Test Webflow API connection'
-  task test_connection: :environment do
-    puts "Testing Webflow API connection..."
-
-    begin
-      webflow = WebflowService.new
-      sites = webflow.list_sites
-
-      puts "✅ Connection successful!"
-      puts "Found #{sites['sites']&.length || 0} sites"
-
-      if sites['sites']&.any?
-        puts "\nSites:"
-        sites['sites'].each do |site|
-          puts "  - #{site['name']} (ID: #{site['_id']})"
-        end
-      end
-
-    rescue WebflowApiError => e
-      puts "❌ Webflow API Error: #{e.message}"
-      puts "Status Code: #{e.status_code}"
-      puts "Response: #{e.response_body}"
-    rescue => e
-      puts "❌ Unexpected error: #{e.message}"
-    end
-  end
-
   desc 'List collections for a site'
   task :list_collections, [:site_id] => :environment do |task, args|
     site_id = args[:site_id]
@@ -138,7 +111,7 @@ namespace :webflow do
 
     token = ENV.fetch("WEBFLOW_TOKEN")
     site_id = ENV.fetch("WEBFLOW_SITE_ID")
-    collection_id = ENV.fetch("WEBFLOW_COLLECTION_ID")
+    collection_id = ENV.fetch("WEBFLOW_WRS_COLLECTION_ID")
 
     if token
       puts "✅ WEBFLOW_TOKEN is configured"
@@ -153,16 +126,92 @@ namespace :webflow do
     end
 
     if collection_id
-      puts "✅ WEBFLOW_COLLECTION_ID is configured"
+      puts "✅ WEBFLOW_WRS_COLLECTION_ID is configured"
     else
-      puts "❌ WEBFLOW_COLLECTION_ID is not configured"
+      puts "❌ WEBFLOW_WRS_COLLECTION_ID is not configured"
+    end
+  end
+
+  desc "Sync Webflow WRS to Rails"
+  task :sync_all_wrs_to_rails do
+    puts "Syncing all WRS to Rails..."
+
+    begin
+      webflow = WebflowService.new
+      wrs = webflow.list_wrs
+
+      if wrs['wrs']&.any?
+        puts "Syncing #{wrs['wrs'].length} WRS to Rails..."
+
+        wrs['wrs'].each do |wrs|
+          puts "Syncing WRS #{wrs['id']} to Rails..."
+
+          wrs = Wrs.find_or_initialize_by(reference_number: wrs['reference_number'])
+
+          wrs.update(
+            name: wrs['name'],
+            address: wrs['address'],
+            flat_number: wrs['flat_number'],
+            details: wrs['details'],
+            total_vat_included_price: wrs['total_incl_vat'],
+            total_vat_excluded_price: wrs['total_exc_vat'],
+            grand_total: wrs['grand_total'],
+            status: wrs['accepted_decline'],
+            status_color: wrs['accepted_declined']
+          )
+
+          window1 = wrs.windows.find_or_initialize_by(location: wrs['window_location'])
+          window2 = wrs.windows.find_or_initialize_by(location: wrs['window_2_location'])
+          window3 = wrs.windows.find_or_initialize_by(location: wrs['window_3_location'])
+          window4 = wrs.windows.find_or_initialize_by(location: wrs['window_4_location'])
+          window5 = wrs.windows.find_or_initialize_by(location: wrs['window_5_location'])
+
+          window1.update(
+            location: wrs['window_location'],
+            tools_list: wrs['window_1_items_2'],
+            tools_prices_list: wrs['window_1_items_prices_3']
+          )
+
+
+          window2.update(
+            location: wrs['window_2_location'],
+            tools_list: wrs['window_2_items_2'],
+            tools_prices_list: wrs['window_2_items_prices_3']
+          )
+
+          window3.update(
+            location: wrs['window_3_location'],
+            tools_list: wrs['window_3_items'],
+            tools_prices_list: wrs['window_3_items_prices']
+          )
+
+          window4.update(
+            location: wrs['window_4_location'],
+            tools_list: wrs['window_4_items'],
+            tools_prices_list: wrs['window_4_items_prices']
+          )
+
+          window5.update(
+            location: wrs['window_5_location'],
+            tools_list: wrs['window_5_items'],
+            tools_prices_list: wrs['window_5_items_prices']
+          )
+
+          wrs.save!
+
+          puts "WRS #{wrs['id']} synced to Rails successfully!"
+        end
+      end
+
+      puts "All WRS synced to Rails successfully!"
     end
 
-    puts "\nTo configure credentials, run:"
-    puts "rails credentials:edit"
-    puts "\nAdd the following:"
-    puts "WEBFLOW_TOKEN: 'your_webflow_api_token'"
-    puts "WEBFLOW_SITE_ID: 'your_site_id'"
-    puts "WEBFLOW_COLLECTION_ID: 'your_collection_id'"
+    rescue WebflowApiError => e
+      puts "❌ Webflow API Error: #{e.message}"
+      puts "Status Code: #{e.status_code}"
+      puts "Response: #{e.response_body}"
+    rescue => e
+      puts "❌ Unexpected error: #{e.message}"
+    end
   end
 end

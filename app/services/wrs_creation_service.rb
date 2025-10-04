@@ -231,4 +231,8 @@ class WrsCreationService
   def sync_to_webflow
     WebflowUploadJob.perform_later(@wrs.id)
   end
+
+  def sync_from_webflow
+    WebflowDownloadJob.perform_later(@wrs.id)
+  end
 end
