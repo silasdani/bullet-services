@@ -270,8 +270,16 @@ Webflow API GET /sites/618ffc83f3028ad35a166db8/collections/619692f4b6773922b327
     begin
       webflow = WebflowService.new
       total_synced = 0
+      total_skipped = 0
       offset = 0
       limit = 100
+      batch_size = 50 # Process in smaller batches for better memory management
+
+      # Get admin user once to avoid repeated queries
+      admin_user = User.find_by(email: 'admin@bullet.co.uk')
+      puts "Admin user: #{admin_user ? 'Found' : 'NOT FOUND'}"
+
+      puts "Starting sync with batch size: #{batch_size}"
 
       loop do
         puts "Fetching WRS items (offset: #{offset}, limit: #{limit})..."
@@ -280,84 +288,60 @@ Webflow API GET /sites/618ffc83f3028ad35a166db8/collections/619692f4b6773922b327
         items = response['items']
         break if items.nil? || items.empty?
 
-        puts "Syncing #{items.length} WRS items to Rails..."
+        puts "Processing #{items.length} WRS items..."
 
-        items.each do |wrs_data|
-          puts "Syncing WRS #{wrs_data['id']} to Rails..."
+        # Process items in batches for better performance
+        items.each_slice(batch_size) do |batch|
+          ActiveRecord::Base.transaction do
+            batch.each do |wrs_data|
+              # Skip if required fields are missing
+              if wrs_data['fieldData']['project-summary'].blank? || wrs_data['fieldData']['name'].blank?
+                total_skipped += 1
+                next
+              end
 
-          # Skip if required fields are missing
-          if wrs_data['fieldData']['project-summary'].blank? || wrs_data['fieldData']['name'].blank?
-            puts "Skipping WRS #{wrs_data['id']} - missing required fields (address or name)"
-            next
+              # Find or initialize WRS by webflow_item_id
+              wrs = WindowScheduleRepair.find_or_initialize_by(webflow_item_id: wrs_data['id'])
+
+              # Set user for new records
+              wrs.user = admin_user if wrs.new_record? && admin_user
+
+              # Update WRS basic information
+              wrs.assign_attributes(
+                name: wrs_data['fieldData']['name'] || "WRS #{wrs_data['id']}",
+                address: wrs_data['fieldData']['project-summary'],
+                flat_number: wrs_data['fieldData']['flat-number'],
+                details: wrs_data['fieldData']['project-summary'],
+                total_vat_included_price: wrs_data['fieldData']['total-incl-vat'],
+                total_vat_excluded_price: wrs_data['fieldData']['total-exc-vat'],
+                grand_total: wrs_data['fieldData']['grand-total'],
+                status: map_webflow_status(wrs_data['fieldData']['accepted-decline']),
+                status_color: wrs_data['fieldData']['accepted-declined'],
+                slug: wrs_data['fieldData']['slug'] || "wrs-#{wrs_data['id']}"
+              )
+
+              # Save the WRS first
+              wrs.save!
+
+              # Bulk delete existing tools and windows (in correct order)
+              # First delete all tools for this WRS
+              Tool.joins(:window).where(windows: { window_schedule_repair_id: wrs.id }).delete_all
+              # Then delete all windows
+              wrs.windows.delete_all
+
+              # Prepare window data
+              window_data = prepare_window_data(wrs_data['fieldData'])
+
+              # Bulk create windows and tools
+              create_windows_and_tools_bulk(wrs, window_data)
+
+              total_synced += 1
+            end
           end
 
-          # Find or initialize WRS by webflow_item_id
-          wrs = WindowScheduleRepair.find_or_initialize_by(webflow_item_id: wrs_data['id'])
-
-          wrs.update(user: User.find_by(email: 'admin@bullet.co.uk')) if wrs.new_record?
-
-          # Update WRS basic information
-          wrs.assign_attributes(
-            name: wrs_data['fieldData']['name'] || "WRS #{wrs_data['id']}",
-            address: wrs_data['fieldData']['project-summary'],
-            flat_number: wrs_data['fieldData']['flat-number'],
-            details: wrs_data['fieldData']['project-summary'],
-            total_vat_included_price: wrs_data['fieldData']['total-incl-vat'],
-            total_vat_excluded_price: wrs_data['fieldData']['total-exc-vat'],
-            grand_total: wrs_data['fieldData']['grand-total'],
-            status: map_webflow_status(wrs_data['fieldData']['accepted-decline']),
-            status_color: wrs_data['fieldData']['accepted-declined'],
-            slug: wrs_data['fieldData']['slug'] || "wrs-#{wrs_data['id']}"
-          )
-
-          # Save the WRS first
-          wrs.save!
-
-          # Clear existing windows and recreate them from Webflow data
-          wrs.windows.destroy_all
-
-          # Create windows based on available data
-          window_data = [
-            {
-              location: wrs_data['fieldData']['window-location'],
-              items: wrs_data['fieldData']['window-1-items-2'],
-              prices: wrs_data['fieldData']['window-1-items-prices-3']
-            },
-            {
-              location: wrs_data['fieldData']['window-2-location'],
-              items: wrs_data['fieldData']['window-2-items-2'],
-              prices: wrs_data['fieldData']['window-2-items-prices-3']
-            },
-            {
-              location: wrs_data['fieldData']['window-3-location'],
-              items: wrs_data['fieldData']['window-3-items'],
-              prices: wrs_data['fieldData']['window-3-items-prices']
-            },
-            {
-              location: wrs_data['fieldData']['window-4-location'],
-              items: wrs_data['fieldData']['window-4-items'],
-              prices: wrs_data['fieldData']['window-4-items-prices']
-            },
-            {
-              location: wrs_data['fieldData']['window-5-location'],
-              items: wrs_data['fieldData']['window-5-items'],
-              prices: wrs_data['fieldData']['window-5-items-prices']
-            }
-          ]
-
-          window_data.each do |window_info|
-            next if window_info[:location].blank?
-
-            window = wrs.windows.create!(
-              location: window_info[:location]
-            )
-
-            # Parse and create tools for this window
-            create_tools_for_window(window, window_info[:items], window_info[:prices])
-          end
-
-          puts "WRS #{wrs_data['id']} synced to Rails successfully!"
-          total_synced += 1
+          # Progress indicator
+          print "."
+          $stdout.flush
         end
 
         # Check if we have more items to fetch
@@ -365,12 +349,14 @@ Webflow API GET /sites/618ffc83f3028ad35a166db8/collections/619692f4b6773922b327
         offset += limit
 
         if offset >= total_items
-          puts "Reached end of items. Total items: #{total_items}"
+          puts "\nReached end of items. Total items: #{total_items}"
           break
         end
       end
 
-      puts "All #{total_synced} WRS synced to Rails successfully!"
+      puts "\nSync completed!"
+      puts "Total synced: #{total_synced}"
+      puts "Total skipped: #{total_skipped}"
     rescue WebflowApiError => e
       puts "❌ Webflow API Error: #{e.message}"
       puts "Status Code: #{e.status_code}"
@@ -391,6 +377,92 @@ Webflow API GET /sites/618ffc83f3028ad35a166db8/collections/619692f4b6773922b327
     else
       'pending'
     end
+  end
+
+  def prepare_window_data(field_data)
+    [
+      {
+        location: field_data['window-location'],
+        items: field_data['window-1-items-2'],
+        prices: field_data['window-1-items-prices-3']
+      },
+      {
+        location: field_data['window-2-location'],
+        items: field_data['window-2-items-2'],
+        prices: field_data['window-2-items-prices-3']
+      },
+      {
+        location: field_data['window-3-location'],
+        items: field_data['window-3-items'],
+        prices: field_data['window-3-items-prices']
+      },
+      {
+        location: field_data['window-4-location'],
+        items: field_data['window-4-items'],
+        prices: field_data['window-4-items-prices']
+      },
+      {
+        location: field_data['window-5-location'],
+        items: field_data['window-5-items'],
+        prices: field_data['window-5-items-prices']
+      }
+    ].reject { |w| w[:location].blank? }
+  end
+
+  def create_windows_and_tools_bulk(wrs, window_data)
+    return if window_data.empty?
+
+    # Bulk create windows
+    windows_to_create = window_data.map do |window_info|
+      {
+        window_schedule_repair_id: wrs.id,
+        location: window_info[:location],
+        created_at: Time.current,
+        updated_at: Time.current
+      }
+    end
+
+    # Use insert_all for bulk window creation
+    Window.insert_all(windows_to_create, returning: [:id, :location])
+
+    # Get the created windows
+    created_windows = Window.where(window_schedule_repair_id: wrs.id)
+                           .where(location: window_data.map { |w| w[:location] })
+                           .index_by(&:location)
+
+    # Bulk create tools
+    tools_to_create = []
+    window_data.each do |window_info|
+      window = created_windows[window_info[:location]]
+      next unless window
+
+      items = parse_items(window_info[:items])
+      prices = parse_prices(window_info[:prices])
+
+      items.each_with_index do |item_name, index|
+        price = prices[index] || 0.0
+        tools_to_create << {
+          window_id: window.id,
+          name: item_name,
+          price: price,
+          created_at: Time.current,
+          updated_at: Time.current
+        }
+      end
+    end
+
+    # Bulk insert tools if any
+    Tool.insert_all(tools_to_create) if tools_to_create.any?
+  end
+
+  def parse_items(items_string)
+    return [] if items_string.blank?
+    items_string.to_s.split("\n").map(&:strip).reject(&:blank?)
+  end
+
+  def parse_prices(prices_string)
+    return [] if prices_string.blank?
+    prices_string.to_s.split("\n").map(&:strip).reject(&:blank?).map(&:to_f)
   end
 
   def create_tools_for_window(window, items_string, prices_string)
