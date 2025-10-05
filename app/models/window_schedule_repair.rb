@@ -42,7 +42,6 @@ class WindowScheduleRepair < ApplicationRecord
   validates :address, presence: true
 
   before_save :calculate_totals
-  before_validation :generate_slug, on: :create
 
   scope :for_user, ->(user) {
     case user.role
@@ -127,10 +126,6 @@ class WindowScheduleRepair < ApplicationRecord
   end
 
   private
-
-  def generate_slug
-    self.slug = "#{name.parameterize}-#{SecureRandom.hex(4)}" if slug.blank?
-  end
 
   # Ransack configuration for filtering
   def self.ransackable_attributes(auth_object = nil)
