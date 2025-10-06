@@ -77,7 +77,7 @@ class Api::V1::WindowScheduleRepairsController < Api::V1::BaseController
   end
 
   def send_to_webflow
-    authorize @window_schedule_repair
+    authorize @window_schedule_repair, :send_to_webflow?
 
     service = WebflowService.new
     service.send_window_schedule_repair(@window_schedule_repair)
@@ -86,7 +86,7 @@ class Api::V1::WindowScheduleRepairsController < Api::V1::BaseController
   end
 
   def publish_to_webflow
-    authorize @window_schedule_repair
+    authorize @window_schedule_repair, :publish_to_webflow?
 
     begin
       service = WebflowService.new
@@ -124,7 +124,7 @@ class Api::V1::WindowScheduleRepairsController < Api::V1::BaseController
   end
 
   def unpublish_from_webflow
-    authorize @window_schedule_repair
+    authorize @window_schedule_repair, :unpublish_from_webflow?
 
     begin
       unless @window_schedule_repair.webflow_item_id.present?

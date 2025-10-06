@@ -51,6 +51,9 @@ class WindowScheduleRepair < ApplicationRecord
 
   validates :name, presence: true
   validates :address, presence: true
+  validates :slug, presence: true, uniqueness: true
+
+  before_validation :generate_slug, on: :create
 
   before_save :calculate_totals
 
@@ -178,6 +181,14 @@ class WindowScheduleRepair < ApplicationRecord
 
   private
 
+  def generate_slug
+    return if slug.present?
+    return if address.blank?
+    return if flat_number.blank?
+
+    self.slug = "#{address.parameterize}-#{flat_number.parameterize}-#{SecureRandom.hex(4)}"
+ end
+
   # Ransack configuration for filtering
   def self.ransackable_attributes(auth_object = nil)
     %w[name slug flat_number reference_number address details status created_at updated_at total_vat_included_price total_vat_excluded_price grand_total deleted_at last_published is_draft is_archived]
@@ -187,4 +198,7 @@ class WindowScheduleRepair < ApplicationRecord
     %w[user windows tools]
   end
 
+  def generate_slug
+    self.slug = SecureRandom.uuid if slug.blank?
+  end
 end
