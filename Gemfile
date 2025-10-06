@@ -45,6 +45,9 @@ gem 'active_model_serializers', '~> 0.10.0'
 gem 'ransack'
 gem 'kaminari'
 
+# Admin panel
+gem 'rails_admin', '~> 3.1'
+
 group :development, :test do
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
   gem "brakeman", require: false

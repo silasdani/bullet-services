@@ -10,7 +10,7 @@ class User < ApplicationRecord
 
   validates :role, presence: true
 
-  enum :role, client: 0, employee: 1, admin: 2
+  enum :role, client: 0, employee: 1, admin: 2, super_admin: 3
 
   has_many :window_schedule_repairs, dependent: :restrict_with_error
   has_many :windows, through: :window_schedule_repairs
@@ -27,7 +27,7 @@ class User < ApplicationRecord
 
   # Role helper methods
   def is_admin?
-    role == 'admin' || role == 2
+    role == 'admin' || role == 2 || role == 'super_admin' || role == 3
   end
 
   def is_employee?
@@ -35,7 +35,7 @@ class User < ApplicationRecord
   end
 
   def is_super_admin?
-    role == 'admin' || role == 2 # You can extend this later if you add super_admin role
+    role == 'super_admin' || role == 3
   end
 
   def token_validation_response
