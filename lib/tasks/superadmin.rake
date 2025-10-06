@@ -15,6 +15,7 @@ namespace :user do
     user.role = :super_admin
     user.confirmed_at ||= Time.current
     user.deleted_at = nil
+    user.webflow_access = true
     user.save!
     puts "Superadmin ensured: #{user.email} (id=#{user.id})"
   end
