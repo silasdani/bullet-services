@@ -179,15 +179,16 @@ class WindowScheduleRepair < ApplicationRecord
     end
   end
 
-  private
 
   def generate_slug
     return if slug.present?
     return if address.blank?
     return if flat_number.blank?
 
-    self.slug = "#{address.parameterize}-#{flat_number.parameterize}-#{SecureRandom.hex(4)}"
- end
+    self.slug = "#{address.parameterize}-#{flat_number.parameterize}-#{SecureRandom.hex(2)}"
+  end
+
+  private
 
   # Ransack configuration for filtering
   def self.ransackable_attributes(auth_object = nil)
@@ -196,9 +197,5 @@ class WindowScheduleRepair < ApplicationRecord
 
   def self.ransackable_associations(auth_object = nil)
     %w[user windows tools]
-  end
-
-  def generate_slug
-    self.slug = SecureRandom.uuid if slug.blank?
   end
 end
