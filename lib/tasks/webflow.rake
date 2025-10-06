@@ -295,6 +295,7 @@ Webflow API GET /sites/618ffc83f3028ad35a166db8/collections/619692f4b6773922b327
 
         # Process items in batches for better performance
         items.each_slice(batch_size) do |batch|
+          mirror_calls = []
           ActiveRecord::Base.transaction do
             batch.each do |wrs_data|
               # Skip if required fields are missing
@@ -324,7 +325,8 @@ Webflow API GET /sites/618ffc83f3028ad35a166db8/collections/619692f4b6773922b327
                 slug: wrs_data['fieldData']['slug'] || "wrs-#{wrs_data['id']}",
                 last_published: wrs_data['lastPublished'],
                 is_draft: wrs_data['isDraft'],
-                is_archived: wrs_data['isArchived']
+                is_archived: wrs_data['isArchived'],
+                webflow_main_image_url: (wrs_data['fieldData']['main-project-image'] && wrs_data['fieldData']['main-project-image']['url'])
               )
 
               # Apply Webflow timestamps to the record if present
@@ -346,7 +348,35 @@ Webflow API GET /sites/618ffc83f3028ad35a166db8/collections/619692f4b6773922b327
               # Bulk create windows and tools
               create_windows_and_tools_bulk(wrs, window_data)
 
+              # Queue mirror to run after transaction commits to avoid FK race
+              if wrs.webflow_main_image_url.present?
+                mirror_calls << [:wrs, wrs.id, wrs.webflow_main_image_url]
+              end
+
               total_synced += 1
+            end
+          end
+
+          # Merge window mirrors collected during bulk creation
+          buffer = Thread.current[:__webflow_mirror_buffer]
+          if buffer.is_a?(Array) && buffer.any?
+            mirror_calls.concat(buffer)
+            Thread.current[:__webflow_mirror_buffer] = []
+          end
+
+          # Run mirrors outside of transaction and rescue FK errors to continue batch
+          mirror_calls.each do |type, id, url|
+            begin
+              if type == :wrs
+                record = WindowScheduleRepair.find_by(id: id)
+                WebflowImageMirrorService.mirror!(record: record, source_url: url, attachment_name: :images) if record
+              elsif type == :window
+                record = Window.find_by(id: id)
+                WebflowImageMirrorService.mirror!(record: record, source_url: url, attachment_name: :image) if record
+              end
+            rescue ActiveRecord::InvalidForeignKey, PG::ForeignKeyViolation => e
+              Rails.logger.error "Mirror skipped for #{type}##{id}: #{e.class} - #{e.message}"
+              next
             end
           end
 
@@ -407,6 +437,7 @@ Webflow API GET /sites/618ffc83f3028ad35a166db8/collections/619692f4b6773922b327
         location: field_data['window-location'],
         items: field_data['window-1-items-2'],
         prices: field_data['window-1-items-prices-3'],
+        image_url: (field_data['main-project-image'] && field_data['main-project-image']['url']),
         created_on: wrs_data['createdOn'],
         last_updated: wrs_data['lastUpdated']
       },
@@ -414,6 +445,7 @@ Webflow API GET /sites/618ffc83f3028ad35a166db8/collections/619692f4b6773922b327
         location: field_data['window-2-location'],
         items: field_data['window-2-items-2'],
         prices: field_data['window-2-items-prices-3'],
+        image_url: field_data['window-2-image-url'],
         created_on: wrs_data['createdOn'],
         last_updated: wrs_data['lastUpdated']
       },
@@ -421,6 +453,7 @@ Webflow API GET /sites/618ffc83f3028ad35a166db8/collections/619692f4b6773922b327
         location: field_data['window-3-location'],
         items: field_data['window-3-items'],
         prices: field_data['window-3-items-prices'],
+        image_url: field_data['window-3-image-url'],
         created_on: wrs_data['createdOn'],
         last_updated: wrs_data['lastUpdated']
       },
@@ -428,6 +461,7 @@ Webflow API GET /sites/618ffc83f3028ad35a166db8/collections/619692f4b6773922b327
         location: field_data['window-4-location'],
         items: field_data['window-4-items'],
         prices: field_data['window-4-items-prices'],
+        image_url: field_data['window-4-image-url'],
         created_on: wrs_data['createdOn'],
         last_updated: wrs_data['lastUpdated']
       },
@@ -435,6 +469,7 @@ Webflow API GET /sites/618ffc83f3028ad35a166db8/collections/619692f4b6773922b327
         location: field_data['window-5-location'],
         items: field_data['window-5-items'],
         prices: field_data['window-5-items-prices'],
+        image_url: field_data['window-5-image-url'],
         created_on: wrs_data['createdOn'],
         last_updated: wrs_data['lastUpdated']
       }
@@ -449,6 +484,7 @@ Webflow API GET /sites/618ffc83f3028ad35a166db8/collections/619692f4b6773922b327
       {
         window_schedule_repair_id: wrs.id,
         location: window_info[:location],
+        webflow_image_url: window_info[:image_url],
         created_at: (Time.parse(window_info[:created_on]) rescue Time.current),
         updated_at: (Time.parse(window_info[:last_updated]) rescue Time.current)
       }
@@ -480,6 +516,13 @@ Webflow API GET /sites/618ffc83f3028ad35a166db8/collections/619692f4b6773922b327
           created_at: (Time.parse(window_info[:created_on]) rescue Time.current),
           updated_at: (Time.parse(window_info[:last_updated]) rescue Time.current)
         }
+      end
+
+      # Defer window mirror to be executed after outer transaction
+      if window.webflow_image_url.present?
+        # collect to a thread-local buffer the caller handles
+        Thread.current[:__webflow_mirror_buffer] ||= []
+        Thread.current[:__webflow_mirror_buffer] << [:window, window.id, window.webflow_image_url]
       end
     end
 

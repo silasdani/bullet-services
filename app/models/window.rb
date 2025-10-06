@@ -60,6 +60,15 @@ class Window < ApplicationRecord
     end
   end
 
+  # Prefer S3 URL if mirrored, otherwise fall back to Webflow URL
+  def effective_image_url
+    if image.attached?
+      image_url
+    else
+      self.webflow_image_url
+    end
+  end
+
 
   private
 

@@ -6,6 +6,18 @@ class WindowScheduleRepair < ApplicationRecord
   has_many :tools, through: :windows
   has_many_attached :images
 
+  # Return first S3 image URL if mirrored, otherwise fallback to Webflow URL stored
+  def main_image_url
+    if images.attached? && images.first.present?
+      images.first.url
+    else
+      webflow_main_image_url
+    end
+  rescue => e
+    Rails.logger.error "Error generating main image URL: #{e.message}"
+    webflow_main_image_url
+  end
+
   accepts_nested_attributes_for :windows, allow_destroy: true, reject_if: :all_blank
 
   # Soft delete functionality
