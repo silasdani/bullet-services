@@ -1,7 +1,21 @@
 Rails.application.routes.draw do
   root 'application#index'
 
-  mount_devise_token_auth_for "User", at: "auth", controllers: {
+  # Admin panel (authentication handled in RailsAdmin initializer)
+  mount RailsAdmin::Engine => '/admin', as: 'rails_admin'
+
+  # HTML Devise routes for admin/superadmin browser login (keep default helpers like new_user_session_path)
+  devise_for :users, controllers: {
+    sessions: "users/sessions"
+  }
+
+  # Redirect accidental GETs on token auth sign-in to Devise HTML sign-in
+  devise_scope :user do
+    get '/auth/sign_in', to: redirect('/users/sign_in')
+  end
+
+  # Token auth routes (rename route helpers to avoid collisions with Devise)
+  mount_devise_token_auth_for "User", at: "auth", as: "api_auth", controllers: {
     registrations: "users/registrations"
   }
 
