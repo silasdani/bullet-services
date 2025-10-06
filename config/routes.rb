@@ -11,6 +11,8 @@ Rails.application.routes.draw do
         member do
           post :send_to_webflow
           post :restore
+          post :publish_to_webflow
+          post :unpublish_from_webflow
         end
         resources :windows, only: [:index, :create]
       end

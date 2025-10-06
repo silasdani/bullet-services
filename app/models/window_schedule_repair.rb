@@ -38,7 +38,6 @@ class WindowScheduleRepair < ApplicationRecord
   enum :status, pending: 0, approved: 1, rejected: 2, completed: 3
 
   validates :name, presence: true
-  validates :slug, presence: true, uniqueness: true
   validates :address, presence: true
 
   before_save :calculate_totals
@@ -58,6 +57,41 @@ class WindowScheduleRepair < ApplicationRecord
   scope :published, -> { where(is_draft: false, is_archived: false) }
   scope :draft, -> { where(is_draft: true) }
   scope :archived, -> { where(is_archived: true) }
+
+  # Webflow status methods
+  def published?
+    !is_draft && !is_archived && webflow_item_id.present?
+  end
+
+  def draft?
+    is_draft || webflow_item_id.blank?
+  end
+
+  def archived?
+    is_archived
+  end
+
+  def mark_as_published!
+    update!(
+      is_draft: false,
+      is_archived: false,
+      last_published: Time.current
+    )
+  end
+
+  def mark_as_draft!
+    update!(
+      is_draft: true,
+      is_archived: false
+    )
+  end
+
+  def mark_as_archived!
+    update!(
+      is_archived: true,
+      is_draft: false
+    )
+  end
 
   def calculate_totals
     # Calculate subtotal more safely with additional error handling

@@ -55,7 +55,8 @@ class WrsCreationService
         name: @params[:name],
         address: @params[:address],
         flat_number: @params[:flat_number],
-        details: @params[:details]
+        details: @params[:details],
+        is_draft: true,
       )
 
       # Update windows and tools

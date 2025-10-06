@@ -2,7 +2,8 @@ class WindowScheduleRepairSerializer < ActiveModel::Serializer
   attributes :id, :name, :slug, :address, :flat_number, :details,
              :total_vat_included_price, :total_vat_excluded_price,
              :status, :status_color, :grand_total, :created_at, :updated_at,
-             :deleted_at, :deleted, :active, :last_published, :is_draft, :is_archived
+             :deleted_at, :deleted, :active, :last_published, :is_draft, :is_archived,
+             :published, :draft, :archived
 
   belongs_to :user
   has_many :windows, serializer: WindowSerializer
@@ -37,5 +38,18 @@ class WindowScheduleRepairSerializer < ActiveModel::Serializer
 
   def active
     object.active?
+  end
+
+  # Webflow status methods
+  def published
+    object.published?
+  end
+
+  def draft
+    object.draft?
+  end
+
+  def archived
+    object.archived?
   end
 end

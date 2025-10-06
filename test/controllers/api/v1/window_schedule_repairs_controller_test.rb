@@ -51,4 +51,43 @@ class Api::V1::WindowScheduleRepairsControllerTest < ActionDispatch::Integration
     end
     assert_response :no_content
   end
+
+  test "should publish to webflow" do
+    # Mock WebflowService to avoid actual API calls
+    webflow_service = mock()
+    webflow_service.stubs(:publish_items).returns(true)
+    WebflowService.stubs(:new).returns(webflow_service)
+
+    @window_schedule_repair.update!(webflow_item_id: "test_item_id")
+
+    post publish_to_webflow_api_v1_window_schedule_repair_url(@window_schedule_repair),
+         headers: { 'Authorization': "Bearer #{@user.create_new_auth_token}" }
+
+    assert_response :success
+    @window_schedule_repair.reload
+    assert_equal false, @window_schedule_repair.is_draft
+    assert_equal false, @window_schedule_repair.is_archived
+    assert_not_nil @window_schedule_repair.last_published
+  end
+
+  test "should unpublish from webflow" do
+    # Mock WebflowService to avoid actual API calls
+    webflow_service = mock()
+    webflow_service.stubs(:unpublish_items).returns(true)
+    WebflowService.stubs(:new).returns(webflow_service)
+
+    @window_schedule_repair.update!(
+      webflow_item_id: "test_item_id",
+      is_draft: false,
+      is_archived: false
+    )
+
+    post unpublish_from_webflow_api_v1_window_schedule_repair_url(@window_schedule_repair),
+         headers: { 'Authorization': "Bearer #{@user.create_new_auth_token}" }
+
+    assert_response :success
+    @window_schedule_repair.reload
+    assert_equal true, @window_schedule_repair.is_draft
+    assert_equal false, @window_schedule_repair.is_archived
+  end
 end
