@@ -148,6 +148,9 @@ Webflow API GET /sites/618ffc83f3028ad35a166db8/collections/619692f4b6773922b327
     "isDraft" => false,
     "fieldData" =>
      {"accepted-declined" => "#024900",
+     "#272626",
+     "#750002"
+     "#740000"
       "total-incl-vat" => 120,
       "total-exc-vat" => 100,
       "grand-total" => 120,
@@ -307,6 +310,7 @@ Webflow API GET /sites/618ffc83f3028ad35a166db8/collections/619692f4b6773922b327
               wrs.user = admin_user if wrs.new_record? && admin_user
 
               # Update WRS basic information
+              status_color = wrs_data['fieldData']['accepted-declined']
               wrs.assign_attributes(
                 name: wrs_data['fieldData']['name'] || "WRS #{wrs_data['id']}",
                 address: wrs_data['fieldData']['project-summary'],
@@ -315,10 +319,17 @@ Webflow API GET /sites/618ffc83f3028ad35a166db8/collections/619692f4b6773922b327
                 total_vat_included_price: wrs_data['fieldData']['total-incl-vat'],
                 total_vat_excluded_price: wrs_data['fieldData']['total-exc-vat'],
                 grand_total: wrs_data['fieldData']['grand-total'],
-                status: map_webflow_status(wrs_data['fieldData']['accepted-decline']),
-                status_color: wrs_data['fieldData']['accepted-declined'],
-                slug: wrs_data['fieldData']['slug'] || "wrs-#{wrs_data['id']}"
+                status: map_status_color_to_status(status_color),
+                status_color: status_color,
+                slug: wrs_data['fieldData']['slug'] || "wrs-#{wrs_data['id']}",
+                last_published: wrs_data['lastPublished'],
+                is_draft: wrs_data['isDraft'],
+                is_archived: wrs_data['isArchived']
               )
+
+              # Apply Webflow timestamps to the record if present
+              wrs.created_at = Time.parse(wrs_data['createdOn']) rescue wrs.created_at
+              wrs.updated_at = Time.parse(wrs_data['lastUpdated']) rescue wrs.updated_at
 
               # Save the WRS first
               wrs.save!
@@ -330,7 +341,7 @@ Webflow API GET /sites/618ffc83f3028ad35a166db8/collections/619692f4b6773922b327
               wrs.windows.delete_all
 
               # Prepare window data
-              window_data = prepare_window_data(wrs_data['fieldData'])
+              window_data = prepare_window_data(wrs_data['fieldData'], wrs_data)
 
               # Bulk create windows and tools
               create_windows_and_tools_bulk(wrs, window_data)
@@ -379,32 +390,53 @@ Webflow API GET /sites/618ffc83f3028ad35a166db8/collections/619692f4b6773922b327
     end
   end
 
-  def prepare_window_data(field_data)
+  def map_status_color_to_status(status_color)
+    case status_color&.downcase
+    when '#024900' # Green - accepted
+      'approved'
+    when '#750002', '#740000' # Dark colors - rejected
+      'rejected'
+    else
+      'pending'
+    end
+  end
+
+  def prepare_window_data(field_data, wrs_data)
     [
       {
         location: field_data['window-location'],
         items: field_data['window-1-items-2'],
-        prices: field_data['window-1-items-prices-3']
+        prices: field_data['window-1-items-prices-3'],
+        created_on: wrs_data['createdOn'],
+        last_updated: wrs_data['lastUpdated']
       },
       {
         location: field_data['window-2-location'],
         items: field_data['window-2-items-2'],
-        prices: field_data['window-2-items-prices-3']
+        prices: field_data['window-2-items-prices-3'],
+        created_on: wrs_data['createdOn'],
+        last_updated: wrs_data['lastUpdated']
       },
       {
         location: field_data['window-3-location'],
         items: field_data['window-3-items'],
-        prices: field_data['window-3-items-prices']
+        prices: field_data['window-3-items-prices'],
+        created_on: wrs_data['createdOn'],
+        last_updated: wrs_data['lastUpdated']
       },
       {
         location: field_data['window-4-location'],
         items: field_data['window-4-items'],
-        prices: field_data['window-4-items-prices']
+        prices: field_data['window-4-items-prices'],
+        created_on: wrs_data['createdOn'],
+        last_updated: wrs_data['lastUpdated']
       },
       {
         location: field_data['window-5-location'],
         items: field_data['window-5-items'],
-        prices: field_data['window-5-items-prices']
+        prices: field_data['window-5-items-prices'],
+        created_on: wrs_data['createdOn'],
+        last_updated: wrs_data['lastUpdated']
       }
     ].reject { |w| w[:location].blank? }
   end
@@ -417,8 +449,8 @@ Webflow API GET /sites/618ffc83f3028ad35a166db8/collections/619692f4b6773922b327
       {
         window_schedule_repair_id: wrs.id,
         location: window_info[:location],
-        created_at: Time.current,
-        updated_at: Time.current
+        created_at: (Time.parse(window_info[:created_on]) rescue Time.current),
+        updated_at: (Time.parse(window_info[:last_updated]) rescue Time.current)
       }
     end
 
@@ -445,8 +477,8 @@ Webflow API GET /sites/618ffc83f3028ad35a166db8/collections/619692f4b6773922b327
           window_id: window.id,
           name: item_name,
           price: price,
-          created_at: Time.current,
-          updated_at: Time.current
+          created_at: (Time.parse(window_info[:created_on]) rescue Time.current),
+          updated_at: (Time.parse(window_info[:last_updated]) rescue Time.current)
         }
       end
     end

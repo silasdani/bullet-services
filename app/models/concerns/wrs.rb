@@ -57,7 +57,7 @@ module Wrs
     {
       fieldData: to_webflow,
       isArchived: false,
-      isDraft: false
+      isDraft: true
     }
   end
 

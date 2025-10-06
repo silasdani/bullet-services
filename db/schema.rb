@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_22_065303) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_06_100626) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -99,6 +99,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_22_065303) do
     t.text "details"
     t.decimal "grand_total", precision: 10, scale: 2
     t.datetime "deleted_at"
+    t.datetime "last_published"
+    t.boolean "is_draft"
+    t.boolean "is_archived"
     t.index ["deleted_at"], name: "index_window_schedule_repairs_on_deleted_at"
     t.index ["user_id"], name: "index_window_schedule_repairs_on_user_id"
   end

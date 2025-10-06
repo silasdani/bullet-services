@@ -54,6 +54,11 @@ class WindowScheduleRepair < ApplicationRecord
     end
   }
 
+  # Webflow-related scopes
+  scope :published, -> { where(is_draft: false, is_archived: false) }
+  scope :draft, -> { where(is_draft: true) }
+  scope :archived, -> { where(is_archived: true) }
+
   def calculate_totals
     # Calculate subtotal more safely with additional error handling
     begin
@@ -129,7 +134,7 @@ class WindowScheduleRepair < ApplicationRecord
 
   # Ransack configuration for filtering
   def self.ransackable_attributes(auth_object = nil)
-    %w[name slug flat_number reference_number address details status created_at updated_at total_vat_included_price total_vat_excluded_price grand_total deleted_at]
+    %w[name slug flat_number reference_number address details status created_at updated_at total_vat_included_price total_vat_excluded_price grand_total deleted_at last_published is_draft is_archived]
   end
 
   def self.ransackable_associations(auth_object = nil)
