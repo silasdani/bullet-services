@@ -7,7 +7,7 @@ class Api::V1::WindowScheduleRepairsControllerTest < ActionDispatch::Integration
     @user = users(:one)
     @window_schedule_repair = @user.window_schedule_repairs.create!(
       name: "Test Schedule",
-      slug: "test-schedule",
+      slug: "test-schedule-#{Time.current.to_i}",
       address: "123 Test St",
       total_vat_included_price: 1000
     )

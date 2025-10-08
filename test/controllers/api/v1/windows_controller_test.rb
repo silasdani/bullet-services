@@ -7,13 +7,12 @@ class Api::V1::WindowsControllerTest < ActionDispatch::IntegrationTest
     @user = users(:one)
     @window_schedule_repair = @user.window_schedule_repairs.create!(
       name: "Test Schedule",
-      slug: "test-schedule",
+      slug: "test-schedule-#{Time.current.to_i}",
       address: "123 Test St",
       total_vat_included_price: 1000
     )
     @window = @window_schedule_repair.windows.create!(
-      location: "Test Location",
-      image: "test.jpg"
+      location: "Test Location"
     )
     sign_in @user
   end
@@ -33,7 +32,6 @@ class Api::V1::WindowsControllerTest < ActionDispatch::IntegrationTest
       post api_v1_windows_url, params: {
         window: {
           location: "New Location",
-          image: "new.jpg",
           window_schedule_repair_id: @window_schedule_repair.id
         }
       }, headers: { "Authorization": "Bearer #{@user.create_new_auth_token}" }

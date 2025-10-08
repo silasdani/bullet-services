@@ -4,6 +4,8 @@ one:
   name: "Test User"
   role: 0
   confirmed_at: <%= Time.current %>
+  uid: "user@example.com"
+  provider: "email"
 
 admin:
   email: "admin@example.com"
@@ -11,6 +13,8 @@ admin:
   name: "Admin User"
   role: 2
   confirmed_at: <%= Time.current %>
+  uid: "admin@example.com"
+  provider: "email"
 
 employee:
   email: "employee@example.com"
@@ -18,3 +22,5 @@ employee:
   name: "Employee User"
   role: 1
   confirmed_at: <%= Time.current %>
+  uid: "employee@example.com"
+  provider: "email"

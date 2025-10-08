@@ -1,9 +1,7 @@
 one:
   location: "Test Location"
-  image: "test.jpg"
   window_schedule_repair: one
 
 two:
   location: "Another Location"
-  image: "another.jpg"
   window_schedule_repair: one

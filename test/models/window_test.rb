@@ -5,13 +5,12 @@ class WindowTest < ActiveSupport::TestCase
     @user = users(:one)
     @window_schedule_repair = @user.window_schedule_repairs.create!(
       name: "Test Schedule",
-      slug: "test-schedule",
+      slug: "test-schedule-#{Time.current.to_i}",
       address: "123 Test St",
       total_vat_included_price: 1000
     )
     @window = @window_schedule_repair.windows.build(
-      location: "Test Location",
-      image: "test.jpg"
+      location: "Test Location"
     )
   end
 
@@ -21,11 +20,6 @@ class WindowTest < ActiveSupport::TestCase
 
   test "location should be present" do
     @window.location = nil
-    assert_not @window.valid?
-  end
-
-  test "image should be present" do
-    @window.image = nil
     assert_not @window.valid?
   end
 
