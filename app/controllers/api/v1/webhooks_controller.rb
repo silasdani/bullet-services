@@ -1,18 +1,14 @@
 # frozen_string_literal: true
 
 class Api::V1::WebhooksController < ActionController::API
-  # Skip authentication for webhooks
   skip_before_action :verify_authenticity_token, raise: false
 
-  # Webflow webhook for collection item changes
-  # Triggered when an item is created, updated, or deleted in Webflow
-  def webflow_collection_item_changed
+  # Webflow webhook for collection item published
+  # Triggered when an item is published in Webflow
+  def webflow_collection_item_published
     begin
-      # Log the webhook for debugging
       Rails.logger.info "Webflow Webhook Received: #{params.inspect}"
-      Rails.logger.info "Webflow Webhook Headers: #{request.headers.to_h.select { |k, _| k.start_with?('HTTP_') || k == 'X-Webflow-Signature' }.inspect}"
 
-      # Verify webhook signature if available
       unless verify_webflow_webhook?
         render json: { error: "Invalid webhook signature" }, status: :unauthorized
         return
@@ -116,8 +112,6 @@ class Api::V1::WebhooksController < ActionController::API
       time_difference = (current_time - request_time).abs
 
       if time_difference > (5 * 60 * 1000)  # 5 minutes in milliseconds
-        Rails.logger.warn "Webflow Webhook: Timestamp too old (difference: #{time_difference}ms)"
-        Rails.logger.warn "  Request time: #{request_time}, Current time: #{current_time}"
         return false
       end
     rescue => e
@@ -126,21 +120,9 @@ class Api::V1::WebhooksController < ActionController::API
     end
 
     # Verify the signature matches
-    # Webflow uses HMAC-SHA256 for webhook signatures
-    # The signature is computed as: HMAC-SHA256(timestamp + ":" + body, secret)
     body = request.raw_post
     signed_payload = "#{timestamp}:#{body}"
     expected_signature = OpenSSL::HMAC.hexdigest("SHA256", webhook_secret, signed_payload)
-
-    Rails.logger.debug "Webflow Webhook Signature Verification:"
-    Rails.logger.debug "  Received signature: #{signature}"
-    Rails.logger.debug "  Expected signature: #{expected_signature}"
-    Rails.logger.debug "  Timestamp: #{timestamp}"
-    Rails.logger.debug "  Body length: #{body.length}"
-    Rails.logger.debug "  Body first 200 chars: #{body[0...200]}"
-    Rails.logger.debug "  Signed payload first 200 chars: #{signed_payload[0...200]}"
-    Rails.logger.debug "  Webhook secret length: #{webhook_secret.length}"
-    Rails.logger.debug "  Webhook secret first 10 chars: #{webhook_secret[0...10]}"
 
     if signature == expected_signature
       Rails.logger.info "Webflow Webhook: Signature verified successfully"
@@ -153,3 +135,42 @@ class Api::V1::WebhooksController < ActionController::API
     end
   end
 end
+
+=begin
+Webflow Webhook Received: #<ActionController::Parameters {
+"triggerType" => "collection_item_published",
+"payload" => {
+"id" => "68e6c5e5dfa4f032bc87f13b",
+"siteId" => "618ffc83f3028ad35a166db8",
+"workspaceId" => "686e45402f386a37da2a841b",
+"collectionId" => "619692f4b6773922b32797f2",
+"cmsLocaleId" => nil,
+"lastPublished" => "2025-10-08T20:13:58.741Z",
+"lastUpdated" => "2025-10-08T20:13:58.741Z",
+"createdOn" => "2025-10-08T20:13:25.299Z",
+isArchived" => false,
+"isDraft" => false,
+"fieldData" => {
+"accepted-declined" => "#FFA500",
+"_noSearch" => false,
+ "total-incl-vat" => 72,
+ "total-exc-vat" => 60,
+ "grand-total" => 72,
+ "project-summary" => "b56, star, 400446",
+ "flat-number" => "65",
+ "name" => "b56, star, 400446 - 65",
+"window-location" => "rear",
+"window-1-items-2" => "½ set epoxy resin",
+"window-1-items-prices-3" => "60",
+"slug" => "b56-star-400446-65-6fd4"
+}},
+"controller" => "api/v1/webhooks",
+"action" => "webflow_collection_item_published",
+ "webhook" => {"triggerType" => "collection_item_published",
+ "payload" => {"id" => "68e6c5e5dfa4f032bc87f13b",
+ "siteId" => "618ffc83f3028ad35a166db8",
+ "workspaceId" => "686e45402f386a37da2a841b",
+ "collectionId" => "619692f4b6773922b32797f2",
+ "cmsLocaleId" => nil,
+ "lastPublished" => "2025-10-08T20:13:58.741Z", "lastUpdated" => "2025-10-08T20:13:58.741Z", "createdOn" => "2025-10-08T20:13:25.299Z", "isArchived" => false, "isDraft" => false, "fieldData" => {"accepted-declined" => "#FFA500", "_noSearch" => false, "total-incl-vat" => 72, "total-exc-vat" => 60, "grand-total" => 72, "project-summary" => "b56, star, 400446", "flat-number" => "65", "name" => "b56, star, 400446 - 65", "window-location" => "rear", "window-1-items-2" => "½ set epoxy resin", "window-1-items-prices-3" => "60", "slug" => "b56-star-400446-65-6fd4"}}}} permitted: false>
+=end

@@ -43,7 +43,6 @@ class WrsSyncService
 
       # Set flag to prevent auto-sync back to Webflow (prevent circular sync loop)
       wrs.skip_webflow_sync = true
-      Rails.logger.debug "WrsSyncService: Syncing from Webflow, skip_webflow_sync=true to prevent circular loop"
 
       # Set user for new records
       wrs.user = @admin_user if wrs.new_record? && @admin_user
@@ -56,12 +55,6 @@ class WrsSyncService
       total_incl_vat = wf_first(field_data, "total-incl-vat", "total_incl_vat", "totalInclVat")
       total_excl_vat = wf_first(field_data, "total-exc-vat", "total-excl-vat", "total_exc_vat", "totalExcVat")
       grand_total_val = wf_first(field_data, "grand-total", "grand_total", "grandTotal")
-
-      # Debug output for price fields
-      if total_incl_vat.nil? && total_excl_vat.nil?
-        puts "   ⚠️  Warning: No VAT prices found in fieldData for WRS #{wrs_data['id']}"
-        puts "      Available fields: #{field_data.keys.select { |k| k.include?('total') || k.include?('vat') }.join(', ')}"
-      end
 
       wrs.assign_attributes(
         name: field_data["name"] || "WRS #{wrs_data['id']}",
