@@ -23,7 +23,7 @@ Rails.application.routes.draw do
     namespace :v1 do
       # Webflow webhooks (no authentication required)
       post "webhooks/webflow/collection_item_changed", to: "webhooks#webflow_collection_item_changed"
-      
+
       resources :window_schedule_repairs do
         member do
           post :send_to_webflow
@@ -50,21 +50,6 @@ Rails.application.routes.draw do
           get :me
         end
       end
-
-      # Webflow API routes
-
-      # Collections
-      get "webflow/collections", to: "webflow#collections"
-      get "webflow/collections/:collection_id", to: "webflow#collection"
-
-      # Collection Items
-      get "webflow/collections/:collection_id/items", to: "webflow#items"
-      get "webflow/collections/:collection_id/items/:item_id", to: "webflow#item"
-      post "webflow/collections/:collection_id/items", to: "webflow#create_item"
-      patch "webflow/collections/:collection_id/items/:item_id", to: "webflow#update_item"
-      delete "webflow/collections/:collection_id/items/:item_id", to: "webflow#delete_item"
-      post "webflow/collections/:collection_id/items/publish", to: "webflow#publish_items"
-      post "webflow/collections/:collection_id/items/unpublish", to: "webflow#unpublish_items"
     end
   end
 end

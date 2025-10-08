@@ -858,6 +858,38 @@
           }
         }
       ]
+    },
+    {
+      "name": "Webhooks",
+      "item": [
+        {
+          "name": "Webflow Collection Item Changed (Test Webhook)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Webflow-Signature",
+                "value": "signature_here_if_using_webhook_secret",
+                "disabled": true
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"_id\": \"{{item_id}}\",\n  \"site\": \"{{site_id}}\",\n  \"triggerType\": \"collection_item_changed\",\n  \"triggeredByUserId\": \"user_id_here\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/webhooks/webflow/collection_item_changed",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "webhooks", "webflow", "collection_item_changed"]
+            },
+            "description": "This endpoint is called by Webflow when a collection item changes. For testing, you can manually trigger it by providing a valid Webflow item ID."
+          }
+        }
+      ]
     }
   ]
 } 
