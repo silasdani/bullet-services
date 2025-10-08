@@ -73,13 +73,18 @@ class Api::V1::WebhooksController < ActionController::API
   private
 
   def process_webflow_item(webflow_item)
-    item_id = webflow_item[:id] || webflow_item["id"]
+    # Convert ActionController::Parameters to hash with string keys for compatibility
+    webflow_item_hash = webflow_item.to_h.deep_stringify_keys
+
+    item_id = webflow_item_hash["id"]
     unless item_id.present?
-      Rails.logger.error "Webflow Webhook: No item ID found in item: #{webflow_item.inspect}"
+      Rails.logger.error "Webflow Webhook: No item ID found in item: #{webflow_item_hash.inspect}"
       return { success: false, error: "No item ID in item" }
     end
 
     Rails.logger.info "Webflow Webhook: Processing item #{item_id}"
+    Rails.logger.info "Webflow Webhook: Item data keys: #{webflow_item_hash.keys.join(', ')}"
+    Rails.logger.info "Webflow Webhook: fieldData keys: #{webflow_item_hash['fieldData']&.keys&.join(', ')}"
 
     # Find the WRS by webflow_item_id or create a new one
     wrs = WindowScheduleRepair.find_by(webflow_item_id: item_id)
@@ -90,7 +95,7 @@ class Api::V1::WebhooksController < ActionController::API
     # Sync the item from Webflow to Rails using the webhook payload data
     # Note: WrsSyncService automatically sets skip_webflow_sync=true to prevent circular loops
     sync_service = WrsSyncService.new(user)
-    result = sync_service.sync_single(webflow_item)
+    result = sync_service.sync_single(webflow_item_hash)
 
     if result[:success]
       Rails.logger.info "Webflow Webhook: Successfully synced WRS ##{result[:wrs_id]} from item #{item_id}"

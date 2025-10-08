@@ -240,23 +240,26 @@ class WrsSyncService
 
       # Handle image URL - can be from main-project-image (window 1) or window-specific field
       image_val = if idx == 1
-        base_image_url
+        # For window 1, we already extracted the URL string in base_image_url
+        field_data["main-project-image"]
       else
         # Try multiple variations: "window-#{idx}-image", "window-#{idx}-image-url", or just "window-#{idx}"
         field_data["window-#{idx}-image"] || field_data["window-#{idx}-image-url"] || field_data["window-#{idx}"]
       end
 
+      Rails.logger.info "    Window #{idx} raw image_val type: #{image_val.class}, value: #{image_val.inspect[0..100]}"
+
       # Extract URL from image value (can be a Hash with url/fileId or a string)
       image_url = if image_val.is_a?(Hash)
-        # Try both string and symbol keys
+        # Extract URL from hash structure: {"fileId" => "...", "url" => "https://...", "alt" => nil}
         extracted = image_val["url"] || image_val[:url]
-        Rails.logger.debug "    Image: Extracted URL from hash: #{extracted&.slice(0, 60)}..."
+        Rails.logger.info "    ✓ Extracted URL from hash: #{extracted&.slice(0, 80)}"
         extracted
       elsif image_val.is_a?(String)
-        Rails.logger.debug "    Image: Using string value: #{image_val&.slice(0, 60)}..."
+        Rails.logger.info "    ✓ Using string value: #{image_val&.slice(0, 80)}"
         image_val
       else
-        Rails.logger.debug "    Image: No image value found"
+        Rails.logger.warn "    ✗ No valid image value (got #{image_val.class})"
         nil
       end
 
@@ -269,6 +272,7 @@ class WrsSyncService
         last_updated: wrs_data["lastUpdated"]
       }
 
+      Rails.logger.info "  Window #{idx}: ✓ Added to list with image_url: #{image_url.present? ? '✓ SET' : '✗ NULL'}"
       windows << window_info
       Rails.logger.debug "  Window #{idx}: ✓ Added to sync list"
     end
@@ -312,12 +316,17 @@ class WrsSyncService
 
     # Use insert_all for bulk window creation
     Window.insert_all(windows_to_create, returning: [ :id, :location ])
-    Rails.logger.debug "  ✓ Inserted #{windows_to_create.size} windows into database"
+    Rails.logger.info "  ✓ Inserted #{windows_to_create.size} windows into database"
 
-    # Get the created windows
+    # Get the created windows and verify what was saved
     created_windows = Window.where(window_schedule_repair_id: wrs.id)
                            .where(location: window_data.map { |w| w[:location] })
                            .index_by(&:location)
+
+    Rails.logger.info "  Verifying saved windows:"
+    created_windows.each do |location, window|
+      Rails.logger.info "    Window ##{window.id} (#{location}): webflow_image_url=#{window.webflow_image_url.inspect[0..80]}"
+    end
 
     # Bulk create tools
     tools_to_create = []
