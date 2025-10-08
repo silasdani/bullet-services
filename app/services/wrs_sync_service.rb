@@ -35,6 +35,18 @@ class WrsSyncService
     return unless wrs.webflow_item_id.present?
 
     begin
+      # Reload the WRS to get fresh associations after bulk insert
+      wrs.reload
+
+      # Log the tools that were imported
+      Rails.logger.info "WrsSyncService: Recalculating totals for WRS ##{wrs.id}"
+      wrs.windows.each_with_index do |window, idx|
+        Rails.logger.info "  Window #{idx + 1} (#{window.location}): #{window.tools.count} tools"
+        window.tools.each do |tool|
+          Rails.logger.info "    - #{tool.name}: #{tool.price}"
+        end
+      end
+
       # Recalculate totals based on the tools we just imported
       wrs.calculate_totals
 
@@ -293,13 +305,13 @@ class WrsSyncService
         mismatches += (items.length - prices.length).abs
       end
       if prices.length < items.length
-        prices += Array.new(items.length - prices.length, 0.0)
+        prices += Array.new(items.length - prices.length, 0)
       elsif prices.length > items.length
         prices = prices.first(items.length)
       end
 
       items.each_with_index do |item_name, index|
-        price = prices[index] || 0.0
+        price = prices[index] || 0
         tools_to_create << {
           window_id: window.id,
           name: item_name,
@@ -330,7 +342,8 @@ class WrsSyncService
 
   def parse_prices(prices_string)
     return [] if prices_string.blank?
-    prices_string.to_s.split("\n").map(&:strip).reject(&:blank?).map(&:to_f)
+    # Convert to integer since Tool.price is an integer column
+    prices_string.to_s.split("\n").map(&:strip).reject(&:blank?).map(&:to_i)
   end
 end
 
