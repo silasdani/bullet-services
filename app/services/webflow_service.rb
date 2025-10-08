@@ -10,56 +10,55 @@ class WebflowService
 
   def initialize
     @api_key = ENV.fetch("WEBFLOW_TOKEN")
+    @site_id = ENV.fetch("WEBFLOW_SITE_ID")
+    @collection_id = ENV.fetch("WEBFLOW_WRS_COLLECTION_ID")
     @rate_limit_requests = []
   end
 
   # Collections
-  def list_collections(site_id)
-    make_request(:get, "/sites/#{site_id}/collections")
+  def list_collections
+    make_request(:get, "/sites/#{@site_id}/collections")
   end
 
-  def get_collection(site_id, collection_id)
-    make_request(:get, "/sites/#{site_id}/collections/#{collection_id}")
+  def get_collection
+    make_request(:get, "/sites/#{@site_id}/collections/#{@collection_id}")
   end
 
   # Collection Items
-  def list_items(site_id, collection_id, params = {})
+  def list_items(params = {})
     query_params = build_query_params(params)
-    make_request(:get, "/sites/#{site_id}/collections/#{collection_id}/items/live#{query_params}")
+    make_request(:get, "/sites/#{@site_id}/collections/#{@collection_id}/items/live#{query_params}")
   end
 
-  def get_item(site_id, collection_id, item_id)
-    make_request(:get, "/sites/#{site_id}/collections/#{collection_id}/items/#{item_id}")
+  def get_item(item_id)
+    make_request(:get, "/sites/#{@site_id}/collections/#{@collection_id}/items/#{item_id}")
   end
 
-  def create_item(site_id, collection_id, item_data)
-    make_request(:post, "/sites/#{site_id}/collections/#{collection_id}/items", body: item_data)
+  def create_item(item_data)
+    make_request(:post, "/sites/#{@site_id}/collections/#{@collection_id}/items", body: item_data)
   end
 
-  def update_item(site_id, collection_id, item_id, item_data)
-    make_request(:patch, "/sites/#{site_id}/collections/#{collection_id}/items/#{item_id}", body: item_data)
+  def update_item(item_id, item_data)
+    make_request(:patch, "/sites/#{@site_id}/collections/#{@collection_id}/items/#{item_id}", body: item_data)
   end
 
-  def delete_item(site_id, collection_id, item_id)
-    make_request(:delete, "/sites/#{site_id}/collections/#{collection_id}/items/#{item_id}")
+  def delete_item(item_id)
+    make_request(:delete, "/sites/#{@site_id}/collections/#{@collection_id}/items/#{item_id}")
   end
 
-  def publish_items(site_id, collection_id, item_ids)
-    make_request(:post, "/sites/#{site_id}/collections/#{collection_id}/items/publish",
+  def publish_items(item_ids)
+    make_request(:post, "/sites/#{@site_id}/collections/#{@collection_id}/items/publish",
                  body: { itemIds: item_ids })
   end
 
-  def unpublish_items(site_id, collection_id, item_ids)
-    make_request(:post, "/sites/#{site_id}/collections/#{collection_id}/items/unpublish",
+  def unpublish_items(item_ids)
+    make_request(:post, "/sites/#{@site_id}/collections/#{@collection_id}/items/unpublish",
                  body: { itemIds: item_ids })
   end
 
   # Legacy method for backward compatibility
   def send_window_schedule_repair(window_schedule_repair)
-    site_id = ENV.fetch("WEBFLOW_SITE_ID")
-    collection_id = ENV.fetch("WEBFLOW_WRS_COLLECTION_ID")
-
-    create_item(site_id, collection_id, window_schedule_repair_data(window_schedule_repair))
+    create_item(window_schedule_repair_data(window_schedule_repair))
   end
 
   private
@@ -138,21 +137,21 @@ class WebflowService
 
   def handle_error_response(response)
     error_message = case response.code
-                    when 400
+    when 400
                       "Bad Request - Invalid parameters"
-                    when 401
+    when 401
                       "Unauthorized - Check your API token"
-                    when 403
+    when 403
                       "Forbidden - Insufficient permissions"
-                    when 404
+    when 404
                       "Not Found - Resource not found"
-                    when 429
+    when 429
                       "Rate Limited - Too many requests"
-                    when 500..599
+    when 500..599
                       "Server Error - Webflow API issue"
-                    else
+    else
                       "HTTP #{response.code} - #{response.body}"
-                    end
+    end
 
     raise WebflowApiError.new(error_message, response.code, response.body)
   end
@@ -160,16 +159,5 @@ class WebflowService
   def window_schedule_repair_data(window_schedule_repair)
     # Use the instance method from the WRS concern for better encapsulation
     window_schedule_repair.to_webflow_formatted
-  end
-end
-
-# Custom error class for Webflow API errors
-class WebflowApiError < StandardError
-  attr_reader :status_code, :response_body
-
-  def initialize(message, status_code = nil, response_body = nil)
-    super(message)
-    @status_code = status_code
-    @response_body = response_body
   end
 end

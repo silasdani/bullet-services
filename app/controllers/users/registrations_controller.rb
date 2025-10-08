@@ -24,6 +24,6 @@ class Users::RegistrationsController < DeviseTokenAuth::RegistrationsController
   private
 
   def configure_permitted_parameters
-    devise_parameter_sanitizer.permit(:sign_up, keys: [:nickname, :name])
+    devise_parameter_sanitizer.permit(:sign_up, keys: [ :nickname, :name ])
   end
 end

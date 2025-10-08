@@ -24,8 +24,8 @@ class WebflowUploadJob < ApplicationJob
         )
 
         # Update the WRS with the Webflow item ID
-        if response && response['_id']
-          window_schedule_repair.update(webflow_item_id: response['_id'])
+        if response && response["_id"]
+          window_schedule_repair.update(webflow_item_id: response["_id"])
         end
       end
 

@@ -24,7 +24,15 @@ class WindowScheduleRepairPolicy < ApplicationPolicy
   end
 
   def send_to_webflow?
-    user.present? && (user.is_admin? || user.is_employee? || record.user == user)
+    user.present? && user.webflow_access
+  end
+
+  def publish_to_webflow?
+    user.present? && user.webflow_access
+  end
+
+  def unpublish_from_webflow?
+    user.present? && user.webflow_access
   end
 
 

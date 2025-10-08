@@ -21,7 +21,7 @@ Rails.application.configure do
   # Store uploaded files on the local file system (see config/storage.yml for options).
   config.active_storage.service = :amazon
 
-    # Assume all access to the app is happening through a SSL-terminating reverse proxy.
+  # Assume all access to the app is happening through a SSL-terminating reverse proxy.
   config.assume_ssl = true
 
   # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
@@ -34,7 +34,7 @@ Rails.application.configure do
   }
 
   # Trust the reverse proxy headers
-  config.action_dispatch.trusted_proxies = ActionDispatch::RemoteIp::TRUSTED_PROXIES + ['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16']
+  config.action_dispatch.trusted_proxies = ActionDispatch::RemoteIp::TRUSTED_PROXIES + [ "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16" ]
 
   # Configure for reverse proxy
   config.action_dispatch.x_forwarded_host = true
@@ -63,9 +63,12 @@ Rails.application.configure do
   # Replace the default in-process memory cache store with a durable alternative.
   config.cache_store = :solid_cache_store
 
-  # Replace the default in-process and non-durable queuing backend for Active Job.
-  config.active_job.queue_adapter = :async
-  config.solid_queue.connects_to = { database: { writing: :queue } }
+  # Active Job adapter (default to inline for low traffic; can toggle via ENV)
+  active_job_adapter = ENV.fetch("ACTIVE_JOB_ADAPTER", "inline").to_sym
+  config.active_job.queue_adapter = active_job_adapter
+  if active_job_adapter == :solid_queue
+    config.solid_queue.connects_to = { database: { writing: :queue } }
+  end
 
   # Ignore bad email addresses and do not raise email delivery errors.
   # Set this to true and configure the email server for immediate delivery to raise delivery errors.

@@ -1,4 +1,5 @@
 source "https://rubygems.org"
+gem "json", "2.13.2"
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 gem "rails", "~> 8.0.2"
@@ -35,21 +36,24 @@ gem "image_processing", "~> 1.2"
 # Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin Ajax possible
 gem "rack-cors"
 
-gem 'devise'
-gem 'devise_token_auth'
-gem 'aws-sdk-s3', require: false
-gem 'httparty'
-gem 'dotenv-rails'
-gem 'pundit'
-gem 'active_model_serializers', '~> 0.10.0'
-gem 'ransack'
-gem 'kaminari'
+gem "devise"
+gem "devise_token_auth"
+gem "aws-sdk-s3", require: false
+gem "httparty"
+gem "dotenv-rails"
+gem "pundit"
+gem "active_model_serializers", "~> 0.10.0"
+gem "ransack"
+gem "kaminari"
+
+# Admin panel
+gem "rails_admin", "~> 3.1"
 
 group :development, :test do
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
   gem "brakeman", require: false
   gem "rubocop-rails-omakase", require: false
-  gem 'pry-rails'
+  gem "pry-rails"
 end
 
 # Asset pipeline gems
@@ -59,3 +63,5 @@ gem "jquery-rails"
 gem "turbolinks"
 gem "coffee-rails"
 gem "uglifier"
+
+gem "ruby-progressbar"

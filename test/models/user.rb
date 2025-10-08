@@ -6,7 +6,7 @@ class User < ApplicationRecord
 
   rails_admin do
     configure :User do
-      label 'Owner of this ball: '
+      label "Owner of this ball: "
     end
   end
 end

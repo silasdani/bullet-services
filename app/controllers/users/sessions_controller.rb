@@ -1,10 +1,12 @@
 class Users::SessionsController < Devise::SessionsController
-  before_action :check_admin_access, only: [:create]
+  before_action :check_admin_access, only: [ :create ]
 
   private
 
   def check_admin_access
-    user = User.find_by(email: params[:user][:email])
+    email = params.dig(:user, :email) || params[:email]
+    return if email.blank?
+    user = User.find_by(email: email)
 
     if user.nil?
       # Don't set flash message here - let Devise handle authentication errors

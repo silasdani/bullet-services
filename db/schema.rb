@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_09_22_065303) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_08_122018) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -44,7 +44,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_22_065303) do
 
   create_table "tools", force: :cascade do |t|
     t.string "name"
-    t.integer "price"
+    t.decimal "price", precision: 10, scale: 2
     t.bigint "window_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -86,8 +86,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_22_065303) do
     t.string "flat_number"
     t.string "reference_number"
     t.string "address"
-    t.integer "total_vat_included_price"
-    t.integer "total_vat_excluded_price"
+    t.decimal "total_vat_included_price", precision: 10, scale: 2
+    t.decimal "total_vat_excluded_price", precision: 10, scale: 2
     t.string "status_color"
     t.integer "status"
     t.boolean "sitemap_on"
@@ -99,6 +99,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_22_065303) do
     t.text "details"
     t.decimal "grand_total", precision: 10, scale: 2
     t.datetime "deleted_at"
+    t.datetime "last_published"
+    t.boolean "is_draft", default: true, null: false
+    t.boolean "is_archived", default: false, null: false
+    t.string "webflow_main_image_url"
     t.index ["deleted_at"], name: "index_window_schedule_repairs_on_deleted_at"
     t.index ["user_id"], name: "index_window_schedule_repairs_on_user_id"
   end
@@ -108,6 +112,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_09_22_065303) do
     t.bigint "window_schedule_repair_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "webflow_image_url"
     t.index ["window_schedule_repair_id"], name: "index_windows_on_window_schedule_repair_id"
   end
 

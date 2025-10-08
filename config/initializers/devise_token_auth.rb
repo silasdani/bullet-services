@@ -54,14 +54,12 @@ DeviseTokenAuth.setup do |config|
   # Makes it possible to use custom uid column
   # config.other_uid = "foo"
 
-  # By default, only Bearer Token authentication is implemented out of the box.
-  # If, however, you wish to integrate with legacy Devise authentication, you can
-  # do so by enabling this flag. NOTE: This feature is highly experimental!
-  # config.enable_standard_devise_support = false
+  # Use standard Devise support so HTML failures redirect to Devise routes
+  config.enable_standard_devise_support = true
 
   # By default DeviseTokenAuth will not send confirmation email, even when including
   # devise confirmable module. If you want to use devise confirmable module and
   # send email, set it to true. (This is a setting for compatibility)
   config.send_confirmation_email = false
-  config.default_confirm_success_url = Rails.env.production? ? 'https://www.bulletservices.co.uk' : 'http://localhost:3000/confirmed'
+  config.default_confirm_success_url = Rails.env.production? ? "https://www.bulletservices.co.uk" : "http://localhost:3000/confirmed"
 end

@@ -1,144 +1,13 @@
 # frozen_string_literal: true
 
 namespace :webflow do
-  desc 'Test Webflow API connection'
-  task test_connection: :environment do
-    puts "Testing Webflow API connection..."
-
-    begin
-      webflow = WebflowService.new
-      sites = webflow.list_sites
-
-      puts "✅ Connection successful!"
-      puts "Found #{sites['sites']&.length || 0} sites"
-
-      if sites['sites']&.any?
-        puts "\nSites:"
-        sites['sites'].each do |site|
-          puts "  - #{site['name']} (ID: #{site['_id']})"
-        end
-      end
-
-    rescue WebflowApiError => e
-      puts "❌ Webflow API Error: #{e.message}"
-      puts "Status Code: #{e.status_code}"
-      puts "Response: #{e.response_body}"
-    rescue => e
-      puts "❌ Unexpected error: #{e.message}"
-    end
-  end
-
-  desc 'List collections for a site'
-  task :list_collections, [:site_id] => :environment do |task, args|
-    site_id = args[:site_id]
-
-    unless site_id
-      puts "Please provide a site ID: rake webflow:list_collections[site_id]"
-      exit 1
-    end
-
-    puts "Fetching collections for site #{site_id}..."
-
-    begin
-      webflow = WebflowService.new
-      collections = webflow.list_collections(site_id)
-
-      if collections['collections']&.any?
-        puts "\nCollections:"
-        collections['collections'].each do |collection|
-          puts "  - #{collection['displayName']} (ID: #{collection['id']})"
-          puts "    Slug: #{collection['slug']}"
-          puts "    Last Updated: #{collection['lastUpdated'] || 'Never'}"
-          puts ""
-        end
-      else
-        puts "No collections found for this site."
-      end
-
-    rescue WebflowApiError => e
-      puts "❌ Error: #{e.message}"
-    end
-  end
-
-  desc 'List items in a collection'
-  task :list_items, [:site_id, :collection_id] => :environment do |task, args|
-    site_id = args[:site_id]
-    collection_id = args[:collection_id]
-
-    unless site_id && collection_id
-      puts "Please provide site ID and collection ID: rake webflow:list_items[site_id,collection_id]"
-      exit 1
-    end
-
-    puts "Fetching items from collection #{collection_id} in site #{site_id}..."
-
-    begin
-      webflow = WebflowService.new
-      items = webflow.list_items(site_id, collection_id)
-
-      if items['items']&.any?
-        puts "\nItems:"
-
-        items['items'].last(10).each do |item|
-          puts "  - ID: #{item['id']}"
-          puts "    Created On: #{item['createdOn']}"
-          puts "    Last Updated: #{item['lastUpdated'] || 'Never'}"
-          puts "    Last Published: #{item['lastPublished'] || 'Never'}"
-          puts "    Is Archived: #{item['isArchived']}"
-          puts "    Is Draft: #{item['isDraft']}"
-          puts "    Field Data:"
-
-          item['fieldData'].each do |field, value|
-            puts "      - #{field}: #{value.inspect}"
-          end
-          puts ""
-        end
-      else
-        puts "No items found in this collection."
-      end
-
-    rescue WebflowApiError => e
-      puts "❌ Error: #{e.message}"
-    end
-  end
-
-  desc 'Send a test window schedule repair to Webflow'
-  task :send_test_window_schedule_repair, [:window_schedule_repair_id] => :environment do |task, args|
-    window_schedule_repair_id = args[:window_schedule_repair_id]
-
-    unless window_schedule_repair_id
-      puts "Please provide a window schedule repair ID: rake webflow:send_test_window_schedule_repair[window_schedule_repair_id]"
-      exit 1
-    end
-
-    begin
-      window_schedule_repair = WindowScheduleRepair.find(window_schedule_repair_id)
-      puts "Sending window schedule repair #{window_schedule_repair.id} to Webflow..."
-
-      webflow = WebflowService.new
-      result = webflow.send_window_schedule_repair(window_schedule_repair)
-
-      puts "✅ Window schedule repair sent successfully!"
-      puts "Item ID: #{result['_id']}"
-      puts "Created: #{result['createdOn']}"
-
-    rescue ActiveRecord::RecordNotFound
-      puts "❌ Window schedule repair with ID #{window_schedule_repair_id} not found."
-    rescue WebflowApiError => e
-      puts "❌ Webflow API Error: #{e.message}"
-      puts "Status Code: #{e.status_code}"
-    rescue => e
-      puts "❌ Unexpected error: #{e.message}"
-    end
-  end
-
-  desc 'Check Webflow credentials configuration'
+  desc "Check Webflow credentials configuration"
   task check_credentials: :environment do
     puts "Checking Webflow credentials configuration..."
 
     token = ENV.fetch("WEBFLOW_TOKEN")
     site_id = ENV.fetch("WEBFLOW_SITE_ID")
-    collection_id = ENV.fetch("WEBFLOW_COLLECTION_ID")
+    collection_id = ENV.fetch("WEBFLOW_WRS_COLLECTION_ID")
 
     if token
       puts "✅ WEBFLOW_TOKEN is configured"
@@ -153,16 +22,76 @@ namespace :webflow do
     end
 
     if collection_id
-      puts "✅ WEBFLOW_COLLECTION_ID is configured"
+      puts "✅ WEBFLOW_WRS_COLLECTION_ID is configured"
     else
-      puts "❌ WEBFLOW_COLLECTION_ID is not configured"
+      puts "❌ WEBFLOW_WRS_COLLECTION_ID is not configured"
     end
+  end
 
-    puts "\nTo configure credentials, run:"
-    puts "rails credentials:edit"
-    puts "\nAdd the following:"
-    puts "WEBFLOW_TOKEN: 'your_webflow_api_token'"
-    puts "WEBFLOW_SITE_ID: 'your_site_id'"
-    puts "WEBFLOW_COLLECTION_ID: 'your_collection_id'"
+  desc "Sync Webflow WRS to Rails"
+  task sync_all_wrs_to_rails: :environment do
+    puts "🔄 Syncing all WRS from Webflow to Rails..."
+
+    begin
+      webflow = WebflowService.new
+      offset = 0
+      limit = 100
+
+      # Get admin user once to avoid repeated queries
+      admin_user = User.find_by(email: "admin@bullet.co.uk")
+      if admin_user
+        puts "✅ Admin user found: #{admin_user.email}"
+      else
+        puts "⚠️  Admin user not found - WRS will be created without user assignment"
+      end
+
+      # Initialize sync service once
+      sync_service = WrsSyncService.new(admin_user)
+
+      total_items = nil
+      all_items = []
+
+      # Fetch all items first
+      loop do
+        puts "\n📥 Fetching WRS items (offset: #{offset}, limit: #{limit})..."
+        response = webflow.list_items({ offset: offset, limit: limit })
+        items = response["items"]
+        break if items.nil? || items.empty?
+
+        all_items.concat(items)
+
+        # Check if we have more items to fetch
+        total_items ||= response["pagination"]["total"]
+        puts "   Retrieved #{items.size} items (Total in Webflow: #{total_items})"
+
+        offset += limit
+        break if offset >= total_items
+      end
+
+      # Process all items with the sync service
+      if all_items.any?
+        puts "\n" + "="*60
+        puts "Processing #{all_items.size} WRS items..."
+        puts "="*60
+
+        result = sync_service.sync_batch(all_items)
+
+        puts "\n" + "="*60
+        puts "✨ Sync completed!"
+        puts "   Synced: #{result[:synced]}"
+        puts "   Skipped: #{result[:skipped]}"
+        puts "="*60
+      else
+        puts "\n⚠️  No items found to sync"
+      end
+
+    rescue WebflowApiError => e
+      puts "\n❌ Webflow API Error: #{e.message}"
+      puts "   Status Code: #{e.status_code}"
+      puts "   Response: #{e.response_body}"
+    rescue => e
+      puts "\n❌ Unexpected error: #{e.message}"
+      puts "   #{e.backtrace.first(5).join("\n   ")}"
+    end
   end
 end
