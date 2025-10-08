@@ -233,8 +233,8 @@ class WrsSyncService
       image_val = if idx == 1
         base_image_url
       else
-        # Try both "window-#{idx}-image" and "window-#{idx}-image-url"
-        field_data["window-#{idx}-image"] || field_data["window-#{idx}-image-url"]
+        # Try multiple variations: "window-#{idx}-image", "window-#{idx}-image-url", or just "window-#{idx}"
+        field_data["window-#{idx}-image"] || field_data["window-#{idx}-image-url"] || field_data["window-#{idx}"]
       end
 
       # Extract URL from image value (can be a Hash with url/fileId or a string)
@@ -261,7 +261,8 @@ class WrsSyncService
     windows.each_with_index do |w, i|
       items_count = parse_items(w[:items]).size
       prices_count = parse_prices(w[:prices]).size
-      Rails.logger.info "  Window #{i + 1}: location='#{w[:location]}', items=#{items_count}, prices=#{prices_count}"
+      has_image = w[:image_url].present? ? "✓ image" : "no image"
+      Rails.logger.info "  Window #{i + 1}: location='#{w[:location]}', items=#{items_count}, prices=#{prices_count}, #{has_image}"
       if items_count != prices_count
         Rails.logger.warn "    ⚠️  Mismatch: #{items_count} items but #{prices_count} prices"
       end

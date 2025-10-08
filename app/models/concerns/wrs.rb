@@ -71,9 +71,14 @@ module Wrs
 
   def window_image_url(window_number)
     window = windows.order(:created_at)[window_number - 1]
-    return nil unless window&.image&.present?
+    return nil unless window
 
-    window.image.url
+    # Prefer ActiveStorage attached image, fallback to Webflow image URL
+    if window.image.present?
+      window.image.url
+    else
+      window.webflow_image_url
+    end
   end
 
   def window_items_list(window_number)
