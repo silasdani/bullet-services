@@ -82,6 +82,25 @@ https://your-ngrok-url.ngrok.io/api/v1/webhooks/webflow/collection_item_changed
 
 **Note:** The webhook uses the complete item data included in the webhook payload, so no additional API calls to Webflow are needed. This makes the webhook faster and avoids rate limiting issues.
 
+### Circular Sync Prevention
+
+To prevent infinite webhook loops, the system implements circular sync prevention:
+
+1. **Webflow → Rails**: When a webhook receives data from Webflow, it sets the `skip_webflow_sync` flag on the WRS record
+2. **Auto-sync Skipped**: The auto-sync callback checks this flag and skips syncing back to Webflow
+3. **No Loop**: This prevents the webhook from triggering another auto-sync, which would trigger another webhook, etc.
+
+**Flow:**
+```
+✅ Webflow Update → Webhook → Rails Update (skip_webflow_sync=true) → No auto-sync → Done
+✅ Rails Update → Auto-sync → Webflow Update → Webhook → Rails Update (skip_webflow_sync=true) → No loop
+```
+
+Without this protection, you would get an infinite loop:
+```
+❌ Webflow Update → Webhook → Rails Update → Auto-sync → Webflow Update → Webhook → Loop forever!
+```
+
 ### What Gets Synced
 
 The webhook syncs all WRS data including:
@@ -222,6 +241,8 @@ Check the logs for specific error messages.
 3. **Handle webhook failures gracefully** - Webflow will retry failed webhooks
 4. **Test webhooks in development** before deploying to production
 5. **Keep sync logic idempotent** - webhooks may be called multiple times for the same event
+6. **Circular sync prevention is automatic** - the system prevents infinite loops between Webflow and Rails
+7. **Draft-only auto-sync** - only draft items auto-sync to Webflow to protect published content
 
 ## Integration with Publish/Unpublish
 

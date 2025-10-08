@@ -44,6 +44,7 @@ class Api::V1::WebhooksController < ActionController::API
       user = wrs&.user || User.where(role: "admin").first
 
       # Sync the item from Webflow to Rails using the webhook payload data
+      # Note: WrsSyncService automatically sets skip_webflow_sync=true to prevent circular loops
       sync_service = WrsSyncService.new(user)
       result = sync_service.sync_single(webflow_item)
 

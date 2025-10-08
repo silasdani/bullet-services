@@ -58,6 +58,9 @@ class WindowScheduleRepair < ApplicationRecord
 
   before_save :calculate_totals
 
+  # Attribute accessor to skip Webflow sync (used when syncing FROM Webflow to prevent loops)
+  attr_accessor :skip_webflow_sync
+
   # Automatic Webflow synchronization
   # Only syncs draft items to protect published content
   after_commit :auto_sync_to_webflow, on: [ :create, :update ], if: :should_auto_sync_to_webflow?
@@ -205,8 +208,9 @@ class WindowScheduleRepair < ApplicationRecord
     # Auto-sync only if:
     # 1. Not deleted
     # 2. Is a draft OR has never been synced to Webflow
-    # This prevents accidentally updating published items
-    !deleted? && (is_draft? || webflow_item_id.blank?)
+    # 3. NOT being synced FROM Webflow (to prevent circular sync loops)
+    # This prevents accidentally updating published items and circular webhook loops
+    !deleted? && (is_draft? || webflow_item_id.blank?) && !skip_webflow_sync
   end
 
   def auto_sync_to_webflow

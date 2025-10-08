@@ -41,6 +41,10 @@ class WrsSyncService
       # Find or initialize WRS by webflow_item_id
       wrs = WindowScheduleRepair.find_or_initialize_by(webflow_item_id: wrs_data["id"])
 
+      # Set flag to prevent auto-sync back to Webflow (prevent circular sync loop)
+      wrs.skip_webflow_sync = true
+      Rails.logger.debug "WrsSyncService: Syncing from Webflow, skip_webflow_sync=true to prevent circular loop"
+
       # Set user for new records
       wrs.user = @admin_user if wrs.new_record? && @admin_user
 
