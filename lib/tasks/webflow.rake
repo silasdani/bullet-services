@@ -1,111 +1,7 @@
 # frozen_string_literal: true
 
 namespace :webflow do
-  desc 'List collections for a site'
-  task :list_collections, [:site_id] => :environment do |task, args|
-    site_id = args[:site_id]
-
-    unless site_id
-      puts "Please provide a site ID: rake webflow:list_collections[site_id]"
-      exit 1
-    end
-
-    puts "Fetching collections for site #{site_id}..."
-
-    begin
-      webflow = WebflowService.new
-      collections = webflow.list_collections(site_id)
-
-      if collections['collections']&.any?
-        puts "\nCollections:"
-        collections['collections'].each do |collection|
-          puts "  - #{collection['displayName']} (ID: #{collection['id']})"
-          puts "    Slug: #{collection['slug']}"
-          puts "    Last Updated: #{collection['lastUpdated'] || 'Never'}"
-          puts ""
-        end
-      else
-        puts "No collections found for this site."
-      end
-
-    rescue WebflowApiError => e
-      puts "❌ Error: #{e.message}"
-    end
-  end
-
-  desc 'List items in a collection'
-  task :list_items, [:site_id, :collection_id] => :environment do |task, args|
-    site_id = args[:site_id]
-    collection_id = args[:collection_id]
-
-    unless site_id && collection_id
-      puts "Please provide site ID and collection ID: rake webflow:list_items[site_id,collection_id]"
-      exit 1
-    end
-
-    puts "Fetching items from collection #{collection_id} in site #{site_id}..."
-
-    begin
-      webflow = WebflowService.new
-      items = webflow.list_items(site_id, collection_id)
-
-      if items['items']&.any?
-        puts "\nItems:"
-
-        items['items'].last(10).each do |item|
-          puts "  - ID: #{item['id']}"
-          puts "    Created On: #{item['createdOn']}"
-          puts "    Last Updated: #{item['lastUpdated'] || 'Never'}"
-          puts "    Last Published: #{item['lastPublished'] || 'Never'}"
-          puts "    Is Archived: #{item['isArchived']}"
-          puts "    Is Draft: #{item['isDraft']}"
-          puts "    Field Data:"
-
-          item['fieldData'].each do |field, value|
-            puts "      - #{field}: #{value.inspect}"
-          end
-          puts ""
-        end
-      else
-        puts "No items found in this collection."
-      end
-
-    rescue WebflowApiError => e
-      puts "❌ Error: #{e.message}"
-    end
-  end
-
-  desc 'Send a test window schedule repair to Webflow'
-  task :send_test_window_schedule_repair, [:window_schedule_repair_id] => :environment do |task, args|
-    window_schedule_repair_id = args[:window_schedule_repair_id]
-
-    unless window_schedule_repair_id
-      puts "Please provide a window schedule repair ID: rake webflow:send_test_window_schedule_repair[window_schedule_repair_id]"
-      exit 1
-    end
-
-    begin
-      window_schedule_repair = WindowScheduleRepair.find(window_schedule_repair_id)
-      puts "Sending window schedule repair #{window_schedule_repair.id} to Webflow..."
-
-      webflow = WebflowService.new
-      result = webflow.send_window_schedule_repair(window_schedule_repair)
-
-      puts "✅ Window schedule repair sent successfully!"
-      puts "Item ID: #{result['_id']}"
-      puts "Created: #{result['createdOn']}"
-
-    rescue ActiveRecord::RecordNotFound
-      puts "❌ Window schedule repair with ID #{window_schedule_repair_id} not found."
-    rescue WebflowApiError => e
-      puts "❌ Webflow API Error: #{e.message}"
-      puts "Status Code: #{e.status_code}"
-    rescue => e
-      puts "❌ Unexpected error: #{e.message}"
-    end
-  end
-
-  desc 'Check Webflow credentials configuration'
+  desc "Check Webflow credentials configuration"
   task check_credentials: :environment do
     puts "Checking Webflow credentials configuration..."
 
@@ -133,427 +29,69 @@ namespace :webflow do
   end
 
   desc "Sync Webflow WRS to Rails"
-  task :sync_all_wrs_to_rails => :environment do
-    puts "Syncing all WRS to Rails..."
-=begin
-it = w.list_items({ "offset": 0, "limit": 5 })
-Webflow API GET /sites/618ffc83f3028ad35a166db8/collections/619692f4b6773922b32797f2/items/live?offset=0&limit=5 - Status: 200
-=> {"items" =>
-  [{"id" => "68dfe57b31012c99b176edb8",
-    "cmsLocaleId" => nil,
-    "lastPublished" => "2025-10-03T15:04:19.329Z",
-    "lastUpdated" => "2025-10-03T15:04:19.329Z",
-    "createdOn" => "2025-10-03T15:02:19.160Z",
-    "isArchived" => false,
-    "isDraft" => false,
-    "fieldData" =>
-     {"accepted-declined" => "#024900",
-     "#272626",
-     "#750002"
-     "#740000"
-      "total-incl-vat" => 120,
-      "total-exc-vat" => 100,
-      "grand-total" => 120,
-      "project-summary" => "test1",
-      "flat-number" => "56",
-      "name" => "test1 - 56",
-      "window-location" => "out",
-      "window-1-items-2" => "1 set epoxy resin",
-      "window-1-items-prices-3" => "100",
-      "main-project-image" =>
-       {"fileId" => "68dfe57a31012c99b176ed88",
-        "url" =>
-         "https://cdn.prod.website-files.com/619692f4d2e01f91e2c4c838/68dfe57a31012c99b176ed88_z86q89ujp0occd36cmtgxg2h9qro.jpeg",
-        "alt" => nil},
-      "slug" => "test1-56-17684f48",
-      "accepted-decline" => "Accepted"}},
-   {"id" => "68dfb4580855ab76b9c30a3a",
-    "cmsLocaleId" => nil,
-    "lastPublished" => "2025-10-03T12:59:47.641Z",
-    "lastUpdated" => "2025-10-03T12:59:47.641Z",
-    "createdOn" => "2025-10-03T11:32:40.721Z",
-    "isArchived" => false,
-    "isDraft" => false,
-    "fieldData" =>
-     {"accepted-declined" => "#024900",
-      "total-incl-vat" => 30,
-      "total-exc-vat" => 25,
-      "grand-total" => 30,
-      "project-summary" => "test",
-      "flat-number" => "157",
-      "name" => "test - 157",
-      "window-location" => "afara",
-      "window-1-items-2" => "Conservation joint repair",
-      "window-1-items-prices-3" => "25",
-      "main-project-image" =>
-       {"fileId" => "68dfb4580855ab76b9c30a35",
-        "url" =>
-         "https://cdn.prod.website-files.com/619692f4d2e01f91e2c4c838/68dfb4580855ab76b9c30a35_unys3giseyxu400cuqspmc9ldnhl.jpeg",
-        "alt" => nil},
-      "slug" => "test-157-1bb98ad3",
-      "accepted-decline" => "Accepted"}},
-   {"id" => "68defd279aa7b1d789c9811f",
-    "cmsLocaleId" => nil,
-    "lastPublished" => "2025-10-02T22:37:00.518Z",
-    "lastUpdated" => "2025-10-02T22:37:00.518Z",
-    "createdOn" => "2025-10-02T22:31:03.227Z",
-    "isArchived" => false,
-    "isDraft" => false,
-    "fieldData" =>
-     {"accepted-declined" => "#024900",
-      "total-incl-vat" => 1452,
-      "total-exc-vat" => 1210,
-      "grand-total" => 1452,
-      "project-summary" => "425100",
-      "flat-number" => "Horea 29",
-      "name" => "425100 - Horea 29",
-      "window-location" => "Rear Elevaton",
-      "window-1-items-2" => "New timber sash complete",
-      "window-1-items-prices-3" => "1210",
-      "main-project-image" =>
-       {"fileId" => "68defd279aa7b1d789c98112",
-        "url" =>
-         "https://cdn.prod.website-files.com/619692f4d2e01f91e2c4c838/68defd279aa7b1d789c98112_4ckuxb1fmttuwv62fg6nuhoafpt4.jpeg",
-        "alt" => nil},
-      "slug" => "425100-horea-29-e9a155ba",
-      "accepted-decline" => "Accepted"}},
-   {"id" => "68def3c005d2de6f6ea3eb37",
-    "cmsLocaleId" => nil,
-    "lastPublished" => "2025-10-02T21:52:24.783Z",
-    "lastUpdated" => "2025-10-02T21:52:24.783Z",
-    "createdOn" => "2025-10-02T21:50:56.960Z",
-    "isArchived" => false,
-    "isDraft" => false,
-    "fieldData" =>
-     {"accepted-declined" => "#024900",
-      "total-incl-vat" => 264,
-      "total-exc-vat" => 220,
-      "grand-total" => 264,
-      "project-summary" => "400446",
-      "flat-number" => "Liviu Rebreanu - 58",
-      "name" => "400446 - Liviu Rebreanu - 58",
-      "window-location" => "afară",
-      "window-1-items-2" => "1 set epoxy resin\n1000mm timber splice repair",
-      "window-1-items-prices-3" => "100\n120",
-      "main-project-image" =>
-       {"fileId" => "68def3c005d2de6f6ea3eb32",
-        "url" =>
-         "https://cdn.prod.website-files.com/619692f4d2e01f91e2c4c838/68def3c005d2de6f6ea3eb32_0glfn7at49r2eghbo1yzoq0kafn0.jpeg",
-        "alt" => nil},
-      "slug" => "400446-liviu-rebreanu-58-e3fa4489",
-      "accepted-decline" => "Accepted"}},
-   {"id" => "68ded0db87ee32ead1c16492",
-    "cmsLocaleId" => nil,
-    "lastPublished" => "2025-10-02T19:37:09.060Z",
-    "lastUpdated" => "2025-10-02T19:37:09.060Z",
-    "createdOn" => "2025-10-02T19:22:03.846Z",
-    "isArchived" => false,
-    "isDraft" => false,
-    "fieldData" =>
-     {"accepted-declined" => "#024900",
-      "total-incl-vat" => 108,
-      "total-exc-vat" => 90,
-      "grand-total" => 108,
-      "project-summary" => "22 Coleridge HA48GW",
-      "flat-number" => "1",
-      "name" => "22 Coleridge HA48GW - 1",
-      "window-location" => "front",
-      "window-1-items-2" => "½ set epoxy resin",
-      "window-1-items-prices-3" => "90",
-      "main-project-image" =>
-       {"fileId" => "68ded0db87ee32ead1c1648d",
-        "url" =>
-         "https://cdn.prod.website-files.com/619692f4d2e01f91e2c4c838/68ded0db87ee32ead1c1648d_y6peg9gi6wpgobnyksbsgly44wzo.jpeg",
-        "alt" => nil},
-      "slug" => "22-coleridge-ha48gw-1-6365f21b",
-      "accepted-decline" => "Accepted"}}],
- "pagination" => {"limit" => 5, "offset" => 0, "total" => 135}}
-=end
+  task sync_all_wrs_to_rails: :environment do
+    puts "🔄 Syncing all WRS from Webflow to Rails..."
 
     begin
       webflow = WebflowService.new
-      total_synced = 0
-      total_skipped = 0
       offset = 0
       limit = 100
-      batch_size = 50 # Process in smaller batches for better memory management
 
       # Get admin user once to avoid repeated queries
-      admin_user = User.find_by(email: 'admin@bullet.co.uk')
-      puts "Admin user: #{admin_user ? 'Found' : 'NOT FOUND'}"
+      admin_user = User.find_by(email: "admin@bullet.co.uk")
+      if admin_user
+        puts "✅ Admin user found: #{admin_user.email}"
+      else
+        puts "⚠️  Admin user not found - WRS will be created without user assignment"
+      end
 
-      puts "Starting sync with batch size: #{batch_size}"
+      # Initialize sync service once
+      sync_service = WrsSyncService.new(admin_user)
 
+      total_items = nil
+      all_items = []
+
+      # Fetch all items first
       loop do
-        puts "Fetching WRS items (offset: #{offset}, limit: #{limit})..."
+        puts "\n📥 Fetching WRS items (offset: #{offset}, limit: #{limit})..."
         response = webflow.list_items({ offset: offset, limit: limit })
-
-        items = response['items']
+        items = response["items"]
         break if items.nil? || items.empty?
 
-        puts "Processing #{items.length} WRS items..."
-
-        # Process items in batches for better performance
-        items.each_slice(batch_size) do |batch|
-          mirror_calls = []
-          ActiveRecord::Base.transaction do
-            batch.each do |wrs_data|
-              # Skip if required fields are missing
-              if wrs_data['fieldData']['project-summary'].blank? || wrs_data['fieldData']['name'].blank?
-                total_skipped += 1
-                next
-              end
-
-              # Find or initialize WRS by webflow_item_id
-              wrs = WindowScheduleRepair.find_or_initialize_by(webflow_item_id: wrs_data['id'])
-
-              # Set user for new records
-              wrs.user = admin_user if wrs.new_record? && admin_user
-
-              # Update WRS basic information
-              status_color = wrs_data['fieldData']['accepted-declined']
-              wrs.assign_attributes(
-                name: wrs_data['fieldData']['name'] || "WRS #{wrs_data['id']}",
-                address: wrs_data['fieldData']['project-summary'],
-                flat_number: wrs_data['fieldData']['flat-number'],
-                details: wrs_data['fieldData']['project-summary'],
-                total_vat_included_price: wrs_data['fieldData']['total-incl-vat'],
-                total_vat_excluded_price: wrs_data['fieldData']['total-exc-vat'],
-                grand_total: wrs_data['fieldData']['grand-total'],
-                status: map_status_color_to_status(status_color),
-                status_color: status_color,
-                slug: wrs_data['fieldData']['slug'] || "wrs-#{wrs_data['id']}",
-                last_published: wrs_data['lastPublished'],
-                is_draft: wrs_data['isDraft'],
-                is_archived: wrs_data['isArchived'],
-                webflow_main_image_url: (wrs_data['fieldData']['main-project-image'] && wrs_data['fieldData']['main-project-image']['url'])
-              )
-
-              # Apply Webflow timestamps to the record if present
-              wrs.created_at = Time.parse(wrs_data['createdOn']) rescue wrs.created_at
-              wrs.updated_at = Time.parse(wrs_data['lastUpdated']) rescue wrs.updated_at
-
-              # Save the WRS first
-              wrs.save!
-
-              # Bulk delete existing tools and windows (in correct order)
-              # First delete all tools for this WRS
-              Tool.joins(:window).where(windows: { window_schedule_repair_id: wrs.id }).delete_all
-              # Then delete all windows
-              wrs.windows.delete_all
-
-              # Prepare window data
-              window_data = prepare_window_data(wrs_data['fieldData'], wrs_data)
-
-              # Bulk create windows and tools
-              create_windows_and_tools_bulk(wrs, window_data)
-
-              # Queue mirror to run after transaction commits to avoid FK race
-              if wrs.webflow_main_image_url.present?
-                mirror_calls << [:wrs, wrs.id, wrs.webflow_main_image_url]
-              end
-
-              total_synced += 1
-            end
-          end
-
-          # Merge window mirrors collected during bulk creation
-          buffer = Thread.current[:__webflow_mirror_buffer]
-          if buffer.is_a?(Array) && buffer.any?
-            mirror_calls.concat(buffer)
-            Thread.current[:__webflow_mirror_buffer] = []
-          end
-
-          # Run mirrors outside of transaction and rescue FK errors to continue batch
-          mirror_calls.each do |type, id, url|
-            begin
-              if type == :wrs
-                record = WindowScheduleRepair.find_by(id: id)
-                WebflowImageMirrorService.mirror!(record: record, source_url: url, attachment_name: :images) if record
-              elsif type == :window
-                record = Window.find_by(id: id)
-                WebflowImageMirrorService.mirror!(record: record, source_url: url, attachment_name: :image) if record
-              end
-            rescue ActiveRecord::InvalidForeignKey, PG::ForeignKeyViolation => e
-              Rails.logger.error "Mirror skipped for #{type}##{id}: #{e.class} - #{e.message}"
-              next
-            end
-          end
-
-          # Progress indicator
-          print "."
-          $stdout.flush
-        end
+        all_items.concat(items)
 
         # Check if we have more items to fetch
-        total_items = response['pagination']['total']
+        total_items ||= response["pagination"]["total"]
+        puts "   Retrieved #{items.size} items (Total in Webflow: #{total_items})"
+
         offset += limit
-
-        if offset >= total_items
-          puts "\nReached end of items. Total items: #{total_items}"
-          break
-        end
+        break if offset >= total_items
       end
 
-      puts "\nSync completed!"
-      puts "Total synced: #{total_synced}"
-      puts "Total skipped: #{total_skipped}"
+      # Process all items with the sync service
+      if all_items.any?
+        puts "\n" + "="*60
+        puts "Processing #{all_items.size} WRS items..."
+        puts "="*60
+
+        result = sync_service.sync_batch(all_items)
+
+        puts "\n" + "="*60
+        puts "✨ Sync completed!"
+        puts "   Synced: #{result[:synced]}"
+        puts "   Skipped: #{result[:skipped]}"
+        puts "="*60
+      else
+        puts "\n⚠️  No items found to sync"
+      end
+
     rescue WebflowApiError => e
-      puts "❌ Webflow API Error: #{e.message}"
-      puts "Status Code: #{e.status_code}"
-      puts "Response: #{e.response_body}"
+      puts "\n❌ Webflow API Error: #{e.message}"
+      puts "   Status Code: #{e.status_code}"
+      puts "   Response: #{e.response_body}"
     rescue => e
-      puts "❌ Unexpected error: #{e.message}"
-    end
-  end
-
-  private
-
-  def map_webflow_status(webflow_status)
-    case webflow_status&.downcase
-    when 'accepted'
-      'approved'
-    when 'declined'
-      'rejected'
-    else
-      'pending'
-    end
-  end
-
-  def map_status_color_to_status(status_color)
-    case status_color&.downcase
-    when '#024900' # Green - accepted
-      'approved'
-    when '#750002', '#740000' # Dark colors - rejected
-      'rejected'
-    else
-      'pending'
-    end
-  end
-
-  def prepare_window_data(field_data, wrs_data)
-    [
-      {
-        location: field_data['window-location'],
-        items: field_data['window-1-items-2'],
-        prices: field_data['window-1-items-prices-3'],
-        image_url: (field_data['main-project-image'] && field_data['main-project-image']['url']),
-        created_on: wrs_data['createdOn'],
-        last_updated: wrs_data['lastUpdated']
-      },
-      {
-        location: field_data['window-2-location'],
-        items: field_data['window-2-items-2'],
-        prices: field_data['window-2-items-prices-3'],
-        image_url: field_data['window-2-image-url'],
-        created_on: wrs_data['createdOn'],
-        last_updated: wrs_data['lastUpdated']
-      },
-      {
-        location: field_data['window-3-location'],
-        items: field_data['window-3-items'],
-        prices: field_data['window-3-items-prices'],
-        image_url: field_data['window-3-image-url'],
-        created_on: wrs_data['createdOn'],
-        last_updated: wrs_data['lastUpdated']
-      },
-      {
-        location: field_data['window-4-location'],
-        items: field_data['window-4-items'],
-        prices: field_data['window-4-items-prices'],
-        image_url: field_data['window-4-image-url'],
-        created_on: wrs_data['createdOn'],
-        last_updated: wrs_data['lastUpdated']
-      },
-      {
-        location: field_data['window-5-location'],
-        items: field_data['window-5-items'],
-        prices: field_data['window-5-items-prices'],
-        image_url: field_data['window-5-image-url'],
-        created_on: wrs_data['createdOn'],
-        last_updated: wrs_data['lastUpdated']
-      }
-    ].reject { |w| w[:location].blank? }
-  end
-
-  def create_windows_and_tools_bulk(wrs, window_data)
-    return if window_data.empty?
-
-    # Bulk create windows
-    windows_to_create = window_data.map do |window_info|
-      {
-        window_schedule_repair_id: wrs.id,
-        location: window_info[:location],
-        webflow_image_url: window_info[:image_url],
-        created_at: (Time.parse(window_info[:created_on]) rescue Time.current),
-        updated_at: (Time.parse(window_info[:last_updated]) rescue Time.current)
-      }
-    end
-
-    # Use insert_all for bulk window creation
-    Window.insert_all(windows_to_create, returning: [:id, :location])
-
-    # Get the created windows
-    created_windows = Window.where(window_schedule_repair_id: wrs.id)
-                           .where(location: window_data.map { |w| w[:location] })
-                           .index_by(&:location)
-
-    # Bulk create tools
-    tools_to_create = []
-    window_data.each do |window_info|
-      window = created_windows[window_info[:location]]
-      next unless window
-
-      items = parse_items(window_info[:items])
-      prices = parse_prices(window_info[:prices])
-
-      items.each_with_index do |item_name, index|
-        price = prices[index] || 0.0
-        tools_to_create << {
-          window_id: window.id,
-          name: item_name,
-          price: price,
-          created_at: (Time.parse(window_info[:created_on]) rescue Time.current),
-          updated_at: (Time.parse(window_info[:last_updated]) rescue Time.current)
-        }
-      end
-
-      # Defer window mirror to be executed after outer transaction
-      if window.webflow_image_url.present?
-        # collect to a thread-local buffer the caller handles
-        Thread.current[:__webflow_mirror_buffer] ||= []
-        Thread.current[:__webflow_mirror_buffer] << [:window, window.id, window.webflow_image_url]
-      end
-    end
-
-    # Bulk insert tools if any
-    Tool.insert_all(tools_to_create) if tools_to_create.any?
-  end
-
-  def parse_items(items_string)
-    return [] if items_string.blank?
-    items_string.to_s.split("\n").map(&:strip).reject(&:blank?)
-  end
-
-  def parse_prices(prices_string)
-    return [] if prices_string.blank?
-    prices_string.to_s.split("\n").map(&:strip).reject(&:blank?).map(&:to_f)
-  end
-
-  def create_tools_for_window(window, items_string, prices_string)
-    return if items_string.blank?
-
-    # Split items and prices by newlines
-    items = items_string.to_s.split("\n").map(&:strip).reject(&:blank?)
-    prices = prices_string.to_s.split("\n").map(&:strip).reject(&:blank?)
-
-    items.each_with_index do |item_name, index|
-      price = prices[index]&.to_f || 0.0
-
-      window.tools.create!(
-        name: item_name,
-        price: price
-      )
+      puts "\n❌ Unexpected error: #{e.message}"
+      puts "   #{e.backtrace.first(5).join("\n   ")}"
     end
   end
 end

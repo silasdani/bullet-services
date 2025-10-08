@@ -482,6 +482,7 @@ DEPENDENCIES
   rails_admin (~> 3.1)
   ransack
   rubocop-rails-omakase
+  ruby-progressbar
   sassc-rails
   solid_cable
   solid_cache
