@@ -18,7 +18,7 @@ class WindowPolicyTest < ActiveSupport::TestCase
   end
 
   def test_scope
-    assert_equal [@window], WindowPolicy::Scope.new(@user, Window).resolve
+    assert_equal [ @window ], WindowPolicy::Scope.new(@user, Window).resolve
   end
 
   def test_show

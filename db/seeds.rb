@@ -142,7 +142,7 @@ repair_details = [
     reference_number: "WRS-#{Time.current.strftime('%Y%m%d')}-#{sprintf('%03d', i + 1)}",
     details: repair_details.sample,
     user: user,
-    status: [:pending, :approved, :rejected, :completed].sample
+    status: [ :pending, :approved, :rejected, :completed ].sample
   )
 
   # Create 1-4 windows per repair
@@ -182,7 +182,7 @@ if test_user
       reference_number: "WRS-#{Time.current.strftime('%Y%m%d')}-#{sprintf('%03d', i + 21)}",
       details: repair_details.sample,
       user: test_user,
-      status: [:pending, :approved, :rejected, :completed].sample
+      status: [ :pending, :approved, :rejected, :completed ].sample
     )
 
     # Create 1-3 windows per repair

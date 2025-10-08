@@ -36,7 +36,7 @@ class WindowTest < ActiveSupport::TestCase
 
   test "should be destroyed when window_schedule_repair is destroyed" do
     @window.save
-    assert_difference 'Window.count', -1 do
+    assert_difference "Window.count", -1 do
       @window_schedule_repair.destroy
     end
   end

@@ -19,24 +19,24 @@ class Api::V1::WindowsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should get index" do
-    get api_v1_windows_url, headers: { 'Authorization': "Bearer #{@user.create_new_auth_token}" }
+    get api_v1_windows_url, headers: { "Authorization": "Bearer #{@user.create_new_auth_token}" }
     assert_response :success
   end
 
   test "should show window" do
-    get api_v1_window_url(@window), headers: { 'Authorization': "Bearer #{@user.create_new_auth_token}" }
+    get api_v1_window_url(@window), headers: { "Authorization": "Bearer #{@user.create_new_auth_token}" }
     assert_response :success
   end
 
   test "should create window" do
-    assert_difference('Window.count') do
+    assert_difference("Window.count") do
       post api_v1_windows_url, params: {
         window: {
           location: "New Location",
           image: "new.jpg",
           window_schedule_repair_id: @window_schedule_repair.id
         }
-      }, headers: { 'Authorization': "Bearer #{@user.create_new_auth_token}" }
+      }, headers: { "Authorization": "Bearer #{@user.create_new_auth_token}" }
     end
     assert_response :created
   end
@@ -44,13 +44,13 @@ class Api::V1::WindowsControllerTest < ActionDispatch::IntegrationTest
   test "should update window" do
     patch api_v1_window_url(@window), params: {
       window: { location: "Updated Location" }
-    }, headers: { 'Authorization': "Bearer #{@user.create_new_auth_token}" }
+    }, headers: { "Authorization": "Bearer #{@user.create_new_auth_token}" }
     assert_response :success
   end
 
   test "should destroy window" do
-    assert_difference('Window.count', -1) do
-      delete api_v1_window_url(@window), headers: { 'Authorization': "Bearer #{@user.create_new_auth_token}" }
+    assert_difference("Window.count", -1) do
+      delete api_v1_window_url(@window), headers: { "Authorization": "Bearer #{@user.create_new_auth_token}" }
     end
     assert_response :no_content
   end

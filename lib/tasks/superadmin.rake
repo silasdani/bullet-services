@@ -1,11 +1,11 @@
 namespace :user do
-  desc 'Create or update a superadmin user'
-  task :create_superadmin, [:email, :password] => :environment do |_, args|
-    email = args[:email] || ENV['EMAIL']
-    password = args[:password] || ENV['PASSWORD']
+  desc "Create or update a superadmin user"
+  task :create_superadmin, [ :email, :password ] => :environment do |_, args|
+    email = args[:email] || ENV["EMAIL"]
+    password = args[:password] || ENV["PASSWORD"]
 
     unless email && password
-      puts 'Usage: rake user:create_superadmin[email,password] or EMAIL=... PASSWORD=... rake user:create_superadmin'
+      puts "Usage: rake user:create_superadmin[email,password] or EMAIL=... PASSWORD=... rake user:create_superadmin"
       exit 1
     end
 

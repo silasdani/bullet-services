@@ -1,4 +1,4 @@
-require 'test_helper'
+require "test_helper"
 
 class WrsCreationServiceTest < ActiveSupport::TestCase
   setup do
@@ -86,11 +86,11 @@ class WrsCreationServiceTest < ActiveSupport::TestCase
 
   test "creates WRS with image upload" do
     # Create a mock file upload
-    mock_file = mock('uploaded_file')
+    mock_file = mock("uploaded_file")
     mock_file.stubs(:present?).returns(true)
     mock_file.stubs(:respond_to?).with(:content_type).returns(true)
-    mock_file.stubs(:content_type).returns('image/jpeg')
-    mock_file.stubs(:original_filename).returns('test.jpg')
+    mock_file.stubs(:content_type).returns("image/jpeg")
+    mock_file.stubs(:original_filename).returns("test.jpg")
 
     params_with_image = @valid_params.deep_dup
     params_with_image[:windows_attributes][0][:image] = mock_file

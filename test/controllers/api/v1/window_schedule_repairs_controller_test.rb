@@ -15,17 +15,17 @@ class Api::V1::WindowScheduleRepairsControllerTest < ActionDispatch::Integration
   end
 
   test "should get index" do
-    get api_v1_window_schedule_repairs_url, headers: { 'Authorization': "Bearer #{@user.create_new_auth_token}" }
+    get api_v1_window_schedule_repairs_url, headers: { "Authorization": "Bearer #{@user.create_new_auth_token}" }
     assert_response :success
   end
 
   test "should show window_schedule_repair" do
-    get api_v1_window_schedule_repair_url(@window_schedule_repair), headers: { 'Authorization': "Bearer #{@user.create_new_auth_token}" }
+    get api_v1_window_schedule_repair_url(@window_schedule_repair), headers: { "Authorization": "Bearer #{@user.create_new_auth_token}" }
     assert_response :success
   end
 
   test "should create window_schedule_repair" do
-    assert_difference('WindowScheduleRepair.count') do
+    assert_difference("WindowScheduleRepair.count") do
       post api_v1_window_schedule_repairs_url, params: {
         window_schedule_repair: {
           name: "New Schedule",
@@ -33,7 +33,7 @@ class Api::V1::WindowScheduleRepairsControllerTest < ActionDispatch::Integration
           address: "456 New St",
           total_vat_included_price: 2000
         }
-      }, headers: { 'Authorization': "Bearer #{@user.create_new_auth_token}" }
+      }, headers: { "Authorization": "Bearer #{@user.create_new_auth_token}" }
     end
     assert_response :created
   end
@@ -41,13 +41,13 @@ class Api::V1::WindowScheduleRepairsControllerTest < ActionDispatch::Integration
   test "should update window_schedule_repair" do
     patch api_v1_window_schedule_repair_url(@window_schedule_repair), params: {
       window_schedule_repair: { name: "Updated Schedule" }
-    }, headers: { 'Authorization': "Bearer #{@user.create_new_auth_token}" }
+    }, headers: { "Authorization": "Bearer #{@user.create_new_auth_token}" }
     assert_response :success
   end
 
   test "should destroy window_schedule_repair" do
-    assert_difference('WindowScheduleRepair.count', -1) do
-      delete api_v1_window_schedule_repair_url(@window_schedule_repair), headers: { 'Authorization': "Bearer #{@user.create_new_auth_token}" }
+    assert_difference("WindowScheduleRepair.count", -1) do
+      delete api_v1_window_schedule_repair_url(@window_schedule_repair), headers: { "Authorization": "Bearer #{@user.create_new_auth_token}" }
     end
     assert_response :no_content
   end
@@ -61,7 +61,7 @@ class Api::V1::WindowScheduleRepairsControllerTest < ActionDispatch::Integration
     @window_schedule_repair.update!(webflow_item_id: "test_item_id")
 
     post publish_to_webflow_api_v1_window_schedule_repair_url(@window_schedule_repair),
-         headers: { 'Authorization': "Bearer #{@user.create_new_auth_token}" }
+         headers: { "Authorization": "Bearer #{@user.create_new_auth_token}" }
 
     assert_response :success
     @window_schedule_repair.reload
@@ -83,7 +83,7 @@ class Api::V1::WindowScheduleRepairsControllerTest < ActionDispatch::Integration
     )
 
     post unpublish_from_webflow_api_v1_window_schedule_repair_url(@window_schedule_repair),
-         headers: { 'Authorization': "Bearer #{@user.create_new_auth_token}" }
+         headers: { "Authorization": "Bearer #{@user.create_new_auth_token}" }
 
     assert_response :success
     @window_schedule_repair.reload

@@ -14,7 +14,7 @@ class WindowScheduleRepairPolicyTest < ActiveSupport::TestCase
   end
 
   def test_scope
-    assert_equal [@window_schedule_repair], WindowScheduleRepairPolicy::Scope.new(@user, WindowScheduleRepair).resolve
+    assert_equal [ @window_schedule_repair ], WindowScheduleRepairPolicy::Scope.new(@user, WindowScheduleRepair).resolve
   end
 
   def test_show
