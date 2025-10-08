@@ -63,10 +63,35 @@ class Window < ApplicationRecord
   # Prefer S3 URL if mirrored, otherwise fall back to Webflow URL
   def effective_image_url
     if image.attached?
+      Rails.logger.debug "Window ##{id}: Using ActiveStorage image"
       image_url
     else
-      self.webflow_image_url
+      url = extract_webflow_url(webflow_image_url)
+      Rails.logger.debug "Window ##{id}: No ActiveStorage image, using webflow_image_url: #{url.inspect}"
+      url
     end
+  rescue => e
+    Rails.logger.error "Window ##{id}: Error in effective_image_url: #{e.message}"
+    nil
+  end
+
+  # Extract URL from webflow_image_url field
+  # Handles both string URLs and accidentally stringified hashes
+  def extract_webflow_url(value)
+    return nil if value.blank?
+
+    # If it's already a clean URL, return it
+    return value if value.is_a?(String) && value.start_with?('http')
+
+    # If it looks like a stringified hash, try to extract the URL
+    if value.is_a?(String) && value.include?('"url"')
+      # Extract URL from stringified hash like: {"url" => "https://...", ...}
+      match = value.match(/"url"\s*=>\s*"([^"]+)"/)
+      return match[1] if match
+    end
+
+    # Fallback: return as-is
+    value
   end
 
 
