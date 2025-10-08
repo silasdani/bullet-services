@@ -93,18 +93,32 @@ The webhook syncs all WRS data including:
 
 ## Webhook Payload
 
-Webflow sends a payload like this:
+Webflow v2 sends a payload like this:
 
 ```json
 {
-  "_id": "item_id_here",
-  "site": "site_id_here",
   "triggerType": "collection_item_changed",
-  "triggeredByUserId": "user_id_here"
+  "payload": {
+    "id": "item_id_here",
+    "siteId": "site_id_here",
+    "workspaceId": "workspace_id_here",
+    "collectionId": "collection_id_here",
+    "cmsLocaleId": null,
+    "lastPublished": "2025-10-08T18:42:53.309Z",
+    "lastUpdated": "2025-10-08T18:42:53.309Z",
+    "createdOn": "2025-10-08T16:33:15.200Z",
+    "isArchived": false,
+    "isDraft": false,
+    "fieldData": {
+      "name": "Item Name",
+      "slug": "item-slug",
+      ...
+    }
+  }
 }
 ```
 
-The webhook uses the item ID to fetch the complete item data from Webflow's API.
+The webhook extracts the item ID from `payload.id` and fetches the complete item data from Webflow's API to ensure we have the latest information.
 
 ## Security
 
@@ -112,8 +126,8 @@ The webhook uses the item ID to fetch the complete item data from Webflow's API.
 
 If `WEBFLOW_WEBHOOK_SECRET` is configured, the webhook verifies incoming requests using HMAC-SHA256:
 
-1. Webflow sends an `X-Webflow-Signature` header
-2. The webhook computes the expected signature using your secret
+1. Webflow sends an `X-Webflow-Signature` header and an `X-Webflow-Timestamp` header
+2. The webhook computes the expected signature as: `HMAC-SHA256(timestamp + body, secret)`
 3. If signatures match, the request is processed
 4. If signatures don't match, the request is rejected with 401 Unauthorized
 
@@ -143,15 +157,18 @@ You can test the webhook manually:
 # Without signature (only works if WEBFLOW_WEBHOOK_SECRET is not set)
 curl -X POST http://localhost:3000/api/v1/webhooks/webflow/collection_item_changed \
   -H "Content-Type: application/json" \
-  -d '{"_id": "your_webflow_item_id"}'
+  -d '{"payload": {"id": "your_webflow_item_id"}}'
 
 # With signature (if you have a secret configured)
-PAYLOAD='{"_id": "your_webflow_item_id"}'
-SIGNATURE=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "your_webhook_secret" | cut -d' ' -f2)
+PAYLOAD='{"payload": {"id": "your_webflow_item_id"}}'
+TIMESTAMP=$(date +%s)000  # Webflow uses milliseconds
+SIGNED_PAYLOAD="${TIMESTAMP}${PAYLOAD}"
+SIGNATURE=$(echo -n "$SIGNED_PAYLOAD" | openssl dgst -sha256 -hmac "your_webhook_secret" | cut -d' ' -f2)
 
 curl -X POST http://localhost:3000/api/v1/webhooks/webflow/collection_item_changed \
   -H "Content-Type: application/json" \
   -H "X-Webflow-Signature: $SIGNATURE" \
+  -H "X-Webflow-Timestamp: $TIMESTAMP" \
   -d "$PAYLOAD"
 ```
 

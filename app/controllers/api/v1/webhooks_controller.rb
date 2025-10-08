@@ -87,8 +87,10 @@ class Api::V1::WebhooksController < ActionController::API
       return true
     end
 
-    # Get the signature from headers
-    signature = request.headers["X-Webflow-Signature"]
+    # Get the signature and timestamp from headers
+    # Rails converts HTTP headers to HTTP_* format, so X-Webflow-Signature becomes HTTP_X_WEBFLOW_SIGNATURE
+    signature = request.headers["X-Webflow-Signature"] || request.headers["HTTP_X_WEBFLOW_SIGNATURE"]
+    timestamp = request.headers["X-Webflow-Timestamp"] || request.headers["HTTP_X_WEBFLOW_TIMESTAMP"]
 
     if signature.blank?
       Rails.logger.warn "Webflow Webhook: No X-Webflow-Signature header provided"
@@ -96,14 +98,22 @@ class Api::V1::WebhooksController < ActionController::API
       return false
     end
 
+    if timestamp.blank?
+      Rails.logger.warn "Webflow Webhook: No X-Webflow-Timestamp header provided"
+      return false
+    end
+
     # Verify the signature matches
     # Webflow uses HMAC-SHA256 for webhook signatures
+    # The signature is computed as: HMAC-SHA256(timestamp + body, secret)
     body = request.raw_post
-    expected_signature = OpenSSL::HMAC.hexdigest("SHA256", webhook_secret, body)
+    signed_payload = "#{timestamp}#{body}"
+    expected_signature = OpenSSL::HMAC.hexdigest("SHA256", webhook_secret, signed_payload)
 
     Rails.logger.debug "Webflow Webhook Signature Verification:"
     Rails.logger.debug "  Received signature: #{signature}"
     Rails.logger.debug "  Expected signature: #{expected_signature}"
+    Rails.logger.debug "  Timestamp: #{timestamp}"
     Rails.logger.debug "  Body length: #{body.length}"
 
     if signature == expected_signature
