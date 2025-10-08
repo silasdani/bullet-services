@@ -127,11 +127,25 @@ The webhook extracts the item ID from `payload.id` and fetches the complete item
 If `WEBFLOW_WEBHOOK_SECRET` is configured, the webhook verifies incoming requests using HMAC-SHA256:
 
 1. Webflow sends an `X-Webflow-Signature` header and an `X-Webflow-Timestamp` header
-2. The webhook computes the expected signature as: `HMAC-SHA256(timestamp + body, secret)`
+2. The webhook computes the expected signature as: `HMAC-SHA256(timestamp + ":" + body, secret)`
+   - Note: The timestamp and body are separated by a colon (`:`)
 3. If signatures match, the request is processed
 4. If signatures don't match, the request is rejected with 401 Unauthorized
 
-**Important**: Without a webhook secret, any request to the webhook endpoint will be processed. Always use a webhook secret in production!
+**Important Notes:**
+- Without a webhook secret, any request to the webhook endpoint will be processed. Always use a webhook secret in production!
+- Webhooks created via OAuth applications include signatures. Webhooks set up through a site's dashboard or using a Site's API Key do not include signatures.
+- The webhook secret should be your OAuth application's client secret (not the site API key).
+
+### Timestamp Validation (Replay Attack Prevention)
+
+To prevent replay attacks, the webhook validates that the timestamp is within 5 minutes of the current server time:
+
+1. The `X-Webflow-Timestamp` is checked against the current server time
+2. If the difference is greater than 5 minutes, the webhook is rejected
+3. This ensures that captured webhook payloads cannot be replayed later
+
+**Important:** Ensure your server's clock is synchronized (e.g., using NTP) to avoid false rejections.
 
 ## Monitoring
 
@@ -162,7 +176,7 @@ curl -X POST http://localhost:3000/api/v1/webhooks/webflow/collection_item_chang
 # With signature (if you have a secret configured)
 PAYLOAD='{"payload": {"id": "your_webflow_item_id"}}'
 TIMESTAMP=$(date +%s)000  # Webflow uses milliseconds
-SIGNED_PAYLOAD="${TIMESTAMP}${PAYLOAD}"
+SIGNED_PAYLOAD="${TIMESTAMP}:${PAYLOAD}"  # Note the colon separator
 SIGNATURE=$(echo -n "$SIGNED_PAYLOAD" | openssl dgst -sha256 -hmac "your_webhook_secret" | cut -d' ' -f2)
 
 curl -X POST http://localhost:3000/api/v1/webhooks/webflow/collection_item_changed \

@@ -103,11 +103,27 @@ class Api::V1::WebhooksController < ActionController::API
       return false
     end
 
+    # Validate timestamp to prevent replay attacks (timestamp should be within 5 minutes)
+    begin
+      request_time = timestamp.to_i
+      current_time = (Time.now.to_f * 1000).to_i  # Convert to milliseconds
+      time_difference = (current_time - request_time).abs
+
+      if time_difference > (5 * 60 * 1000)  # 5 minutes in milliseconds
+        Rails.logger.warn "Webflow Webhook: Timestamp too old (difference: #{time_difference}ms)"
+        Rails.logger.warn "  Request time: #{request_time}, Current time: #{current_time}"
+        return false
+      end
+    rescue => e
+      Rails.logger.error "Webflow Webhook: Error validating timestamp: #{e.message}"
+      return false
+    end
+
     # Verify the signature matches
     # Webflow uses HMAC-SHA256 for webhook signatures
-    # The signature is computed as: HMAC-SHA256(timestamp + body, secret)
+    # The signature is computed as: HMAC-SHA256(timestamp + ":" + body, secret)
     body = request.raw_post
-    signed_payload = "#{timestamp}#{body}"
+    signed_payload = "#{timestamp}:#{body}"
     expected_signature = OpenSSL::HMAC.hexdigest("SHA256", webhook_secret, signed_payload)
 
     Rails.logger.debug "Webflow Webhook Signature Verification:"
@@ -115,6 +131,10 @@ class Api::V1::WebhooksController < ActionController::API
     Rails.logger.debug "  Expected signature: #{expected_signature}"
     Rails.logger.debug "  Timestamp: #{timestamp}"
     Rails.logger.debug "  Body length: #{body.length}"
+    Rails.logger.debug "  Body first 200 chars: #{body[0...200]}"
+    Rails.logger.debug "  Signed payload first 200 chars: #{signed_payload[0...200]}"
+    Rails.logger.debug "  Webhook secret length: #{webhook_secret.length}"
+    Rails.logger.debug "  Webhook secret first 10 chars: #{webhook_secret[0...10]}"
 
     if signature == expected_signature
       Rails.logger.info "Webflow Webhook: Signature verified successfully"
