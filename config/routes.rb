@@ -21,6 +21,9 @@ Rails.application.routes.draw do
 
   namespace :api do
     namespace :v1 do
+      # Webflow webhooks (no authentication required)
+      post "webhooks/webflow/collection_item_changed", to: "webhooks#webflow_collection_item_changed"
+      
       resources :window_schedule_repairs do
         member do
           post :send_to_webflow

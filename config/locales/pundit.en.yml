@@ -1,0 +1,34 @@
+en:
+  pundit:
+    user_policy:
+      index?: "You don't have permission to view all users."
+      show?: "You don't have permission to view this user."
+      create?: "You don't have permission to create users."
+      update?: "You don't have permission to update this user."
+      destroy?: "You don't have permission to delete this user."
+      me?: "You must be authenticated to access your profile."
+    
+    window_policy:
+      index?: "You don't have permission to view windows."
+      show?: "You don't have permission to view this window."
+      create?: "You don't have permission to create windows."
+      update?: "You don't have permission to update this window."
+      destroy?: "You don't have permission to delete this window."
+    
+    window_schedule_repair_policy:
+      index?: "You don't have permission to view window schedule repairs."
+      show?: "You don't have permission to view this window schedule repair."
+      create?: "You don't have permission to create window schedule repairs."
+      update?: "You don't have permission to update this window schedule repair."
+      destroy?: "You don't have permission to delete this window schedule repair."
+      restore?: "You don't have permission to restore this window schedule repair."
+      send_to_webflow?: "You don't have Webflow access. Please contact an administrator to enable this feature."
+      publish_to_webflow?: "You don't have Webflow access. Please contact an administrator to enable this feature."
+      unpublish_from_webflow?: "You don't have Webflow access. Please contact an administrator to enable this feature."
+    
+    image_policy:
+      upload_window_image?: "You don't have permission to upload images to this window."
+      upload_multiple_images?: "You don't have permission to upload images to this window schedule repair."
+    
+    default: "You are not authorized to perform this action."
+

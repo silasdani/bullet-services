@@ -97,18 +97,31 @@ class Api::V1::WindowScheduleRepairsController < Api::V1::BaseController
         @window_schedule_repair.update!(webflow_item_id: response["id"])
       end
 
-      # Publish the item
+      # Publish the item to live
       service.publish_items([ @window_schedule_repair.webflow_item_id ])
 
-      # Update local status
-      @window_schedule_repair.mark_as_published!
+      # Sync back from Webflow to get the latest published state
+      webflow_item = service.get_item(@window_schedule_repair.webflow_item_id)
+      sync_service = WrsSyncService.new(current_user)
+      sync_result = sync_service.sync_single(webflow_item)
 
-      render json: {
-        success: true,
-        message: "WRS published to Webflow successfully",
-        webflow_item_id: @window_schedule_repair.webflow_item_id,
-        last_published: @window_schedule_repair.last_published
-      }
+      if sync_result[:success]
+        @window_schedule_repair.reload
+        render json: {
+          success: true,
+          message: "WRS published to Webflow and synced successfully",
+          webflow_item_id: @window_schedule_repair.webflow_item_id,
+          last_published: @window_schedule_repair.last_published,
+          is_draft: @window_schedule_repair.is_draft
+        }
+      else
+        render json: {
+          success: true,
+          message: "WRS published but sync failed",
+          webflow_item_id: @window_schedule_repair.webflow_item_id,
+          sync_error: sync_result[:error]
+        }
+      end
     rescue WebflowApiError => e
       render json: {
         success: false,
@@ -136,16 +149,35 @@ class Api::V1::WindowScheduleRepairsController < Api::V1::BaseController
       end
 
       service = WebflowService.new
+
+      # Unpublish the item from live
       service.unpublish_items([ @window_schedule_repair.webflow_item_id ])
 
-      # Update local status
-      @window_schedule_repair.mark_as_draft!
+      # Update the draft version in Webflow with latest data (ensuring isDraft: true)
+      draft_data = @window_schedule_repair.to_webflow_formatted.merge(isDraft: true)
+      service.update_item(@window_schedule_repair.webflow_item_id, draft_data)
 
-      render json: {
-        success: true,
-        message: "WRS unpublished from Webflow successfully",
-        webflow_item_id: @window_schedule_repair.webflow_item_id
-      }
+      # Sync back from Webflow to get the latest unpublished state
+      webflow_item = service.get_item(@window_schedule_repair.webflow_item_id)
+      sync_service = WrsSyncService.new(current_user)
+      sync_result = sync_service.sync_single(webflow_item)
+
+      if sync_result[:success]
+        @window_schedule_repair.reload
+        render json: {
+          success: true,
+          message: "WRS unpublished from Webflow and synced successfully",
+          webflow_item_id: @window_schedule_repair.webflow_item_id,
+          is_draft: @window_schedule_repair.is_draft
+        }
+      else
+        render json: {
+          success: true,
+          message: "WRS unpublished but sync failed",
+          webflow_item_id: @window_schedule_repair.webflow_item_id,
+          sync_error: sync_result[:error]
+        }
+      end
     rescue WebflowApiError => e
       render json: {
         success: false,
