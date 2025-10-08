@@ -30,6 +30,34 @@ class WrsSyncService
 
   private
 
+  def sync_back_to_webflow(wrs)
+    # Only sync back if the item has a webflow_item_id
+    return unless wrs.webflow_item_id.present?
+
+    begin
+      # Recalculate totals based on the tools we just imported
+      wrs.calculate_totals
+
+      # Maintain skip flags to prevent triggering auto-sync callback
+      wrs.skip_webflow_sync = true
+      wrs.skip_auto_sync = true
+      wrs.save!
+
+      # Update the draft version in Webflow with recalculated totals
+      # This won't affect the published version until manually re-published
+      webflow_service = WebflowService.new
+      item_data = wrs.to_webflow_formatted.merge(isDraft: wrs.is_draft?)
+
+      webflow_service.update_item(wrs.webflow_item_id, item_data)
+
+      Rails.logger.info "WrsSyncService: Synced recalculated totals back to Webflow for WRS ##{wrs.id}"
+      Rails.logger.info "  Total incl VAT: #{wrs.total_vat_included_price}, Total excl VAT: #{wrs.total_vat_excluded_price}, Grand Total: #{wrs.grand_total}"
+    rescue => e
+      Rails.logger.error "WrsSyncService: Error syncing back to Webflow for WRS ##{wrs.id}: #{e.message}"
+      # Don't fail the whole sync if the sync-back fails
+    end
+  end
+
   def process_wrs_item(wrs_data)
     begin
       # Skip if required fields are missing
@@ -41,8 +69,9 @@ class WrsSyncService
       # Find or initialize WRS by webflow_item_id
       wrs = WindowScheduleRepair.find_or_initialize_by(webflow_item_id: wrs_data["id"])
 
-      # Set flag to prevent auto-sync back to Webflow (prevent circular sync loop)
+      # Set flags to prevent auto-sync back to Webflow during initial save (prevent circular sync loop)
       wrs.skip_webflow_sync = true
+      wrs.skip_auto_sync = true
 
       # Set user for new records
       wrs.user = @admin_user if wrs.new_record? && @admin_user
@@ -91,6 +120,10 @@ class WrsSyncService
 
       # Bulk create windows and tools
       created_stats = create_windows_and_tools_bulk(wrs, window_data)
+
+      # After syncing FROM Webflow, recalculate totals and sync BACK to Webflow
+      # This ensures our calculated values are pushed to Webflow
+      sync_back_to_webflow(wrs)
 
       @total_synced += 1
       { success: true, wrs_id: wrs.id, stats: created_stats }

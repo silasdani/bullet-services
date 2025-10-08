@@ -15,48 +15,42 @@ class Api::V1::WebhooksController < ActionController::API
       end
 
       # Extract the item data from the webhook payload
-      # Webflow v2 sends the complete item data in the payload, so we don't need to fetch it from the API
-      webflow_item = params[:payload]
+      # Webflow v2 published webhook sends items in an array
+      payload = params[:payload]
 
-      unless webflow_item.present?
+      unless payload.present?
         Rails.logger.error "Webflow Webhook: No payload found in params: #{params.inspect}"
         render json: { error: "No payload provided in webhook" }, status: :bad_request
         return
       end
 
-      item_id = webflow_item[:id]
-      unless item_id.present?
-        Rails.logger.error "Webflow Webhook: No item ID found in payload: #{webflow_item.inspect}"
-        render json: { error: "No item ID in payload" }, status: :bad_request
+      # For published webhooks, the items are in an array
+      items = payload[:items]
+      unless items.present? && items.is_a?(Array) && items.any?
+        Rails.logger.error "Webflow Webhook: No items found in payload: #{payload.inspect}"
+        render json: { error: "No items in payload" }, status: :bad_request
         return
       end
 
-      Rails.logger.info "Webflow Webhook: Processing item #{item_id}"
+      # Process each item (usually just one for published events)
+      results = []
+      items.each do |webflow_item|
+        result = process_webflow_item(webflow_item)
+        results << result
+      end
 
-      # Find the WRS by webflow_item_id or create a new one
-      wrs = WindowScheduleRepair.find_by(webflow_item_id: item_id)
-
-      # Set the user (default to first admin if WRS doesn't exist)
-      user = wrs&.user || User.where(role: "admin").first
-
-      # Sync the item from Webflow to Rails using the webhook payload data
-      # Note: WrsSyncService automatically sets skip_webflow_sync=true to prevent circular loops
-      sync_service = WrsSyncService.new(user)
-      result = sync_service.sync_single(webflow_item)
-
-      if result[:success]
-        Rails.logger.info "Webflow Webhook: Successfully synced WRS ##{result[:wrs_id]} from item #{item_id}"
+      # Return response based on results
+      if results.all? { |r| r[:success] }
         render json: {
           success: true,
-          message: "WRS synced successfully",
-          wrs_id: result[:wrs_id]
+          message: "All items synced successfully",
+          results: results
         }, status: :ok
       else
-        Rails.logger.error "Webflow Webhook: Failed to sync item #{item_id} - #{result[:error]}"
         render json: {
           success: false,
-          error: result[:error],
-          reason: result[:reason]
+          message: "Some items failed to sync",
+          results: results
         }, status: :unprocessable_content
       end
 
@@ -77,6 +71,38 @@ class Api::V1::WebhooksController < ActionController::API
   end
 
   private
+
+  def process_webflow_item(webflow_item)
+    item_id = webflow_item[:id] || webflow_item["id"]
+    unless item_id.present?
+      Rails.logger.error "Webflow Webhook: No item ID found in item: #{webflow_item.inspect}"
+      return { success: false, error: "No item ID in item" }
+    end
+
+    Rails.logger.info "Webflow Webhook: Processing item #{item_id}"
+
+    # Find the WRS by webflow_item_id or create a new one
+    wrs = WindowScheduleRepair.find_by(webflow_item_id: item_id)
+
+    # Set the user (default to first admin if WRS doesn't exist)
+    user = wrs&.user || User.where(role: "admin").first
+
+    # Sync the item from Webflow to Rails using the webhook payload data
+    # Note: WrsSyncService automatically sets skip_webflow_sync=true to prevent circular loops
+    sync_service = WrsSyncService.new(user)
+    result = sync_service.sync_single(webflow_item)
+
+    if result[:success]
+      Rails.logger.info "Webflow Webhook: Successfully synced WRS ##{result[:wrs_id]} from item #{item_id}"
+      { success: true, wrs_id: result[:wrs_id], item_id: item_id }
+    else
+      Rails.logger.error "Webflow Webhook: Failed to sync item #{item_id} - #{result[:error]}"
+      { success: false, error: result[:error], reason: result[:reason], item_id: item_id }
+    end
+  rescue => e
+    Rails.logger.error "Webflow Webhook: Error processing item #{item_id}: #{e.message}"
+    { success: false, error: e.message, item_id: item_id }
+  end
 
   def verify_webflow_webhook?
     # Webflow sends a signature header for webhook verification
@@ -137,40 +163,44 @@ class Api::V1::WebhooksController < ActionController::API
 end
 
 =begin
-Webflow Webhook Received: #<ActionController::Parameters {
+Webflow collection_item_published Webhook Payload Structure:
+
 "triggerType" => "collection_item_published",
 "payload" => {
-"id" => "68e6c5e5dfa4f032bc87f13b",
-"siteId" => "618ffc83f3028ad35a166db8",
-"workspaceId" => "686e45402f386a37da2a841b",
-"collectionId" => "619692f4b6773922b32797f2",
-"cmsLocaleId" => nil,
-"lastPublished" => "2025-10-08T20:13:58.741Z",
-"lastUpdated" => "2025-10-08T20:13:58.741Z",
-"createdOn" => "2025-10-08T20:13:25.299Z",
-isArchived" => false,
-"isDraft" => false,
-"fieldData" => {
-"accepted-declined" => "#FFA500",
-"_noSearch" => false,
- "total-incl-vat" => 72,
- "total-exc-vat" => 60,
- "grand-total" => 72,
- "project-summary" => "b56, star, 400446",
- "flat-number" => "65",
- "name" => "b56, star, 400446 - 65",
-"window-location" => "rear",
-"window-1-items-2" => "½ set epoxy resin",
-"window-1-items-prices-3" => "60",
-"slug" => "b56-star-400446-65-6fd4"
-}},
-"controller" => "api/v1/webhooks",
-"action" => "webflow_collection_item_published",
- "webhook" => {"triggerType" => "collection_item_published",
- "payload" => {"id" => "68e6c5e5dfa4f032bc87f13b",
- "siteId" => "618ffc83f3028ad35a166db8",
- "workspaceId" => "686e45402f386a37da2a841b",
- "collectionId" => "619692f4b6773922b32797f2",
- "cmsLocaleId" => nil,
- "lastPublished" => "2025-10-08T20:13:58.741Z", "lastUpdated" => "2025-10-08T20:13:58.741Z", "createdOn" => "2025-10-08T20:13:25.299Z", "isArchived" => false, "isDraft" => false, "fieldData" => {"accepted-declined" => "#FFA500", "_noSearch" => false, "total-incl-vat" => 72, "total-exc-vat" => 60, "grand-total" => 72, "project-summary" => "b56, star, 400446", "flat-number" => "65", "name" => "b56, star, 400446 - 65", "window-location" => "rear", "window-1-items-2" => "½ set epoxy resin", "window-1-items-prices-3" => "60", "slug" => "b56-star-400446-65-6fd4"}}}} permitted: false>
+  "items" => [
+    {
+      "id" => "68e6da253fab2e1905974866",
+      "siteId" => "618ffc83f3028ad35a166db8",
+      "workspaceId" => "686e45402f386a37da2a841b",
+      "collectionId" => "619692f4b6773922b32797f2",
+      "cmsLocaleId" => nil,
+      "lastPublished" => "2025-10-08T22:00:36.371Z",
+      "lastUpdated" => "2025-10-08T22:00:36.371Z",
+      "createdOn" => "2025-10-08T21:39:49.725Z",
+      "isArchived" => false,
+      "isDraft" => false,
+      "fieldData" => {
+        "accepted-declined" => "#FFA500",
+        "_noSearch" => false,
+        "total-incl-vat" => 345.6,
+        "total-exc-vat" => 288,
+        "grand-total" => 345.6,
+        "project-summary" => "1, one, 11",
+        "flat-number" => "111",
+        "name" => "1, one, 11 - 111",
+        "window-location" => "1",
+        "window-1-items-2" => "Easing and adjusting of sash window",
+        "window-1-items-prices-3" => "300",
+        "main-project-image" => {
+          "fileId" => "68e6dae5abbb2d252189d889",
+          "url" => "https://cdn.prod.website-files.com/.../image.jpeg",
+          "alt" => nil
+        },
+        "slug" => "1-one-11-111-afcd"
+      }
+    }
+  ]
+}
+
+Note: The published webhook sends items in an array, unlike the changed webhook
 =end
