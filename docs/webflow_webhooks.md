@@ -74,11 +74,13 @@ https://your-ngrok-url.ngrok.io/api/v1/webhooks/webflow/collection_item_changed
 ### Webhook Flow
 
 1. **Change in Webflow**: A WRS item is created, updated, or published in Webflow
-2. **Webhook Triggered**: Webflow sends a POST request to your webhook endpoint
+2. **Webhook Triggered**: Webflow sends a POST request to your webhook endpoint with complete item data
 3. **Signature Verification**: The webhook verifies the request is from Webflow (if secret is configured)
-4. **Fetch Latest Data**: The webhook fetches the complete item data from Webflow API
-5. **Sync to Rails**: Uses `WrsSyncService` to update the Rails database
+4. **Timestamp Validation**: The webhook validates the timestamp to prevent replay attacks
+5. **Sync to Rails**: Uses `WrsSyncService` to update the Rails database with the webhook payload data
 6. **Response**: Returns success/failure status to Webflow
+
+**Note:** The webhook uses the complete item data included in the webhook payload, so no additional API calls to Webflow are needed. This makes the webhook faster and avoids rate limiting issues.
 
 ### What Gets Synced
 
@@ -118,7 +120,7 @@ Webflow v2 sends a payload like this:
 }
 ```
 
-The webhook extracts the item ID from `payload.id` and fetches the complete item data from Webflow's API to ensure we have the latest information.
+The webhook extracts the item ID from `payload.id` and uses the complete item data included in the webhook payload. This includes all field data, timestamps, and publication status, so no additional API calls are needed.
 
 ## Security
 
@@ -199,11 +201,13 @@ curl -X POST http://localhost:3000/api/v1/webhooks/webflow/collection_item_chang
 
 Common issues:
 - **Missing required fields**: WRS must have `name`, `address`, and `slug`
-- **Invalid item ID**: The item might not exist in Webflow
-- **API errors**: Check that `WEBFLOW_TOKEN` has proper permissions
+- **Invalid item ID**: The item might not exist in the webhook payload
 - **User not found**: Default admin user must exist for new WRS items
+- **Rate limiting**: If you see 429 errors, the webhook might be configured incorrectly or there may be other API calls happening
 
 Check the logs for specific error messages.
+
+**Note:** The webhook no longer makes additional API calls to fetch item data since Webflow v2 includes complete item data in the webhook payload. This eliminates rate limiting issues from webhook processing.
 
 ### Signature Verification Failing
 

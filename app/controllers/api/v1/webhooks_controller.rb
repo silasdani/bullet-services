@@ -18,19 +18,24 @@ class Api::V1::WebhooksController < ActionController::API
         return
       end
 
-      # Extract the item ID from the webhook payload
-      # Webflow v2 sends payload in a nested structure
-      item_id = params.dig(:payload, :id) || params[:_id] || params[:itemId] || params[:id]
+      # Extract the item data from the webhook payload
+      # Webflow v2 sends the complete item data in the payload, so we don't need to fetch it from the API
+      webflow_item = params[:payload]
 
-      unless item_id.present?
-        Rails.logger.error "Webflow Webhook: No item ID found in params: #{params.inspect}"
-        render json: { error: "No item ID provided in webhook" }, status: :bad_request
+      unless webflow_item.present?
+        Rails.logger.error "Webflow Webhook: No payload found in params: #{params.inspect}"
+        render json: { error: "No payload provided in webhook" }, status: :bad_request
         return
       end
 
-      # Get the full item data from Webflow
-      webflow_service = WebflowService.new
-      webflow_item = webflow_service.get_item(item_id)
+      item_id = webflow_item[:id]
+      unless item_id.present?
+        Rails.logger.error "Webflow Webhook: No item ID found in payload: #{webflow_item.inspect}"
+        render json: { error: "No item ID in payload" }, status: :bad_request
+        return
+      end
+
+      Rails.logger.info "Webflow Webhook: Processing item #{item_id}"
 
       # Find the WRS by webflow_item_id or create a new one
       wrs = WindowScheduleRepair.find_by(webflow_item_id: item_id)
@@ -38,7 +43,7 @@ class Api::V1::WebhooksController < ActionController::API
       # Set the user (default to first admin if WRS doesn't exist)
       user = wrs&.user || User.where(role: "admin").first
 
-      # Sync the item from Webflow to Rails
+      # Sync the item from Webflow to Rails using the webhook payload data
       sync_service = WrsSyncService.new(user)
       result = sync_service.sync_single(webflow_item)
 
@@ -55,15 +60,15 @@ class Api::V1::WebhooksController < ActionController::API
           success: false,
           error: result[:error],
           reason: result[:reason]
-        }, status: :unprocessable_entity
+        }, status: :unprocessable_content
       end
 
     rescue WebflowApiError => e
       Rails.logger.error "Webflow Webhook Error: #{e.message}"
       render json: {
         success: false,
-        error: "Failed to fetch item from Webflow: #{e.message}"
-      }, status: :unprocessable_entity
+        error: "Webflow API error: #{e.message}"
+      }, status: :unprocessable_content
     rescue => e
       Rails.logger.error "Webflow Webhook Unexpected Error: #{e.class} - #{e.message}"
       Rails.logger.error e.backtrace.first(5).join("\n")
