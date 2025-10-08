@@ -142,12 +142,22 @@ class WrsSyncService
     base_image_url = (field_data["main-project-image"] && field_data["main-project-image"]["url"])
     windows = []
 
+    Rails.logger.debug "WrsSyncService: Preparing window data from field_data"
+    Rails.logger.debug "  Available window-related fields: #{field_data.keys.select { |k| k.include?('window') }.join(', ')}"
+
     # Check for windows 1-10 to handle cases where windows don't start from 1
     (1..10).each do |idx|
       # For window 1, use "window-location", for others use "window-#{idx}-location"
       location_key = idx == 1 ? "window-location" : "window-#{idx}-location"
       location = field_data[location_key]
-      next if location.blank?
+
+      # Skip if location is nil, empty string, or just whitespace
+      if location.blank? || location.to_s.strip.empty?
+        Rails.logger.debug "  Window #{idx}: No valid location (#{location_key}=#{location.inspect})"
+        next
+      end
+
+      Rails.logger.debug "  Window #{idx}: Found location='#{location}'"
 
       # Try multiple variations of items field names
       items_keys = if idx == 1
@@ -166,6 +176,16 @@ class WrsSyncService
       items_val = wf_first(field_data, *items_keys)
       prices_val = wf_first(field_data, *prices_keys)
 
+      Rails.logger.debug "    Items: #{items_val.inspect}"
+      Rails.logger.debug "    Prices: #{prices_val.inspect}"
+
+      # Skip window if it has no items (empty window with just location shouldn't create a window)
+      # This prevents duplicate windows when Webflow sends empty window fields
+      if items_val.blank? || items_val.to_s.strip.empty?
+        Rails.logger.debug "  Window #{idx}: Skipping - has location='#{location}' but no items"
+        next
+      end
+
       # Handle image URL - can be from main-project-image (window 1) or window-specific field
       image_val = if idx == 1
         base_image_url
@@ -181,7 +201,7 @@ class WrsSyncService
         image_val
       end
 
-      windows << {
+      window_info = {
         location: location,
         items: items_val,
         prices: prices_val,
@@ -189,6 +209,19 @@ class WrsSyncService
         created_on: wrs_data["createdOn"],
         last_updated: wrs_data["lastUpdated"]
       }
+
+      windows << window_info
+      Rails.logger.debug "  Window #{idx}: ✓ Added to sync list"
+    end
+
+    Rails.logger.info "WrsSyncService: Prepared #{windows.size} window(s) from Webflow data"
+    windows.each_with_index do |w, i|
+      items_count = parse_items(w[:items]).size
+      prices_count = parse_prices(w[:prices]).size
+      Rails.logger.info "  Window #{i + 1}: location='#{w[:location]}', items=#{items_count}, prices=#{prices_count}"
+      if items_count != prices_count
+        Rails.logger.warn "    ⚠️  Mismatch: #{items_count} items but #{prices_count} prices"
+      end
     end
 
     windows
@@ -196,6 +229,8 @@ class WrsSyncService
 
   def create_windows_and_tools_bulk(wrs, window_data)
     return { windows_created: 0, tools_created: 0, mismatched_rows: 0 } if window_data.empty?
+
+    Rails.logger.debug "WrsSyncService: Creating #{window_data.size} window(s) in database"
 
     # Bulk create windows
     windows_to_create = window_data.map do |window_info|
@@ -210,6 +245,7 @@ class WrsSyncService
 
     # Use insert_all for bulk window creation
     Window.insert_all(windows_to_create, returning: [ :id, :location ])
+    Rails.logger.debug "  ✓ Inserted #{windows_to_create.size} windows into database"
 
     # Get the created windows
     created_windows = Window.where(window_schedule_repair_id: wrs.id)
@@ -249,7 +285,14 @@ class WrsSyncService
     end
 
     # Bulk insert tools if any
-    Tool.insert_all(tools_to_create) if tools_to_create.any?
+    if tools_to_create.any?
+      Tool.insert_all(tools_to_create)
+      Rails.logger.debug "  ✓ Inserted #{tools_to_create.size} tools into database"
+    else
+      Rails.logger.debug "  ⚠️  No tools to insert"
+    end
+
+    Rails.logger.info "WrsSyncService: Created #{created_windows.size} windows and #{tools_to_create.size} tools"
 
     { windows_created: created_windows.size, tools_created: tools_to_create.size, mismatched_rows: mismatches }
   end

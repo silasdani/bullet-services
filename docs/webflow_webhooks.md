@@ -112,6 +112,8 @@ The webhook syncs all WRS data including:
 - Image URLs
 - Timestamps (created, updated, published)
 
+**Important**: The sync service only creates windows that have **both** a location **and** items/tools. This prevents duplicate empty windows from being created when Webflow sends empty fields from its CMS collection structure.
+
 ## Webhook Payload
 
 Webflow v2 sends a payload like this:
@@ -227,6 +229,38 @@ Common issues:
 Check the logs for specific error messages.
 
 **Note:** The webhook no longer makes additional API calls to fetch item data since Webflow v2 includes complete item data in the webhook payload. This eliminates rate limiting issues from webhook processing.
+
+### Duplicate Windows Issue
+
+If you're seeing duplicate or empty windows being created:
+
+**Cause**: Webflow's CMS collection has fields for multiple windows (windows 1-5) in its schema. When the webhook sends data, it includes ALL fields from the collection, even empty ones. 
+
+**Solution**: The sync service now validates that a window has **both** a location **AND** items before creating it. Empty windows with just a location field are skipped.
+
+**Debugging**: Enable debug logging to see exactly what windows are being detected and created:
+
+```ruby
+# In Rails console or logs
+Rails.logger.level = :debug
+```
+
+You'll see output like:
+```
+WrsSyncService: Preparing window data from field_data
+  Available window-related fields: window-location, window-1-items-2, window-1-items-prices-3, window-2-location...
+  Window 1: Found location='Rear Elevation'
+    Items: "Conservation joint repair x1"
+    Prices: "110.0"
+  Window 1: ✓ Added to sync list
+  Window 2: No valid location (window-2-location="")
+  Window 3: Found location='Front Door'
+    Items: ""
+    Prices: ""
+  Window 3: Skipping - has location='Front Door' but no items
+WrsSyncService: Prepared 1 window(s) from Webflow data
+  Window 1: location='Rear Elevation', items=1, prices=1
+```
 
 ### Signature Verification Failing
 
