@@ -10,6 +10,16 @@ class Api::V1::BaseController < ActionController::API
   private
 
   def user_not_authorized(exception)
-    render json: { error: exception.policy.class.to_s.underscore + "." + exception.query }, status: :forbidden
+    policy_name = exception.policy.class.to_s.underscore
+    query = exception.query.to_s
+
+    # Try to get a custom message from I18n, fall back to default if not found
+    message = I18n.t(
+      query,
+      scope: [ :pundit, policy_name ],
+      default: I18n.t("pundit.default")
+    )
+
+    render json: { error: message }, status: :forbidden
   end
 end

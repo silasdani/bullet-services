@@ -86,8 +86,9 @@ item_data = {
 }
 item = webflow.create_item("site_id", "collection_id", item_data)
 
-# Publish items
-webflow.publish_items("site_id", "collection_id", ["item_id_1", "item_id_2"])
+# Publish items (sets isDraft to false)
+# Note: In Webflow v2, publishing is done by updating the isDraft field
+webflow.publish_items(["item_id_1", "item_id_2"])
 
 # Manage forms
 forms = webflow.list_forms("site_id")
@@ -127,8 +128,8 @@ The integration provides REST API endpoints for all Webflow operations:
 - `POST /api/v1/webflow/sites/:site_id/collections/:collection_id/items` - Create item
 - `PATCH /api/v1/webflow/sites/:site_id/collections/:collection_id/items/:item_id` - Update item
 - `DELETE /api/v1/webflow/sites/:site_id/collections/:collection_id/items/:item_id` - Delete item
-- `POST /api/v1/webflow/sites/:site_id/collections/:collection_id/items/publish` - Publish items
-- `POST /api/v1/webflow/sites/:site_id/collections/:collection_id/items/unpublish` - Unpublish items
+- `POST /api/v1/webflow/sites/:site_id/collections/:collection_id/items/publish` - Publish items (sets isDraft to false via PATCH)
+- `POST /api/v1/webflow/sites/:site_id/collections/:collection_id/items/unpublish` - Unpublish items (sets isDraft to true via PATCH)
 
 ### Forms
 - `GET /api/v1/webflow/sites/:site_id/forms` - List forms

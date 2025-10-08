@@ -47,13 +47,17 @@ class WebflowService
   end
 
   def publish_items(item_ids)
-    make_request(:post, "/sites/#{@site_id}/collections/#{@collection_id}/items/publish",
+    # Webflow v2 publish endpoint
+    # POST /collections/{collectionId}/items/publish
+    make_request(:post, "/collections/#{@collection_id}/items/publish",
                  body: { itemIds: item_ids })
   end
 
   def unpublish_items(item_ids)
-    make_request(:post, "/sites/#{@site_id}/collections/#{@collection_id}/items/unpublish",
-                 body: { itemIds: item_ids })
+    # Webflow v2: Delete items from live collection
+    # Format: DELETE /collections/{collectionId}/items/live with items array
+    make_request(:delete, "/collections/#{@collection_id}/items/live",
+                 body: { items: item_ids.map { |id| { id: id } } })
   end
 
   # Legacy method for backward compatibility
