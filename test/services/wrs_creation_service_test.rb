@@ -11,14 +11,14 @@ class WrsCreationServiceTest < ActiveSupport::TestCase
         {
           location: "Kitchen",
           tools_attributes: [
-            { name: "Glass Panel", price: 100.0 },
-            { name: "Installation", price: 50.0 }
+            { name: "Glass Panel", price: 100 },
+            { name: "Installation", price: 50 }
           ]
         },
         {
           location: "Living Room",
           tools_attributes: [
-            { name: "Frame Repair", price: 75.0 }
+            { name: "Frame Repair", price: 75 }
           ]
         }
       ]
@@ -69,7 +69,7 @@ class WrsCreationServiceTest < ActiveSupport::TestCase
           id: wrs.windows.first.id,
           location: "Updated Kitchen",
           tools_attributes: [
-            { name: "New Glass", price: 150.0 }
+            { name: "New Glass", price: 150 }
           ]
         }
       ]
