@@ -10,6 +10,7 @@ class Api::V1::WebhooksController < ActionController::API
     begin
       # Log the webhook for debugging
       Rails.logger.info "Webflow Webhook Received: #{params.inspect}"
+      Rails.logger.info "Webflow Webhook Headers: #{request.headers.to_h.select { |k, _| k.start_with?('HTTP_') || k == 'X-Webflow-Signature' }.inspect}"
 
       # Verify webhook signature if available
       unless verify_webflow_webhook?
@@ -18,9 +19,11 @@ class Api::V1::WebhooksController < ActionController::API
       end
 
       # Extract the item ID from the webhook payload
-      item_id = params[:_id] || params[:itemId] || params[:id]
+      # Webflow v2 sends payload in a nested structure
+      item_id = params.dig(:payload, :id) || params[:_id] || params[:itemId] || params[:id]
 
       unless item_id.present?
+        Rails.logger.error "Webflow Webhook: No item ID found in params: #{params.inspect}"
         render json: { error: "No item ID provided in webhook" }, status: :bad_request
         return
       end
@@ -79,13 +82,17 @@ class Api::V1::WebhooksController < ActionController::API
     webhook_secret = ENV["WEBFLOW_WEBHOOK_SECRET"]
 
     # If no secret is configured, allow all requests (less secure)
-    return true if webhook_secret.blank?
+    if webhook_secret.blank?
+      Rails.logger.info "Webflow Webhook: No WEBFLOW_WEBHOOK_SECRET configured, skipping signature verification"
+      return true
+    end
 
     # Get the signature from headers
     signature = request.headers["X-Webflow-Signature"]
 
     if signature.blank?
-      Rails.logger.warn "Webflow Webhook: No signature provided"
+      Rails.logger.warn "Webflow Webhook: No X-Webflow-Signature header provided"
+      Rails.logger.warn "Available headers: #{request.headers.to_h.select { |k, _| k.start_with?('HTTP_') }.keys.join(', ')}"
       return false
     end
 
@@ -94,10 +101,18 @@ class Api::V1::WebhooksController < ActionController::API
     body = request.raw_post
     expected_signature = OpenSSL::HMAC.hexdigest("SHA256", webhook_secret, body)
 
+    Rails.logger.debug "Webflow Webhook Signature Verification:"
+    Rails.logger.debug "  Received signature: #{signature}"
+    Rails.logger.debug "  Expected signature: #{expected_signature}"
+    Rails.logger.debug "  Body length: #{body.length}"
+
     if signature == expected_signature
+      Rails.logger.info "Webflow Webhook: Signature verified successfully"
       true
     else
       Rails.logger.warn "Webflow Webhook: Invalid signature"
+      Rails.logger.warn "  Received: #{signature}"
+      Rails.logger.warn "  Expected: #{expected_signature}"
       false
     end
   end
