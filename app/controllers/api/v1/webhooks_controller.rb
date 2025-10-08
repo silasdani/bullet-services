@@ -74,7 +74,8 @@ class Api::V1::WebhooksController < ActionController::API
 
   def process_webflow_item(webflow_item)
     # Convert ActionController::Parameters to hash with string keys for compatibility
-    webflow_item_hash = webflow_item.to_h.deep_stringify_keys
+    # Use to_unsafe_h to bypass strong parameters since this is webhook data
+    webflow_item_hash = webflow_item.to_unsafe_h.deep_stringify_keys
 
     item_id = webflow_item_hash["id"]
     unless item_id.present?
