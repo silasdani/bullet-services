@@ -54,6 +54,7 @@ class WindowScheduleRepair < ApplicationRecord
   validates :slug, presence: true, uniqueness: true
 
   before_validation :generate_slug, on: :create
+  before_validation :generate_reference_number
   before_validation :set_default_webflow_flags, on: :create
 
   before_save :calculate_totals
@@ -197,6 +198,22 @@ class WindowScheduleRepair < ApplicationRecord
     return if flat_number.blank?
 
     self.slug = "#{address.parameterize}-#{flat_number.parameterize}-#{SecureRandom.hex(2)}"
+  end
+
+  def generate_reference_number
+    return if reference_number.present?
+
+    # Generate a user-friendly reference number: WRS-YYYYMMDD-###
+    # Format: WRS-20241008-001
+    date_part = Time.current.strftime("%Y%m%d")
+
+    # Find the highest sequence number for today
+    today_wrs_count = WindowScheduleRepair.unscoped
+                                          .where("reference_number LIKE ?", "WRS-#{date_part}-%")
+                                          .count
+
+    sequence = sprintf("%03d", today_wrs_count + 1)
+    self.reference_number = "WRS-#{date_part}-#{sequence}"
   end
 
   def set_default_webflow_flags

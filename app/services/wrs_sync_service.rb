@@ -63,6 +63,7 @@ class WrsSyncService
       webflow_service.update_item(wrs.webflow_item_id, item_data)
 
       Rails.logger.info "WrsSyncService: Synced recalculated totals back to Webflow for WRS ##{wrs.id}"
+      Rails.logger.info "  Reference Number: #{wrs.reference_number}"
       Rails.logger.info "  Total incl VAT: #{wrs.total_vat_included_price}, Total excl VAT: #{wrs.total_vat_excluded_price}, Grand Total: #{wrs.grand_total}"
     rescue => e
       Rails.logger.error "WrsSyncService: Error syncing back to Webflow for WRS ##{wrs.id}: #{e.message}"
@@ -97,11 +98,15 @@ class WrsSyncService
       total_excl_vat = wf_first(field_data, "total-exc-vat", "total-excl-vat", "total_exc_vat", "totalExcVat")
       grand_total_val = wf_first(field_data, "grand-total", "grand_total", "grandTotal")
 
+      # Extract reference number from Webflow (if present)
+      ref_number = wf_first(field_data, "reference-number", "reference_number", "referenceNumber")
+
       wrs.assign_attributes(
         name: field_data["name"] || "WRS #{wrs_data['id']}",
         address: field_data["project-summary"],
         flat_number: field_data["flat-number"],
         details: field_data["project-summary"],
+        reference_number: ref_number, # Will be auto-generated if blank
         total_vat_included_price: total_incl_vat&.to_f || 0.0,
         total_vat_excluded_price: total_excl_vat&.to_f || 0.0,
         grand_total: grand_total_val&.to_f || 0.0,
