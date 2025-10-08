@@ -1,5 +1,5 @@
 class Users::SessionsController < Devise::SessionsController
-  before_action :check_admin_access, only: [:create]
+  before_action :check_admin_access, only: [ :create ]
 
   private
 

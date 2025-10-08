@@ -42,13 +42,13 @@ class MirrorWebflowImageJob < ApplicationJob
 
   def open_uri_for(url)
     uri = URI.parse(url)
-    raise ArgumentError, 'Only HTTPS is allowed' unless uri.is_a?(URI::HTTPS)
+    raise ArgumentError, "Only HTTPS is allowed" unless uri.is_a?(URI::HTTPS)
 
     # Stream into Tempfile to avoid loading full file into memory
-    tempfile = Tempfile.new(["webflow", File.extname(uri.path)], binmode: true)
+    tempfile = Tempfile.new([ "webflow", File.extname(uri.path) ], binmode: true)
     Net::HTTP.start(uri.host, uri.port, use_ssl: true) do |http|
       http.request_get(uri.request_uri) do |resp|
-        raise "Failed to download image: HTTP #{resp.code}" unless resp.code.to_i.between?(200,299)
+        raise "Failed to download image: HTTP #{resp.code}" unless resp.code.to_i.between?(200, 299)
         resp.read_body { |chunk| tempfile.write(chunk) }
       end
     end

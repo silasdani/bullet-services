@@ -60,15 +60,15 @@ class WindowScheduleRepair < ApplicationRecord
 
   # Automatic Webflow synchronization
   # Only syncs draft items to protect published content
-  after_commit :auto_sync_to_webflow, on: [:create, :update], if: :should_auto_sync_to_webflow?
+  after_commit :auto_sync_to_webflow, on: [ :create, :update ], if: :should_auto_sync_to_webflow?
 
   scope :for_user, ->(user) {
     case user.role
-    when 'admin'
+    when "admin"
       all
-    when 'employee'
+    when "employee"
       where(user: user)
-    when 'client'
+    when "client"
       where(user: user)
     end
   }
@@ -171,16 +171,16 @@ class WindowScheduleRepair < ApplicationRecord
 
   def status_color
     case status
-    when 'pending'
-      '#FFA500' # Orange for pending
-    when 'approved'
-      '#00FF00' # Green for approved
-    when 'rejected'
-      '#FF0000' # Red for rejected
-    when 'completed'
-      '#0000FF' # Blue for completed
+    when "pending"
+      "#FFA500" # Orange for pending
+    when "approved"
+      "#00FF00" # Green for approved
+    when "rejected"
+      "#FF0000" # Red for rejected
+    when "completed"
+      "#0000FF" # Blue for completed
     else
-      '#FFA500' # Default orange for pending
+      "#FFA500" # Default orange for pending
     end
   end
 

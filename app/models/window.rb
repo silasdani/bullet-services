@@ -39,11 +39,11 @@ class Window < ApplicationRecord
   end
 
   def tools_list
-    tools.map(&:name).join(', ')
+    tools.map(&:name).join(", ")
   end
 
   def tools_prices_list
-    tools.map(&:price).join(', ')
+    tools.map(&:price).join(", ")
   end
 
   def total_price
@@ -79,7 +79,7 @@ class Window < ApplicationRecord
 
     # Only require image if it was previously present and now missing
     if image_was_present? && !image.present?
-      errors.add(:image, 'must be present')
+      errors.add(:image, "must be present")
     end
   end
 

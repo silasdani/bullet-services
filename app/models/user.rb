@@ -6,7 +6,7 @@ class User < ApplicationRecord
   has_one_attached :image
 
   devise :database_authenticatable, :registerable,
-         :recoverable, :rememberable, :validatable #, :confirmable
+         :recoverable, :rememberable, :validatable # , :confirmable
 
   validates :role, presence: true
 
@@ -27,15 +27,15 @@ class User < ApplicationRecord
 
   # Role helper methods
   def is_admin?
-    role == 'admin' || role == 2 || role == 'super_admin' || role == 3
+    role == "admin" || role == 2 || role == "super_admin" || role == 3
   end
 
   def is_employee?
-    role == 'employee' || role == 1
+    role == "employee" || role == 1
   end
 
   def is_super_admin?
-    role == 'super_admin' || role == 3
+    role == "super_admin" || role == 3
   end
 
   def token_validation_response

@@ -9,14 +9,14 @@ class WebflowImageMirrorService
       case attachment
       when ActiveStorage::Attached::One
         current = attachment.blob
-        if current&.metadata.is_a?(Hash) && current.metadata['source_url'] == source_url
+        if current&.metadata.is_a?(Hash) && current.metadata["source_url"] == source_url
           return
         else
           attachment.purge
         end
       when ActiveStorage::Attached::Many
         blobs = attachment.blobs
-        if blobs.any? { |b| b.metadata.is_a?(Hash) && b.metadata['source_url'] == source_url }
+        if blobs.any? { |b| b.metadata.is_a?(Hash) && b.metadata["source_url"] == source_url }
           return
         else
           attachment.purge
@@ -60,19 +60,19 @@ class WebflowImageMirrorService
         retry
       else
         Rails.logger.error "Skipping attach due to FK error for blob ##{blob.id}: #{e.class} - #{e.message}"
-        return
+        nil
       end
     end
   end
 
   def self.download(url)
     uri = URI.parse(url)
-    raise ArgumentError, 'Only HTTPS is allowed' unless uri.is_a?(URI::HTTPS)
+    raise ArgumentError, "Only HTTPS is allowed" unless uri.is_a?(URI::HTTPS)
 
-    tempfile = Tempfile.new(["webflow", File.extname(uri.path)], binmode: true)
+    tempfile = Tempfile.new([ "webflow", File.extname(uri.path) ], binmode: true)
     Net::HTTP.start(uri.host, uri.port, use_ssl: true) do |http|
       http.request_get(uri.request_uri) do |resp|
-        raise "Failed to download image: HTTP #{resp.code}" unless resp.code.to_i.between?(200,299)
+        raise "Failed to download image: HTTP #{resp.code}" unless resp.code.to_i.between?(200, 299)
         resp.read_body { |chunk| tempfile.write(chunk) }
       end
     end

@@ -137,21 +137,21 @@ class WebflowService
 
   def handle_error_response(response)
     error_message = case response.code
-                    when 400
+    when 400
                       "Bad Request - Invalid parameters"
-                    when 401
+    when 401
                       "Unauthorized - Check your API token"
-                    when 403
+    when 403
                       "Forbidden - Insufficient permissions"
-                    when 404
+    when 404
                       "Not Found - Resource not found"
-                    when 429
+    when 429
                       "Rate Limited - Too many requests"
-                    when 500..599
+    when 500..599
                       "Server Error - Webflow API issue"
-                    else
+    else
                       "HTTP #{response.code} - #{response.body}"
-                    end
+    end
 
     raise WebflowApiError.new(error_message, response.code, response.body)
   end

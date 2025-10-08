@@ -1,5 +1,5 @@
 class Api::V1::WindowsController < Api::V1::BaseController
-  before_action :set_window, only: [:show, :update, :destroy]
+  before_action :set_window, only: [ :show, :update, :destroy ]
 
   def index
     @windows = policy_scope(Window)

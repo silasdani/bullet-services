@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 class Api::V1::UsersController < Api::V1::BaseController
-  before_action :set_user, only: [:show, :update, :destroy]
+  before_action :set_user, only: [ :show, :update, :destroy ]
 
   def index
     authorize User
-    @users = User.includes([image_attachment: :blob]).order(created_at: :desc)
+    @users = User.includes([ image_attachment: :blob ]).order(created_at: :desc)
     render json: @users
   end
 
@@ -48,7 +48,7 @@ class Api::V1::UsersController < Api::V1::BaseController
     if current_user
       render json: current_user
     else
-      render json: { error: 'Not authenticated' }, status: :unauthorized
+      render json: { error: "Not authenticated" }, status: :unauthorized
     end
   end
 
@@ -57,7 +57,7 @@ class Api::V1::UsersController < Api::V1::BaseController
   def set_user
     @user = User.find(params[:id])
   rescue ActiveRecord::RecordNotFound
-    render json: { error: 'User not found' }, status: :not_found
+    render json: { error: "User not found" }, status: :not_found
   end
 
   def user_params

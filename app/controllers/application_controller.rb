@@ -18,6 +18,6 @@ class ApplicationController < ActionController::Base
   end
 
   def auth_request?
-    request.path.start_with?('/auth')
+    request.path.start_with?("/auth")
   end
 end

@@ -1,8 +1,8 @@
 class Api::V1::WindowScheduleRepairsController < Api::V1::BaseController
-  before_action :set_window_schedule_repair, only: [:show, :update, :destroy, :send_to_webflow, :restore, :publish_to_webflow, :unpublish_from_webflow]
+  before_action :set_window_schedule_repair, only: [ :show, :update, :destroy, :send_to_webflow, :restore, :publish_to_webflow, :unpublish_from_webflow ]
 
   def index
-    @q = policy_scope(WindowScheduleRepair).includes(:user, :windows, windows: [:tools, :image_attachment]).ransack(params[:q])
+    @q = policy_scope(WindowScheduleRepair).includes(:user, :windows, windows: [ :tools, :image_attachment ]).ransack(params[:q])
     @window_schedule_repairs = @q.result.page(params[:page]).per(params[:per_page] || 100)
 
     render json: {
@@ -94,11 +94,11 @@ class Api::V1::WindowScheduleRepairsController < Api::V1::BaseController
       # First ensure the item exists in Webflow (create as draft if needed)
       unless @window_schedule_repair.webflow_item_id.present?
         response = service.send_window_schedule_repair(@window_schedule_repair)
-        @window_schedule_repair.update!(webflow_item_id: response['id'])
+        @window_schedule_repair.update!(webflow_item_id: response["id"])
       end
 
       # Publish the item
-      service.publish_items([@window_schedule_repair.webflow_item_id])
+      service.publish_items([ @window_schedule_repair.webflow_item_id ])
 
       # Update local status
       @window_schedule_repair.mark_as_published!
@@ -136,7 +136,7 @@ class Api::V1::WindowScheduleRepairsController < Api::V1::BaseController
       end
 
       service = WebflowService.new
-      service.unpublish_items([@window_schedule_repair.webflow_item_id])
+      service.unpublish_items([ @window_schedule_repair.webflow_item_id ])
 
       # Update local status
       @window_schedule_repair.mark_as_draft!
@@ -164,10 +164,10 @@ class Api::V1::WindowScheduleRepairsController < Api::V1::BaseController
 
   def set_window_schedule_repair
     # For restore action, we need to find deleted records too
-    if action_name == 'restore'
-      @window_schedule_repair = WindowScheduleRepair.with_deleted.includes(:user, :windows, windows: [:tools, :image_attachment]).find(params[:id])
+    if action_name == "restore"
+      @window_schedule_repair = WindowScheduleRepair.with_deleted.includes(:user, :windows, windows: [ :tools, :image_attachment ]).find(params[:id])
     else
-      @window_schedule_repair = WindowScheduleRepair.includes(:user, :windows, windows: [:tools, :image_attachment]).find(params[:id])
+      @window_schedule_repair = WindowScheduleRepair.includes(:user, :windows, windows: [ :tools, :image_attachment ]).find(params[:id])
     end
   end
 
@@ -182,7 +182,7 @@ class Api::V1::WindowScheduleRepairsController < Api::V1::BaseController
         images: [],
         windows_attributes: [
           :id, :location, :image, :_destroy,
-          tools_attributes: [:id, :name, :price, :_destroy]
+          tools_attributes: [ :id, :name, :price, :_destroy ]
         ]
       )
     else
@@ -194,7 +194,7 @@ class Api::V1::WindowScheduleRepairsController < Api::V1::BaseController
         images: [],
         windows_attributes: [
           :id, :location, :image, :_destroy,
-          tools_attributes: [:id, :name, :price, :_destroy]
+          tools_attributes: [ :id, :name, :price, :_destroy ]
         ]
       )
     end

@@ -33,25 +33,25 @@ class WrsSyncService
   def process_wrs_item(wrs_data)
     begin
       # Skip if required fields are missing
-      if wrs_data['fieldData']['project-summary'].blank? || wrs_data['fieldData']['name'].blank?
+      if wrs_data["fieldData"]["project-summary"].blank? || wrs_data["fieldData"]["name"].blank?
         @total_skipped += 1
-        return { success: false, reason: 'missing_required_fields' }
+        return { success: false, reason: "missing_required_fields" }
       end
 
       # Find or initialize WRS by webflow_item_id
-      wrs = WindowScheduleRepair.find_or_initialize_by(webflow_item_id: wrs_data['id'])
+      wrs = WindowScheduleRepair.find_or_initialize_by(webflow_item_id: wrs_data["id"])
 
       # Set user for new records
       wrs.user = @admin_user if wrs.new_record? && @admin_user
 
       # Update WRS basic information
-      status_color = wrs_data['fieldData']['accepted-declined']
-      field_data = wrs_data['fieldData']
+      status_color = wrs_data["fieldData"]["accepted-declined"]
+      field_data = wrs_data["fieldData"]
 
       # Extract price fields with fallback options
-      total_incl_vat = wf_first(field_data, 'total-incl-vat', 'total_incl_vat', 'totalInclVat')
-      total_excl_vat = wf_first(field_data, 'total-exc-vat', 'total-excl-vat', 'total_exc_vat', 'totalExcVat')
-      grand_total_val = wf_first(field_data, 'grand-total', 'grand_total', 'grandTotal')
+      total_incl_vat = wf_first(field_data, "total-incl-vat", "total_incl_vat", "totalInclVat")
+      total_excl_vat = wf_first(field_data, "total-exc-vat", "total-excl-vat", "total_exc_vat", "totalExcVat")
+      grand_total_val = wf_first(field_data, "grand-total", "grand_total", "grandTotal")
 
       # Debug output for price fields
       if total_incl_vat.nil? && total_excl_vat.nil?
@@ -60,25 +60,25 @@ class WrsSyncService
       end
 
       wrs.assign_attributes(
-        name: field_data['name'] || "WRS #{wrs_data['id']}",
-        address: field_data['project-summary'],
-        flat_number: field_data['flat-number'],
-        details: field_data['project-summary'],
+        name: field_data["name"] || "WRS #{wrs_data['id']}",
+        address: field_data["project-summary"],
+        flat_number: field_data["flat-number"],
+        details: field_data["project-summary"],
         total_vat_included_price: total_incl_vat&.to_f || 0.0,
         total_vat_excluded_price: total_excl_vat&.to_f || 0.0,
         grand_total: grand_total_val&.to_f || 0.0,
         status: map_status_color_to_status(status_color),
         status_color: status_color,
-        slug: field_data['slug'] || "wrs-#{wrs_data['id']}",
-        last_published: wrs_data['lastPublished'],
-        is_draft: wrs_data['isDraft'],
-        is_archived: wrs_data['isArchived'],
-        webflow_main_image_url: (field_data['main-project-image'] && field_data['main-project-image']['url'])
+        slug: field_data["slug"] || "wrs-#{wrs_data['id']}",
+        last_published: wrs_data["lastPublished"],
+        is_draft: wrs_data["isDraft"],
+        is_archived: wrs_data["isArchived"],
+        webflow_main_image_url: (field_data["main-project-image"] && field_data["main-project-image"]["url"])
       )
 
       # Apply Webflow timestamps to the record if present
-      wrs.created_at = Time.parse(wrs_data['createdOn']) rescue wrs.created_at
-      wrs.updated_at = Time.parse(wrs_data['lastUpdated']) rescue wrs.updated_at
+      wrs.created_at = Time.parse(wrs_data["createdOn"]) rescue wrs.created_at
+      wrs.updated_at = Time.parse(wrs_data["lastUpdated"]) rescue wrs.updated_at
 
       # Save the WRS first
       wrs.save!
@@ -90,7 +90,7 @@ class WrsSyncService
       wrs.windows.delete_all
 
       # Prepare window data
-      window_data = prepare_window_data(wrs_data['fieldData'], wrs_data)
+      window_data = prepare_window_data(wrs_data["fieldData"], wrs_data)
 
       # Bulk create windows and tools
       created_stats = create_windows_and_tools_bulk(wrs, window_data)
@@ -107,7 +107,7 @@ class WrsSyncService
 
   def render_progress(processed, total)
     width = 40
-    ratio = [[processed.to_f / [total, 1].max, 0].max, 1].min
+    ratio = [ [ processed.to_f / [ total, 1 ].max, 0 ].max, 1 ].min
     filled = (ratio * width).floor
     bar = "[" + ("#" * filled) + ("-" * (width - filled)) + "]"
     percent = (ratio * 100).round(1)
@@ -147,16 +147,16 @@ class WrsSyncService
 
       # Try multiple variations of items field names
       items_keys = if idx == 1
-        ["window-1-items-2", "window-1-items", "window-items"]
+        [ "window-1-items-2", "window-1-items", "window-items" ]
       else
-        ["window-#{idx}-items-2", "window-#{idx}-items"]
+        [ "window-#{idx}-items-2", "window-#{idx}-items" ]
       end
 
       # Try multiple variations of prices field names
       prices_keys = if idx == 1
-        ["window-1-items-prices-3", "window-1-items-prices", "window-items-prices"]
+        [ "window-1-items-prices-3", "window-1-items-prices", "window-items-prices" ]
       else
-        ["window-#{idx}-items-prices-3", "window-#{idx}-items-prices"]
+        [ "window-#{idx}-items-prices-3", "window-#{idx}-items-prices" ]
       end
 
       items_val = wf_first(field_data, *items_keys)
@@ -205,7 +205,7 @@ class WrsSyncService
     end
 
     # Use insert_all for bulk window creation
-    Window.insert_all(windows_to_create, returning: [:id, :location])
+    Window.insert_all(windows_to_create, returning: [ :id, :location ])
 
     # Get the created windows
     created_windows = Window.where(window_schedule_repair_id: wrs.id)

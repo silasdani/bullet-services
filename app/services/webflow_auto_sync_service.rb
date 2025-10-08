@@ -10,9 +10,9 @@ class WebflowAutoSyncService
 
   def sync
     # Safety checks
-    return { success: false, reason: 'record_deleted' } if @wrs.deleted?
-    return { success: false, reason: 'not_draft' } unless should_auto_sync?
-    return { success: false, reason: 'invalid_data' } unless valid_for_sync?
+    return { success: false, reason: "record_deleted" } if @wrs.deleted?
+    return { success: false, reason: "not_draft" } unless should_auto_sync?
+    return { success: false, reason: "invalid_data" } unless valid_for_sync?
 
     begin
       if @wrs.webflow_item_id.present?
@@ -53,18 +53,18 @@ class WebflowAutoSyncService
     response = @webflow_service.create_item(item_data)
 
     # Update the WRS with the Webflow item ID
-    @wrs.update_column(:webflow_item_id, response['id'])
+    @wrs.update_column(:webflow_item_id, response["id"])
 
     Rails.logger.info "WebflowAutoSync: Created WRS ##{@wrs.id} in Webflow as draft (#{response['id']})"
 
-    { success: true, action: 'created', webflow_item_id: response['id'] }
+    { success: true, action: "created", webflow_item_id: response["id"] }
   end
 
   def update_webflow_item
     # Only update if it's still a draft
     unless @wrs.is_draft?
       Rails.logger.info "WebflowAutoSync: Skipping WRS ##{@wrs.id} - item is published"
-      return { success: false, reason: 'item_published' }
+      return { success: false, reason: "item_published" }
     end
 
     # Prepare data with isDraft: true to maintain draft status
@@ -74,6 +74,6 @@ class WebflowAutoSyncService
 
     Rails.logger.info "WebflowAutoSync: Updated WRS ##{@wrs.id} in Webflow (#{@wrs.webflow_item_id})"
 
-    { success: true, action: 'updated', webflow_item_id: @wrs.webflow_item_id }
+    { success: true, action: "updated", webflow_item_id: @wrs.webflow_item_id }
   end
 end

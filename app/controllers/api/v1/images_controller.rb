@@ -1,5 +1,5 @@
 class Api::V1::ImagesController < Api::V1::BaseController
-  before_action :set_window, only: [:upload_window_image]
+  before_action :set_window, only: [ :upload_window_image ]
 
   def upload_window_image
     authorize @window, :update?
@@ -10,7 +10,7 @@ class Api::V1::ImagesController < Api::V1::BaseController
     if result[:success]
       render json: result
     else
-      render json: { error: result[:errors].join(', ') }, status: :unprocessable_content
+      render json: { error: result[:errors].join(", ") }, status: :unprocessable_content
     end
   end
 
@@ -20,13 +20,13 @@ class Api::V1::ImagesController < Api::V1::BaseController
     authorize @window_schedule_repair, :update?
 
     if params[:image].blank?
-      render json: { error: 'No image provided' }, status: :unprocessable_content
+      render json: { error: "No image provided" }, status: :unprocessable_content
       return
     end
 
     begin
       # Create a temporary window to handle the image upload
-      temp_window = @window_schedule_repair.windows.build(location: 'Temporary')
+      temp_window = @window_schedule_repair.windows.build(location: "Temporary")
 
       service = WindowImageUploadService.new(temp_window)
       result = service.upload_image(params[:image])
@@ -34,11 +34,11 @@ class Api::V1::ImagesController < Api::V1::BaseController
       if result[:success]
         render json: result
       else
-        render json: { error: result[:errors].join(', ') }, status: :unprocessable_content
+        render json: { error: result[:errors].join(", ") }, status: :unprocessable_content
       end
     rescue => e
       Rails.logger.error "Window image upload for WRS error: #{e.message}"
-      render json: { error: 'Failed to upload image' }, status: :internal_server_error
+      render json: { error: "Failed to upload image" }, status: :internal_server_error
     end
   end
 
@@ -47,7 +47,7 @@ class Api::V1::ImagesController < Api::V1::BaseController
     authorize @window_schedule_repair, :update?
 
     if params[:images].blank?
-      render json: { error: 'No images provided' }, status: :unprocessable_content
+      render json: { error: "No images provided" }, status: :unprocessable_content
       return
     end
 
@@ -67,13 +67,13 @@ class Api::V1::ImagesController < Api::V1::BaseController
 
       render json: {
         success: true,
-        message: 'Images uploaded successfully',
+        message: "Images uploaded successfully",
         image_count: @window_schedule_repair.images.count,
         image_urls: @window_schedule_repair.images.map { |img| url_for(img) }
       }
     rescue => e
       Rails.logger.error "Multiple images upload error: #{e.message}"
-      render json: { error: 'Failed to upload images' }, status: :internal_server_error
+      render json: { error: "Failed to upload images" }, status: :internal_server_error
     end
   end
 
