@@ -33,9 +33,7 @@ class WrsCreationService
 
       # Save the WRS again with the calculated totals
       if @wrs.save
-        # Sync to Webflow if collection ID is provided
-        sync_to_webflow if @wrs.webflow_collection_id.present?
-
+        # Auto-sync will handle Webflow synchronization via after_commit callback
         { success: true, wrs: @wrs }
       else
         @errors = @wrs.errors.full_messages
@@ -67,9 +65,7 @@ class WrsCreationService
       @wrs.calculate_totals
 
       if @wrs.save
-        # Sync to Webflow
-        sync_to_webflow if @wrs.webflow_collection_id.present?
-
+        # Auto-sync will handle Webflow synchronization via after_commit callback
         { success: true, wrs: @wrs }
       else
         @errors = @wrs.errors.full_messages
@@ -229,6 +225,9 @@ class WrsCreationService
       )
     end
   end
+
+  # Note: Webflow sync is now handled automatically via after_commit callback in WindowScheduleRepair model
+  # These methods are kept for backward compatibility if needed, but are no longer called by default
 
   def sync_to_webflow
     WebflowUploadJob.perform_later(@wrs.id)

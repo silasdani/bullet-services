@@ -306,6 +306,6 @@ Webflow API GET /sites/618ffc83f3028ad35a166db8/collections/619692f4b6773922b327
 
 w = WebflowService.new
 syncer = WrsSyncService.new(User.admin.first)
-witem = w.get_item('68d2a113b8db547c6f04e825')
+witem = w.get_item('67044f41c7f9a70ef7654851')
 syncer.sync_single(witem)
 =end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_08_114144) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_08_122018) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -100,7 +100,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_08_114144) do
     t.decimal "grand_total", precision: 10, scale: 2
     t.datetime "deleted_at"
     t.datetime "last_published"
-    t.boolean "is_draft", default: false, null: false
+    t.boolean "is_draft", default: true, null: false
     t.boolean "is_archived", default: false, null: false
     t.string "webflow_main_image_url"
     t.index ["deleted_at"], name: "index_window_schedule_repairs_on_deleted_at"

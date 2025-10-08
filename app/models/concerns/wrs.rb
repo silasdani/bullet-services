@@ -53,11 +53,12 @@ module Wrs
   end
 
   # Returns formatted data structure compatible with existing WebflowCollectionMapperService
+  # Respects the current draft/published status of the record
   def to_webflow_formatted
     {
       fieldData: to_webflow,
-      isArchived: false,
-      isDraft: true
+      isArchived: is_archived || false,
+      isDraft: is_draft.nil? ? true : is_draft  # Default to draft if not set
     }
   end
 

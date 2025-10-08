@@ -54,8 +54,13 @@ class WindowScheduleRepair < ApplicationRecord
   validates :slug, presence: true, uniqueness: true
 
   before_validation :generate_slug, on: :create
+  before_validation :set_default_webflow_flags, on: :create
 
   before_save :calculate_totals
+
+  # Automatic Webflow synchronization
+  # Only syncs draft items to protect published content
+  after_commit :auto_sync_to_webflow, on: [:create, :update], if: :should_auto_sync_to_webflow?
 
   scope :for_user, ->(user) {
     case user.role
@@ -188,7 +193,26 @@ class WindowScheduleRepair < ApplicationRecord
     self.slug = "#{address.parameterize}-#{flat_number.parameterize}-#{SecureRandom.hex(2)}"
   end
 
+  def set_default_webflow_flags
+    # Set default values for Webflow flags if not already set
+    self.is_draft = true if is_draft.nil?
+    self.is_archived = false if is_archived.nil?
+  end
+
   private
+
+  def should_auto_sync_to_webflow?
+    # Auto-sync only if:
+    # 1. Not deleted
+    # 2. Is a draft OR has never been synced to Webflow
+    # This prevents accidentally updating published items
+    !deleted? && (is_draft? || webflow_item_id.blank?)
+  end
+
+  def auto_sync_to_webflow
+    # Run sync in background to avoid blocking the main request
+    AutoSyncToWebflowJob.perform_later(id)
+  end
 
   # Ransack configuration for filtering
   def self.ransackable_attributes(auth_object = nil)
