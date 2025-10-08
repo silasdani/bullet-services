@@ -182,7 +182,16 @@ class WrsSyncService
   end
 
   def prepare_window_data(field_data, wrs_data)
-    base_image_url = (field_data["main-project-image"] && field_data["main-project-image"]["url"])
+    # Extract base image URL for window 1 from main-project-image
+    main_image_field = field_data["main-project-image"]
+    base_image_url = if main_image_field.is_a?(Hash)
+      main_image_field["url"] || main_image_field[:url]
+    elsif main_image_field.is_a?(String)
+      main_image_field
+    else
+      nil
+    end
+
     windows = []
 
     Rails.logger.debug "WrsSyncService: Preparing window data from field_data"
@@ -239,9 +248,16 @@ class WrsSyncService
 
       # Extract URL from image value (can be a Hash with url/fileId or a string)
       image_url = if image_val.is_a?(Hash)
-        image_val["url"]
-      else
+        # Try both string and symbol keys
+        extracted = image_val["url"] || image_val[:url]
+        Rails.logger.debug "    Image: Extracted URL from hash: #{extracted&.slice(0, 60)}..."
+        extracted
+      elsif image_val.is_a?(String)
+        Rails.logger.debug "    Image: Using string value: #{image_val&.slice(0, 60)}..."
         image_val
+      else
+        Rails.logger.debug "    Image: No image value found"
+        nil
       end
 
       window_info = {
@@ -278,10 +294,17 @@ class WrsSyncService
 
     # Bulk create windows
     windows_to_create = window_data.map do |window_info|
+      image_url = window_info[:image_url]
+
+      # Log if we're about to store something that's not a string
+      if image_url.present? && !image_url.is_a?(String)
+        Rails.logger.warn "  ⚠️  Window #{window_info[:location]}: image_url is #{image_url.class}, not String: #{image_url.inspect}"
+      end
+
       {
         window_schedule_repair_id: wrs.id,
         location: window_info[:location],
-        webflow_image_url: window_info[:image_url],
+        webflow_image_url: image_url,
         created_at: (Time.parse(window_info[:created_on]) rescue Time.current),
         updated_at: (Time.parse(window_info[:last_updated]) rescue Time.current)
       }
