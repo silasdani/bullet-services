@@ -5,19 +5,19 @@ RailsAdmin.config do |config|
   config.asset_source = :sprockets
   # Authenticate: ensure user is logged in via Devise session
   config.authenticate_with do
-    redirect_to main_app.new_user_session_path unless request.env['warden']&.user(:user).present?
+    redirect_to main_app.new_user_session_path unless request.env["warden"]&.user(:user).present?
   end
 
   # Authorize: only admins/superadmins allowed
   config.authorize_with do
-    redirect_to main_app.root_path, alert: 'You are not authorized to access this page.' unless current_user&.is_admin?
+    redirect_to main_app.root_path, alert: "You are not authorized to access this page." unless current_user&.is_admin?
   end
 
   config.current_user_method(&:current_user)
 
   config.authorize_with do
     unless current_user&.is_admin?
-      redirect_to main_app.root_path, alert: 'You are not authorized to access this page.'
+      redirect_to main_app.root_path, alert: "You are not authorized to access this page."
     end
   end
 

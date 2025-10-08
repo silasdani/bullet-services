@@ -1,8 +1,8 @@
 Rails.application.routes.draw do
-  root 'application#index'
+  root "application#index"
 
   # Admin panel (authentication handled in RailsAdmin initializer)
-  mount RailsAdmin::Engine => '/admin', as: 'rails_admin'
+  mount RailsAdmin::Engine => "/admin", as: "rails_admin"
 
   # HTML Devise routes for admin/superadmin browser login (keep default helpers like new_user_session_path)
   devise_for :users, controllers: {
@@ -11,7 +11,7 @@ Rails.application.routes.draw do
 
   # Redirect accidental GETs on token auth sign-in to Devise HTML sign-in
   devise_scope :user do
-    get '/auth/sign_in', to: redirect('/users/sign_in')
+    get "/auth/sign_in", to: redirect("/users/sign_in")
   end
 
   # Token auth routes (rename route helpers to avoid collisions with Devise)
@@ -28,10 +28,10 @@ Rails.application.routes.draw do
           post :publish_to_webflow
           post :unpublish_from_webflow
         end
-        resources :windows, only: [:index, :create]
+        resources :windows, only: [ :index, :create ]
       end
 
-      resources :windows, only: [:show, :update, :destroy]
+      resources :windows, only: [ :show, :update, :destroy ]
 
       # Image upload routes
       resources :images, only: [] do

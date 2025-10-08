@@ -21,7 +21,7 @@ Rails.application.configure do
   # Store uploaded files on the local file system (see config/storage.yml for options).
   config.active_storage.service = :amazon
 
-    # Assume all access to the app is happening through a SSL-terminating reverse proxy.
+  # Assume all access to the app is happening through a SSL-terminating reverse proxy.
   config.assume_ssl = true
 
   # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
@@ -34,7 +34,7 @@ Rails.application.configure do
   }
 
   # Trust the reverse proxy headers
-  config.action_dispatch.trusted_proxies = ActionDispatch::RemoteIp::TRUSTED_PROXIES + ['10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16']
+  config.action_dispatch.trusted_proxies = ActionDispatch::RemoteIp::TRUSTED_PROXIES + [ "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16" ]
 
   # Configure for reverse proxy
   config.action_dispatch.x_forwarded_host = true

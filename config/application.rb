@@ -12,19 +12,19 @@ module BulletServices
     # not contain `.rb` files, or that should not be reloaded or eager loaded.
     # Common ones are `templates`, `generators`, or `middleware`, for example.
     config.autoload_lib(ignore: %w[assets tasks])
-    config.action_mailer.deliver_later_queue_name = 'mailers'
+    config.action_mailer.deliver_later_queue_name = "mailers"
 
     # Set global default URL options for all environments
     config.after_initialize do
       Rails.application.routes.default_url_options = {
-        host: ENV.fetch('DEFAULT_URL_HOST', 'localhost'),
-        port: ENV.fetch('DEFAULT_URL_PORT', 3000)
+        host: ENV.fetch("DEFAULT_URL_HOST", "localhost"),
+        port: ENV.fetch("DEFAULT_URL_PORT", 3000)
       }
 
       # Set ActiveStorage::Current.url_options globally
       ActiveStorage::Current.url_options = {
-        host: ENV.fetch('DEFAULT_URL_HOST', 'localhost'),
-        port: ENV.fetch('DEFAULT_URL_PORT', 3000)
+        host: ENV.fetch("DEFAULT_URL_HOST", "localhost"),
+        port: ENV.fetch("DEFAULT_URL_PORT", 3000)
       }
     end
 

@@ -61,5 +61,5 @@ DeviseTokenAuth.setup do |config|
   # devise confirmable module. If you want to use devise confirmable module and
   # send email, set it to true. (This is a setting for compatibility)
   config.send_confirmation_email = false
-  config.default_confirm_success_url = Rails.env.production? ? 'https://www.bulletservices.co.uk' : 'http://localhost:3000/confirmed'
+  config.default_confirm_success_url = Rails.env.production? ? "https://www.bulletservices.co.uk" : "http://localhost:3000/confirmed"
 end

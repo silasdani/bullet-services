@@ -1,1 +1,1 @@
-Rails.application.config.session_store :cookie_store, key: 'bullet_session', expire_after: 14.days, secure: Rails.env.production?
+Rails.application.config.session_store :cookie_store, key: "bullet_session", expire_after: 14.days, secure: Rails.env.production?
