@@ -2,6 +2,7 @@
 
 # Background job to automatically sync WRS to Webflow
 # Runs asynchronously to avoid blocking the main request
+# Triggered explicitly by WrsCreationService after all operations (including image attachments) are complete
 class AutoSyncToWebflowJob < ApplicationJob
   queue_as :default
 

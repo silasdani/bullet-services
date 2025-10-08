@@ -47,6 +47,9 @@ class WebflowAutoSyncService
   end
 
   def create_webflow_item
+    # Log image availability for debugging
+    log_image_status
+
     # Prepare data with isDraft: true to create as draft
     item_data = @wrs.to_webflow_formatted.merge(isDraft: true)
 
@@ -67,6 +70,9 @@ class WebflowAutoSyncService
       return { success: false, reason: "item_published" }
     end
 
+    # Log image availability for debugging
+    log_image_status
+
     # Prepare data with isDraft: true to maintain draft status
     item_data = @wrs.to_webflow_formatted.merge(isDraft: true)
 
@@ -75,5 +81,16 @@ class WebflowAutoSyncService
     Rails.logger.info "WebflowAutoSync: Updated WRS ##{@wrs.id} in Webflow (#{@wrs.webflow_item_id})"
 
     { success: true, action: "updated", webflow_item_id: @wrs.webflow_item_id }
+  end
+
+  def log_image_status
+    # Log which windows have images attached for debugging
+    @wrs.windows.each_with_index do |window, index|
+      if window.image.attached?
+        Rails.logger.info "WebflowAutoSync: Window #{index + 1} has image attached (#{window.image.filename})"
+      else
+        Rails.logger.info "WebflowAutoSync: Window #{index + 1} has NO image"
+      end
+    end
   end
 end

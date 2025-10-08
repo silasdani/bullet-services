@@ -19,6 +19,9 @@ class WrsCreationService
         is_draft: true
       )
 
+      # Skip auto-sync - we'll handle it explicitly after all operations complete
+      @wrs.skip_auto_sync = true
+
       # Save the WRS first to generate slug and pass validations
       unless @wrs.save
         @errors = @wrs.errors.full_messages
@@ -32,23 +35,28 @@ class WrsCreationService
       @wrs.calculate_totals
 
       # Save the WRS again with the calculated totals
-      if @wrs.save
-        # Auto-sync will handle Webflow synchronization via after_commit callback
-        { success: true, wrs: @wrs }
-      else
+      unless @wrs.save
         @errors = @wrs.errors.full_messages
-        { success: false, errors: @errors }
+        return { success: false, errors: @errors }
       end
-    rescue => e
-      @errors << "Failed to create WRS: #{e.message}"
-      { success: false, errors: @errors }
     end
+
+    # After transaction is committed and all images are attached, trigger sync
+    trigger_webflow_sync if @wrs.persisted?
+
+    { success: true, wrs: @wrs }
+  rescue => e
+    @errors << "Failed to create WRS: #{e.message}"
+    { success: false, errors: @errors }
   end
 
   def update(wrs_id)
     @wrs = @user.window_schedule_repairs.find(wrs_id)
 
     ActiveRecord::Base.transaction do
+      # Skip auto-sync - we'll handle it explicitly after all operations complete
+      @wrs.skip_auto_sync = true
+
       # Update WRS basic info
       @wrs.assign_attributes(
         name: @params[:name],
@@ -64,17 +72,19 @@ class WrsCreationService
       # Recalculate totals
       @wrs.calculate_totals
 
-      if @wrs.save
-        # Auto-sync will handle Webflow synchronization via after_commit callback
-        { success: true, wrs: @wrs }
-      else
+      unless @wrs.save
         @errors = @wrs.errors.full_messages
-        { success: false, errors: @errors }
+        return { success: false, errors: @errors }
       end
-    rescue => e
-      @errors << "Failed to update WRS: #{e.message}"
-      { success: false, errors: @errors }
     end
+
+    # After transaction is committed and all images are attached, trigger sync
+    trigger_webflow_sync
+
+    { success: true, wrs: @wrs }
+  rescue => e
+    @errors << "Failed to update WRS: #{e.message}"
+    { success: false, errors: @errors }
   end
 
   private
@@ -226,8 +236,18 @@ class WrsCreationService
     end
   end
 
-  # Note: Webflow sync is now handled automatically via after_commit callback in WindowScheduleRepair model
-  # These methods are kept for backward compatibility if needed, but are no longer called by default
+  def trigger_webflow_sync
+    # Only sync if the WRS should be auto-synced (draft or never synced)
+    return unless @wrs.is_draft? || @wrs.webflow_item_id.blank?
+    return if @wrs.deleted?
+
+    # Trigger the auto-sync job
+    # At this point, all images are attached and the transaction is committed
+    AutoSyncToWebflowJob.perform_later(@wrs.id)
+  end
+
+  # Note: Webflow sync is now handled explicitly by trigger_webflow_sync after all operations complete
+  # These methods are kept for backward compatibility if needed
 
   def sync_to_webflow
     WebflowUploadJob.perform_later(@wrs.id)
