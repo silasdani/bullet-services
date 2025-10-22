@@ -5,27 +5,23 @@ class WebflowUploadJob < ApplicationJob
     window_schedule_repair = WindowScheduleRepair.find(window_schedule_repair_id)
 
     begin
-      webflow_service = WebflowService.new
+      item_service = Webflow::ItemService.new
 
       if window_schedule_repair.webflow_item_id.present?
         # Update existing item
-        webflow_service.update_item(
-          ENV.fetch("WEBFLOW_SITE_ID"),
-          window_schedule_repair.webflow_collection_id,
+        item_service.update_item(
           window_schedule_repair.webflow_item_id,
-          webflow_service.send(:window_schedule_repair_data, window_schedule_repair)
+          window_schedule_repair.to_webflow_formatted
         )
       else
         # Create new item
-        response = webflow_service.create_item(
-          ENV.fetch("WEBFLOW_SITE_ID"),
-          window_schedule_repair.webflow_collection_id,
-          webflow_service.send(:window_schedule_repair_data, window_schedule_repair)
+        response = item_service.create_item(
+          window_schedule_repair.to_webflow_formatted
         )
 
         # Update the WRS with the Webflow item ID
-        if response && response["_id"]
-          window_schedule_repair.update(webflow_item_id: response["_id"])
+        if response && response["id"]
+          window_schedule_repair.update(webflow_item_id: response["id"])
         end
       end
 

@@ -26,33 +26,33 @@ class Api::V1::WindowScheduleRepairsController < Api::V1::BaseController
   def create
     authorize WindowScheduleRepair
 
-    service = WrsCreationService.new(current_user, window_schedule_repair_params)
-    result = service.create
+    service = Wrs::CreationService.new(user: current_user, params: window_schedule_repair_params)
+    result = service.call
 
     if result[:success]
       render json: {
         success: true,
         message: "WRS created successfully",
-        id: service.wrs.id,
-        name: service.wrs.name,
-        address: service.wrs.address
+        id: result[:wrs].id,
+        name: result[:wrs].name,
+        address: result[:wrs].address
       }, status: :created
     else
-      render json: { errors: result[:errors] }, status: :unprocessable_content
+      render json: { errors: service.errors }, status: :unprocessable_content
     end
   end
 
   def update
     authorize @window_schedule_repair
 
-    service = WrsCreationService.new(current_user, window_schedule_repair_params)
+    service = Wrs::CreationService.new(user: current_user, params: window_schedule_repair_params)
     result = service.update(@window_schedule_repair.id)
 
     if result[:success]
       @window_schedule_repair.reload
       render json: @window_schedule_repair
     else
-      render json: { errors: result[:errors] }, status: :unprocessable_content
+      render json: { errors: service.errors }, status: :unprocessable_content
     end
   end
 
@@ -79,8 +79,8 @@ class Api::V1::WindowScheduleRepairsController < Api::V1::BaseController
   def send_to_webflow
     authorize @window_schedule_repair, :send_to_webflow?
 
-    service = WebflowService.new
-    service.send_window_schedule_repair(@window_schedule_repair)
+    item_service = Webflow::ItemService.new
+    item_service.create_item(@window_schedule_repair.to_webflow_formatted)
 
     render json: { message: "Sent to Webflow successfully" }
   end
@@ -89,21 +89,21 @@ class Api::V1::WindowScheduleRepairsController < Api::V1::BaseController
     authorize @window_schedule_repair, :publish_to_webflow?
 
     begin
-      service = WebflowService.new
+      item_service = Webflow::ItemService.new
 
       # First ensure the item exists in Webflow (create as draft if needed)
       unless @window_schedule_repair.webflow_item_id.present?
-        response = service.send_window_schedule_repair(@window_schedule_repair)
+        response = item_service.create_item(@window_schedule_repair.to_webflow_formatted)
         @window_schedule_repair.update!(webflow_item_id: response["id"])
       end
 
       # Publish the item to live
-      service.publish_items([ @window_schedule_repair.webflow_item_id ])
+      item_service.publish_items([ @window_schedule_repair.webflow_item_id ])
 
       # Sync back from Webflow to get the latest published state
-      webflow_item = service.get_item(@window_schedule_repair.webflow_item_id)
-      sync_service = WrsSyncService.new(current_user)
-      sync_result = sync_service.sync_single(webflow_item)
+      webflow_item = item_service.get_item(@window_schedule_repair.webflow_item_id)
+      sync_service = Wrs::SyncService.new(admin_user: current_user)
+      sync_result = sync_service.call(webflow_item)
 
       if sync_result[:success]
         @window_schedule_repair.reload
@@ -148,19 +148,19 @@ class Api::V1::WindowScheduleRepairsController < Api::V1::BaseController
         return
       end
 
-      service = WebflowService.new
+      item_service = Webflow::ItemService.new
 
       # Unpublish the item from live
-      service.unpublish_items([ @window_schedule_repair.webflow_item_id ])
+      item_service.unpublish_items([ @window_schedule_repair.webflow_item_id ])
 
       # Update the draft version in Webflow with latest data (ensuring isDraft: true)
       draft_data = @window_schedule_repair.to_webflow_formatted.merge(isDraft: true)
-      service.update_item(@window_schedule_repair.webflow_item_id, draft_data)
+      item_service.update_item(@window_schedule_repair.webflow_item_id, draft_data)
 
       # Sync back from Webflow to get the latest unpublished state
-      webflow_item = service.get_item(@window_schedule_repair.webflow_item_id)
-      sync_service = WrsSyncService.new(current_user)
-      sync_result = sync_service.sync_single(webflow_item)
+      webflow_item = item_service.get_item(@window_schedule_repair.webflow_item_id)
+      sync_service = Wrs::SyncService.new(admin_user: current_user)
+      sync_result = sync_service.call(webflow_item)
 
       if sync_result[:success]
         @window_schedule_repair.reload

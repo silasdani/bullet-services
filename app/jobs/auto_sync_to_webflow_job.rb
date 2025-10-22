@@ -17,8 +17,8 @@ class AutoSyncToWebflowJob < ApplicationJob
     return unless wrs&.active?
 
     # Run the sync
-    service = WebflowAutoSyncService.new(wrs)
-    result = service.sync
+    service = Webflow::AutoSyncService.new(wrs: wrs)
+    result = service.call
 
     if result[:success]
       Rails.logger.info "AutoSyncToWebflowJob: Successfully synced WRS ##{wrs_id} - #{result[:action]}"

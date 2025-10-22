@@ -26,8 +26,8 @@ class WrsCreationServiceTest < ActiveSupport::TestCase
   end
 
   test "creates WRS with windows and tools" do
-    service = WrsCreationService.new(@user, @valid_params)
-    result = service.create
+    service = Wrs::CreationService.new(user: @user, params: @valid_params)
+    result = service.call
 
     assert result[:success]
     assert_equal "Test WRS", result[:wrs].name
@@ -37,8 +37,8 @@ class WrsCreationServiceTest < ActiveSupport::TestCase
   end
 
   test "calculates totals correctly" do
-    service = WrsCreationService.new(@user, @valid_params)
-    result = service.create
+    service = Wrs::CreationService.new(user: @user, params: @valid_params)
+    result = service.call
 
     wrs = result[:wrs]
     assert_equal 225.0, wrs.total_vat_excluded_price
@@ -48,17 +48,17 @@ class WrsCreationServiceTest < ActiveSupport::TestCase
 
   test "handles invalid params" do
     invalid_params = @valid_params.merge(name: "")
-    service = WrsCreationService.new(@user, invalid_params)
-    result = service.create
+    service = Wrs::CreationService.new(user: @user, params: invalid_params)
+    result = service.call
 
     refute result[:success]
-    assert_includes result[:errors], "Name can't be blank"
+    assert_includes service.errors, "Name can't be blank"
   end
 
   test "updates existing WRS" do
     # Create initial WRS
-    service = WrsCreationService.new(@user, @valid_params)
-    result = service.create
+    service = Wrs::CreationService.new(user: @user, params: @valid_params)
+    result = service.call
     wrs = result[:wrs]
 
     # Update WRS
@@ -75,7 +75,7 @@ class WrsCreationServiceTest < ActiveSupport::TestCase
       ]
     }
 
-    service = WrsCreationService.new(@user, update_params)
+    service = Wrs::CreationService.new(user: @user, params: update_params)
     result = service.update(wrs.id)
 
     assert result[:success]
@@ -95,8 +95,8 @@ class WrsCreationServiceTest < ActiveSupport::TestCase
     params_with_image = @valid_params.deep_dup
     params_with_image[:windows_attributes][0][:image] = mock_file
 
-    service = WrsCreationService.new(@user, params_with_image)
-    result = service.create
+    service = Wrs::CreationService.new(user: @user, params: params_with_image)
+    result = service.call
 
     assert result[:success]
     assert_equal 1, result[:wrs].windows.count

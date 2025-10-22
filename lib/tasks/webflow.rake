@@ -33,7 +33,7 @@ namespace :webflow do
     puts "🔄 Syncing all WRS from Webflow to Rails..."
 
     begin
-      webflow = WebflowService.new
+      item_service = Webflow::ItemService.new
       offset = 0
       limit = 100
 
@@ -46,7 +46,7 @@ namespace :webflow do
       end
 
       # Initialize sync service once
-      sync_service = WrsSyncService.new(admin_user)
+      sync_service = Wrs::SyncService.new(admin_user: admin_user)
 
       total_items = nil
       all_items = []
@@ -54,7 +54,7 @@ namespace :webflow do
       # Fetch all items first
       loop do
         puts "\n📥 Fetching WRS items (offset: #{offset}, limit: #{limit})..."
-        response = webflow.list_items({ offset: offset, limit: limit })
+        response = item_service.list_items({ offset: offset, limit: limit })
         items = response["items"]
         break if items.nil? || items.empty?
 
