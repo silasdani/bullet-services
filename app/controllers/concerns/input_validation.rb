@@ -6,14 +6,10 @@ module InputValidation
 
   private
 
-  def sanitize_params(params)
-    params.each do |key, value|
-      if value.is_a?(String)
-        params[key] = value.strip
-      elsif value.is_a?(Hash)
-        sanitize_params(value)
-      end
-    end
+  def sanitize_params(params_to_sanitize = nil)
+    # Don't modify params directly as it might be frozen
+    # This method is here for future use but not actively used
+    true
   end
 
   def validate_file_upload(file)
@@ -23,12 +19,12 @@ module InputValidation
     max_size = 10.megabytes
 
     unless allowed_types.include?(file.content_type)
-      add_error("Invalid file type. Allowed: #{allowed_types.join(', ')}")
+      Rails.logger.error("Invalid file type. Allowed: #{allowed_types.join(', ')}")
       return false
     end
 
     unless file.size <= max_size
-      add_error("File too large. Maximum size: #{max_size / 1.megabyte}MB")
+      Rails.logger.error("File too large. Maximum size: #{max_size / 1.megabyte}MB")
       return false
     end
 

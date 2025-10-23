@@ -33,6 +33,10 @@ class User < ApplicationRecord
     ['super_admin', 3].include?(role)
   end
 
+  def webflow_access
+    is_admin? || is_employee?
+  end
+
   def token_validation_response
     UserSerializer.new(self).as_json
   end

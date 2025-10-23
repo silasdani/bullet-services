@@ -4,9 +4,9 @@ module Api
   module V1
     class BaseController < ActionController::API
       include Pundit::Authorization
-      include DeviseTokenAuth::Concerns::SetUserByToken
-      include InputValidation
       include ErrorHandling
+      include InputValidation
+      include DeviseTokenAuth::Concerns::SetUserByToken
 
       before_action :authenticate_user!
       before_action :set_pagination_params
@@ -56,12 +56,12 @@ module Api
         render json: error_response, status: status
       end
 
-      def render_success(data:, message: nil, meta: nil)
+      def render_success(data:, message: nil, meta: nil, status: :ok)
         response = { data: data }
         response[:message] = message if message.present?
         response[:meta] = meta if meta.present?
 
-        render json: response
+        render json: response, status: status
       end
 
       def pagination_meta(collection)
@@ -73,10 +73,6 @@ module Api
           has_next_page: collection.next_page.present?,
           has_prev_page: collection.prev_page.present?
         }
-      end
-
-      def sanitize_params
-        sanitize_params(params)
       end
     end
   end

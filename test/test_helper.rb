@@ -23,30 +23,30 @@ module ActiveSupport
     # Add more helper methods to be used by all tests here...
 
     # Mock helper for tests
-    def mock(name)
+    def mock(name = nil)
       Minitest::Mock.new(name)
     end
 
     # Job assertion helpers
     def assert_enqueued_with(job_class, args = nil, &block)
       if args
-        assert_enqueued_jobs 1, only: job_class do
+        super(1, only: job_class, args: args) do
           block.call
         end
       else
-        assert_enqueued_jobs 1, only: job_class do
+        super(1, only: job_class) do
           block.call
         end
       end
     end
 
-    def assert_no_enqueued_jobs(job_class = nil, &block)
+    def assert_no_enqueued_jobs_for(job_class = nil, &block)
       if job_class
-        assert_no_enqueued_jobs only: job_class do
+        super(only: job_class) do
           block.call
         end
       else
-        assert_no_enqueued_jobs do
+        super do
           block.call
         end
       end
@@ -60,9 +60,12 @@ module ActiveSupport
         user.save!
       end
 
+      token_data = user.tokens.values.first
+      client_id = user.tokens.keys.first
+
       {
-        'access-token' => user.tokens.values.first['token'],
-        'client' => user.tokens.keys.first,
+        'access-token' => token_data['token'],
+        'client' => client_id,
         'uid' => user.uid
       }
     end

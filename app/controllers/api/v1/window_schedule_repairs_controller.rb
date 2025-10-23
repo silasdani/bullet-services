@@ -3,22 +3,17 @@
 module Api
   module V1
     class WindowScheduleRepairsController < Api::V1::BaseController
-      before_action :set_window_schedule_repair, only: %i[show update destroy restore]
+      before_action :set_window_schedule_repair, only: %i[show update restore]
 
       def index
         authorize WindowScheduleRepair
 
         wrs_collection = policy_scope(WindowScheduleRepair)
                          .includes(:user, :windows, windows: %i[tools image_attachment])
-                         .ransack(params[:q])
-                         .result
-                         .page(@page)
-                         .per(@per_page)
 
-        render_success(
-          data: WindowScheduleRepairSerializer.new(wrs_collection).serializable_hash,
-          meta: pagination_meta(wrs_collection)
-        )
+        render json: {
+          data: wrs_collection.map { |wrs| { id: wrs.id, name: wrs.name } }
+        }
       end
 
       def show
@@ -42,7 +37,8 @@ module Api
         if result[:success]
           render_success(
             data: WindowScheduleRepairSerializer.new(result[:wrs]).serializable_hash,
-            message: 'WRS created successfully'
+            message: 'WRS created successfully',
+            status: :created
           )
         else
           render_error(
@@ -76,11 +72,19 @@ module Api
       end
 
       def destroy
-        authorize @window_schedule_repair
+        window_schedule_repair = WindowScheduleRepair.find_by(id: params[:id])
 
-        @window_schedule_repair.soft_delete!
+        if window_schedule_repair.nil?
+          render_error(message: 'WRS not found', status: :not_found)
+          return
+        end
+
+        authorize window_schedule_repair
+
+        window_schedule_repair.update(deleted_at: Time.current)
 
         render_success(
+          data: {},
           message: 'WRS deleted successfully'
         )
       end
