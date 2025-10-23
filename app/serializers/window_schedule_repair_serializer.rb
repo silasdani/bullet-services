@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class WindowScheduleRepairSerializer < ActiveModel::Serializer
   attributes :id, :name, :slug, :address, :flat_number, :details,
              :total_vat_included_price, :total_vat_excluded_price,
@@ -10,25 +12,23 @@ class WindowScheduleRepairSerializer < ActiveModel::Serializer
 
   # Ensure windows are loaded properly
   def windows
-    begin
-      return [] unless object.respond_to?(:windows)
-      return [] unless object.windows.any?
-      object.windows
-    rescue => e
-      Rails.logger.error "Error loading windows in serializer: #{e.message}"
-      []
-    end
+    return [] unless object.respond_to?(:windows)
+    return [] unless object.windows.any?
+
+    object.windows
+  rescue StandardError => e
+    Rails.logger.error "Error loading windows in serializer: #{e.message}"
+    []
   end
 
   # Ensure user is loaded
   def user
-    begin
-      return nil unless object.respond_to?(:user)
-      object.user
-    rescue => e
-      Rails.logger.error "Error loading user in serializer: #{e.message}"
-      nil
-    end
+    return nil unless object.respond_to?(:user)
+
+    object.user
+  rescue StandardError => e
+    Rails.logger.error "Error loading user in serializer: #{e.message}"
+    nil
   end
 
   # Soft delete status methods

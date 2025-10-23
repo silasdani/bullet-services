@@ -1,4 +1,6 @@
-require "test_helper"
+# frozen_string_literal: true
+
+require 'test_helper'
 
 class WindowScheduleRepairPolicyTest < ActiveSupport::TestCase
   def setup
@@ -6,15 +8,15 @@ class WindowScheduleRepairPolicyTest < ActiveSupport::TestCase
     @admin = users(:admin)
     @employee = users(:employee)
     @window_schedule_repair = @user.window_schedule_repairs.create!(
-      name: "Test Schedule",
+      name: 'Test Schedule',
       slug: "test-schedule-#{Time.current.to_i}",
-      address: "123 Test St",
+      address: '123 Test St',
       total_vat_included_price: 1000
     )
   end
 
   def test_scope
-    assert_equal [ @window_schedule_repair ], WindowScheduleRepairPolicy::Scope.new(@user, WindowScheduleRepair).resolve
+    assert_equal [@window_schedule_repair], WindowScheduleRepairPolicy::Scope.new(@user, WindowScheduleRepair).resolve
   end
 
   def test_show

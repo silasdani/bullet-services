@@ -282,6 +282,8 @@ GEM
     raabro (1.4.0)
     racc (1.8.1)
     rack (3.2.0)
+    rack-attack (6.8.0)
+      rack (>= 1.0, < 4)
     rack-cors (3.0.0)
       logger
       rack (>= 3.0.14)
@@ -463,6 +465,7 @@ DEPENDENCIES
   bootsnap
   brakeman
   coffee-rails
+  csv
   debug
   devise
   devise_token_auth
@@ -477,6 +480,7 @@ DEPENDENCIES
   pry-rails
   puma (>= 5.0)
   pundit
+  rack-attack
   rack-cors
   rails (~> 8.0.2)
   rails_admin (~> 3.1)

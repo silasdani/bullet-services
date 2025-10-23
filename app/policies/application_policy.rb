@@ -8,7 +8,6 @@ class ApplicationPolicy
     @record = record
   end
 
-
   class Scope
     attr_reader :user, :scope
 

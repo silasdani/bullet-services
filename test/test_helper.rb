@@ -1,12 +1,14 @@
-ENV["RAILS_ENV"] ||= "test"
+# frozen_string_literal: true
+
+ENV['RAILS_ENV'] ||= 'test'
 
 # Set dummy environment variables for test environment
-ENV["WEBFLOW_TOKEN"] ||= "test_token"
-ENV["WEBFLOW_SITE_ID"] ||= "test_site_id"
-ENV["WEBFLOW_WRS_COLLECTION_ID"] ||= "test_collection_id"
+ENV['WEBFLOW_TOKEN'] ||= 'test_token'
+ENV['WEBFLOW_SITE_ID'] ||= 'test_site_id'
+ENV['WEBFLOW_WRS_COLLECTION_ID'] ||= 'test_collection_id'
 
-require_relative "../config/environment"
-require "rails/test_help"
+require_relative '../config/environment'
+require 'rails/test_help'
 
 module ActiveSupport
   class TestCase

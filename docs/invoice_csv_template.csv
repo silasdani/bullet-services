@@ -1,0 +1,3 @@
+name,slug,webflow_item_id,is_archived,is_draft,webflow_created_on,webflow_published_on,freshbooks_client_id,job,wrs_link,included_vat_amount,excluded_vat_amount,status_color,status,final_status,invoice_pdf_link
+"Sample Invoice 1","sample-invoice-1","wf-item-123",false,false,"2024-01-15","2024-01-16","client-001","Window Repair Job","https://example.com/wrs/1","120.00","1000.00","#28a745","Paid","Completed","https://example.com/invoices/sample-1.pdf"
+"Sample Invoice 2","sample-invoice-2","wf-item-124",false,true,"2024-01-20","","client-002","Door Installation","https://example.com/wrs/2","60.00","500.00","#ffc107","Pending","In Progress",""

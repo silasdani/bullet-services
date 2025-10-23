@@ -3,7 +3,7 @@
 module Wrs
   # Service for syncing WRS data from Webflow
   class SyncService < BaseService
-    attribute :admin_user, default: -> { nil }
+    attribute :admin_user, default: -> {}
 
     def initialize(attributes = {})
       super
@@ -24,7 +24,7 @@ module Wrs
       total_items = wrs_items.size
       log_info("Starting sync of #{total_items} WRS items...")
 
-      wrs_items.each_with_index do |wrs_data, index|
+      wrs_items.each_with_index do |wrs_data, _index|
         process_wrs_item(wrs_data)
         @processed_count += 1
         render_progress(@processed_count, total_items)
@@ -37,34 +37,32 @@ module Wrs
     private
 
     def process_wrs_item(wrs_data)
-      begin
-        return skip_item("missing_required_fields") unless valid_wrs_data?(wrs_data)
+      return skip_item('missing_required_fields') unless valid_wrs_data?(wrs_data)
 
-        wrs = find_or_initialize_wrs(wrs_data)
-        set_sync_flags(wrs)
+      wrs = find_or_initialize_wrs(wrs_data)
+      set_sync_flags(wrs)
 
-        update_wrs_from_webflow(wrs, wrs_data)
-        wrs.save!
+      update_wrs_from_webflow(wrs, wrs_data)
+      wrs.save!
 
-        recreate_windows_and_tools(wrs, wrs_data)
-        sync_back_to_webflow(wrs)
+      recreate_windows_and_tools(wrs, wrs_data)
+      sync_back_to_webflow(wrs)
 
-        @total_synced += 1
-        success_result(wrs)
-      rescue => e
-        @total_skipped += 1
-        log_error("Error processing WRS item #{wrs_data['id']}: #{e.class} - #{e.message}")
-        failure_result(e.message)
-      end
+      @total_synced += 1
+      success_result(wrs)
+    rescue StandardError => e
+      @total_skipped += 1
+      log_error("Error processing WRS item #{wrs_data['id']}: #{e.class} - #{e.message}")
+      failure_result(e.message)
     end
 
     def valid_wrs_data?(wrs_data)
-      field_data = wrs_data["fieldData"]
-      field_data["project-summary"].present? && field_data["name"].present?
+      field_data = wrs_data['fieldData']
+      field_data['project-summary'].present? && field_data['name'].present?
     end
 
     def find_or_initialize_wrs(wrs_data)
-      wrs = WindowScheduleRepair.find_or_initialize_by(webflow_item_id: wrs_data["id"])
+      wrs = WindowScheduleRepair.find_or_initialize_by(webflow_item_id: wrs_data['id'])
       wrs.user = admin_user if wrs.new_record? && admin_user
       wrs
     end
@@ -75,24 +73,24 @@ module Wrs
     end
 
     def update_wrs_from_webflow(wrs, wrs_data)
-      field_data = wrs_data["fieldData"]
-      status_color = field_data["accepted-declined"]
+      field_data = wrs_data['fieldData']
+      status_color = field_data['accepted-declined']
 
       wrs.assign_attributes(
-        name: field_data["name"] || "WRS #{wrs_data['id']}",
-        address: field_data["project-summary"],
-        flat_number: field_data["flat-number"],
-        details: field_data["project-summary"],
+        name: field_data['name'] || "WRS #{wrs_data['id']}",
+        address: field_data['project-summary'],
+        flat_number: field_data['flat-number'],
+        details: field_data['project-summary'],
         reference_number: extract_reference_number(field_data),
-        total_vat_included_price: extract_price(field_data, "total-incl-vat"),
-        total_vat_excluded_price: extract_price(field_data, "total-exc-vat"),
-        grand_total: extract_price(field_data, "grand-total"),
+        total_vat_included_price: extract_price(field_data, 'total-incl-vat'),
+        total_vat_excluded_price: extract_price(field_data, 'total-exc-vat'),
+        grand_total: extract_price(field_data, 'grand-total'),
         status: map_status_color_to_status(status_color),
         status_color: status_color,
-        slug: field_data["slug"] || "wrs-#{wrs_data['id']}",
-        last_published: wrs_data["lastPublished"],
-        is_draft: wrs_data["isDraft"],
-        is_archived: wrs_data["isArchived"],
+        slug: field_data['slug'] || "wrs-#{wrs_data['id']}",
+        last_published: wrs_data['lastPublished'],
+        is_draft: wrs_data['isDraft'],
+        is_archived: wrs_data['isArchived'],
         webflow_main_image_url: extract_main_image_url(field_data)
       )
 
@@ -104,7 +102,7 @@ module Wrs
       Tool.joins(:window).where(windows: { window_schedule_repair_id: wrs.id }).delete_all
       wrs.windows.delete_all
 
-      window_data = prepare_window_data(wrs_data["fieldData"], wrs_data)
+      window_data = prepare_window_data(wrs_data['fieldData'], wrs_data)
       create_windows_and_tools_bulk(wrs, window_data)
     end
 
@@ -121,7 +119,7 @@ module Wrs
         item_service.update_item(wrs.webflow_item_id, item_data)
 
         log_info("Synced recalculated totals back to Webflow for WRS ##{wrs.id}")
-      rescue => e
+      rescue StandardError => e
         log_error("Error syncing back to Webflow for WRS ##{wrs.id}: #{e.message}")
       end
     end
@@ -137,28 +135,36 @@ module Wrs
     end
 
     def extract_reference_number(field_data)
-      wf_first(field_data, "reference-number", "reference_number", "referenceNumber")
+      wf_first(field_data, 'reference-number', 'reference_number', 'referenceNumber')
     end
 
     def extract_price(field_data, key)
-      wf_first(field_data, key, key.gsub("-", "_"), key.camelize).to_f || 0.0
+      wf_first(field_data, key, key.gsub('-', '_'), key.camelize).to_f || 0.0
     end
 
     def extract_main_image_url(field_data)
-      main_image = field_data["main-project-image"]
-      main_image && main_image["url"]
+      main_image = field_data['main-project-image']
+      main_image && main_image['url']
     end
 
     def apply_webflow_timestamps(wrs, wrs_data)
-      wrs.created_at = Time.parse(wrs_data["createdOn"]) rescue wrs.created_at
-      wrs.updated_at = Time.parse(wrs_data["lastUpdated"]) rescue wrs.updated_at
+      wrs.created_at = begin
+        Time.parse(wrs_data['createdOn'])
+      rescue StandardError
+        wrs.created_at
+      end
+      wrs.updated_at = begin
+        Time.parse(wrs_data['lastUpdated'])
+      rescue StandardError
+        wrs.updated_at
+      end
     end
 
     def prepare_window_data(field_data, wrs_data)
       windows = []
 
       (1..10).each do |idx|
-        location_key = idx == 1 ? "window-location" : "window-#{idx}-location"
+        location_key = idx == 1 ? 'window-location' : "window-#{idx}-location"
         location = field_data[location_key]
 
         next if location.blank? || location.to_s.strip.empty?
@@ -174,8 +180,8 @@ module Wrs
           items: items_val,
           prices: prices_val,
           image_url: image_url,
-          created_on: wrs_data["createdOn"],
-          last_updated: wrs_data["lastUpdated"]
+          created_on: wrs_data['createdOn'],
+          last_updated: wrs_data['lastUpdated']
         }
       end
 
@@ -184,30 +190,30 @@ module Wrs
 
     def extract_items(field_data, idx)
       items_keys = if idx == 1
-        [ "window-1-items-2", "window-1-items", "window-items" ]
-      else
-        [ "window-#{idx}-items-2", "window-#{idx}-items" ]
-      end
+                     ['window-1-items-2', 'window-1-items', 'window-items']
+                   else
+                     ["window-#{idx}-items-2", "window-#{idx}-items"]
+                   end
       wf_first(field_data, *items_keys)
     end
 
     def extract_prices(field_data, idx)
       prices_keys = if idx == 1
-        [ "window-1-items-prices-3", "window-1-items-prices", "window-items-prices" ]
-      else
-        [ "window-#{idx}-items-prices-3", "window-#{idx}-items-prices" ]
-      end
+                      ['window-1-items-prices-3', 'window-1-items-prices', 'window-items-prices']
+                    else
+                      ["window-#{idx}-items-prices-3", "window-#{idx}-items-prices"]
+                    end
       wf_first(field_data, *prices_keys)
     end
 
     def extract_image_url(field_data, idx)
       if idx == 1
-        main_image = field_data["main-project-image"]
-        return main_image["url"] if main_image.is_a?(Hash)
+        main_image = field_data['main-project-image']
+        return main_image['url'] if main_image.is_a?(Hash)
         return main_image if main_image.is_a?(String)
       else
         image_val = field_data["window-#{idx}-image"] || field_data["window-#{idx}-image-url"]
-        return image_val["url"] if image_val.is_a?(Hash)
+        return image_val['url'] if image_val.is_a?(Hash)
         return image_val if image_val.is_a?(String)
       end
       nil
@@ -222,16 +228,24 @@ module Wrs
           window_schedule_repair_id: wrs.id,
           location: window_info[:location],
           webflow_image_url: window_info[:image_url],
-          created_at: (Time.parse(window_info[:created_on]) rescue Time.current),
-          updated_at: (Time.parse(window_info[:last_updated]) rescue Time.current)
+          created_at: begin
+            Time.parse(window_info[:created_on])
+          rescue StandardError
+            Time.current
+          end,
+          updated_at: begin
+            Time.parse(window_info[:last_updated])
+          rescue StandardError
+            Time.current
+          end
         }
       end
 
-      Window.insert_all(windows_to_create, returning: [ :id, :location ])
+      Window.insert_all(windows_to_create, returning: %i[id location])
 
       created_windows = Window.where(window_schedule_repair_id: wrs.id)
-                             .where(location: window_data.map { |w| w[:location] })
-                             .index_by(&:location)
+                              .where(location: window_data.map { |w| w[:location] })
+                              .index_by(&:location)
 
       # Bulk create tools
       tools_to_create = []
@@ -244,9 +258,7 @@ module Wrs
         items = parse_items(window_info[:items])
         prices = parse_prices(window_info[:prices])
 
-        if items.length != prices.length && !prices.empty?
-          mismatches += (items.length - prices.length).abs
-        end
+        mismatches += (items.length - prices.length).abs if items.length != prices.length && !prices.empty?
 
         prices = normalize_prices(items, prices)
 
@@ -256,8 +268,16 @@ module Wrs
             window_id: window.id,
             name: item_name,
             price: price,
-            created_at: (Time.parse(window_info[:created_on]) rescue Time.current),
-            updated_at: (Time.parse(window_info[:last_updated]) rescue Time.current)
+            created_at: begin
+              Time.parse(window_info[:created_on])
+            rescue StandardError
+              Time.current
+            end,
+            updated_at: begin
+              Time.parse(window_info[:last_updated])
+            rescue StandardError
+              Time.current
+            end
           }
         end
       end
@@ -279,11 +299,13 @@ module Wrs
 
     def parse_items(items_string)
       return [] if items_string.blank?
+
       items_string.to_s.split("\n").map(&:strip).reject(&:blank?)
     end
 
     def parse_prices(prices_string)
       return [] if prices_string.blank?
+
       prices_string.to_s.split("\n").map(&:strip).reject(&:blank?).map(&:to_i)
     end
 
@@ -297,20 +319,20 @@ module Wrs
 
     def map_status_color_to_status(status_color)
       case status_color&.downcase
-      when "#024900" # Green - accepted
-        "approved"
-      when "#750002", "#740000" # Dark colors - rejected
-        "rejected"
+      when '#024900' # Green - accepted
+        'approved'
+      when '#750002', '#740000' # Dark colors - rejected
+        'rejected'
       else
-        "pending"
+        'pending'
       end
     end
 
     def render_progress(processed, total)
       width = 40
-      ratio = [ [ processed.to_f / [ total, 1 ].max, 0 ].max, 1 ].min
+      ratio = [[processed.to_f / [total, 1].max, 0].max, 1].min
       filled = (ratio * width).floor
-      bar = "[" + ("#" * filled) + ("-" * (width - filled)) + "]"
+      bar = "[#{'#' * filled}#{'-' * (width - filled)}]"
       percent = (ratio * 100).round(1)
       print "\r#{bar} #{percent}% (#{processed}/#{total})"
       $stdout.flush
