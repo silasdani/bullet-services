@@ -19,6 +19,11 @@ module WebflowSyncable
     raise NotImplementedError, 'Implement #webflow_collection_id'
   end
 
+  # Alias for backward compatibility with tests
+  def should_auto_sync_to_webflow?
+    should_sync_to_webflow?
+  end
+
   private
 
   def should_sync_to_webflow?

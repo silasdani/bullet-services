@@ -7,8 +7,8 @@ module Webflow
     base_uri 'https://api.webflow.com/v2'
 
     def initialize
-      @api_key = Rails.application.credentials.webflow[:api_key]
-      @site_id = Rails.application.credentials.webflow[:site_id]
+      @api_key = Rails.application.credentials.webflow&.dig(:api_key) || ENV.fetch('WEBFLOW_TOKEN', nil)
+      @site_id = Rails.application.credentials.webflow&.dig(:site_id) || ENV.fetch('WEBFLOW_SITE_ID', nil)
 
       raise 'Webflow API key not configured' if @api_key.blank?
       raise 'Webflow site ID not configured' if @site_id.blank?

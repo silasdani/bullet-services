@@ -6,7 +6,7 @@ module Wrs
     attribute :params, default: -> { {} }
 
     def call
-      with_error_handling do
+      result = with_error_handling do
         with_transaction do
           update_wrs
           update_associated_windows
@@ -16,13 +16,20 @@ module Wrs
         trigger_webflow_sync if success?
         success_result
       end
+
+      if result.nil?
+        Rails.logger.error "Service failed with errors: #{errors.inspect}"
+        { success: false, errors: errors }
+      else
+        result
+      end
     end
 
     private
 
     def update_wrs
-      unless @wrs.update(wrs_attributes)
-        add_errors(@wrs.errors.full_messages)
+      unless wrs.update(wrs_attributes)
+        add_errors(wrs.errors.full_messages)
         return false
       end
 
@@ -32,17 +39,29 @@ module Wrs
     def update_associated_windows
       return unless params[:windows_attributes]
 
+      # Clear existing windows if we're providing new ones
+      # This follows Rails convention for nested attributes
+      wrs.windows.destroy_all if params[:windows_attributes].any?
+
       params[:windows_attributes].each do |window_attrs|
-        if window_attrs[:id].present?
-          update_existing_window(window_attrs)
-        else
-          create_new_window(window_attrs)
+        next if window_attrs[:_destroy] == '1' || window_attrs[:location].blank?
+
+        window = wrs.windows.build(
+          location: window_attrs[:location],
+          webflow_image_url: window_attrs[:webflow_image_url]
+        )
+
+        unless window.save
+          add_errors(window.errors.full_messages)
+          raise ActiveRecord::Rollback
         end
+
+        create_window_tools(window, window_attrs[:tools_attributes]) if window_attrs[:tools_attributes]
       end
     end
 
     def update_existing_window(window_attrs)
-      window = @wrs.windows.find(window_attrs[:id])
+      window = wrs.windows.find(window_attrs[:id])
 
       if window_attrs[:_destroy] == '1'
         window.destroy
@@ -62,7 +81,7 @@ module Wrs
     def create_new_window(window_attrs)
       return if window_attrs[:location].blank?
 
-      window = @wrs.windows.build(
+      window = wrs.windows.build(
         location: window_attrs[:location],
         webflow_image_url: window_attrs[:webflow_image_url]
       )
@@ -115,12 +134,28 @@ module Wrs
       raise ActiveRecord::Rollback
     end
 
+    def create_window_tools(window, tools_attributes)
+      tools_attributes.each do |tool_attrs|
+        next if tool_attrs[:name].blank?
+
+        tool = window.tools.build(
+          name: tool_attrs[:name],
+          price: tool_attrs[:price] || 0
+        )
+
+        unless tool.save
+          add_errors(tool.errors.full_messages)
+          raise ActiveRecord::Rollback
+        end
+      end
+    end
+
     def calculate_totals
-      @wrs.calculate_totals!
+      wrs.save! # This will trigger the before_save callback to recalculate totals
     end
 
     def trigger_webflow_sync
-      WebflowSyncJob.perform_later(@wrs.class.name, @wrs.id)
+      WebflowSyncJob.perform_later(wrs.class.name, wrs.id)
     end
 
     def wrs_attributes
@@ -134,7 +169,7 @@ module Wrs
     end
 
     def success_result
-      { success: true, data: @wrs }
+      { success: true, wrs: wrs.reload }
     end
   end
 end

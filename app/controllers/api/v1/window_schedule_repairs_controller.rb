@@ -41,7 +41,7 @@ module Api
 
         if result[:success]
           render_success(
-            data: WindowScheduleRepairSerializer.new(result[:data]).serializable_hash,
+            data: WindowScheduleRepairSerializer.new(result[:wrs]).serializable_hash,
             message: 'WRS created successfully'
           )
         else
@@ -64,7 +64,7 @@ module Api
 
         if result[:success]
           render_success(
-            data: WindowScheduleRepairSerializer.new(result[:data]).serializable_hash,
+            data: WindowScheduleRepairSerializer.new(result[:wrs]).serializable_hash,
             message: 'WRS updated successfully'
           )
         else

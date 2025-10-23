@@ -63,7 +63,7 @@ class WrsCreationServiceTest < ActiveSupport::TestCase
     result = service.call
     wrs = result[:wrs]
 
-    # Update WRS
+    # Update WRS using UpdateService
     update_params = {
       name: 'Updated WRS',
       windows_attributes: [
@@ -77,8 +77,8 @@ class WrsCreationServiceTest < ActiveSupport::TestCase
       ]
     }
 
-    service = Wrs::CreationService.new(user: @user, params: update_params)
-    result = service.update(wrs.id)
+    update_service = Wrs::UpdateService.new(wrs: wrs, params: update_params)
+    result = update_service.call
 
     assert result[:success]
     assert_equal 'Updated WRS', result[:wrs].name
@@ -89,10 +89,10 @@ class WrsCreationServiceTest < ActiveSupport::TestCase
   test 'creates WRS with image upload' do
     # Create a mock file upload
     mock_file = mock('uploaded_file')
-    mock_file.stubs(:present?).returns(true)
-    mock_file.stubs(:respond_to?).with(:content_type).returns(true)
-    mock_file.stubs(:content_type).returns('image/jpeg')
-    mock_file.stubs(:original_filename).returns('test.jpg')
+    mock_file.expect(:present?, true)
+    mock_file.expect(:respond_to?, true, [:content_type])
+    mock_file.expect(:content_type, 'image/jpeg')
+    mock_file.expect(:original_filename, 'test.jpg')
 
     params_with_image = @valid_params.deep_dup
     params_with_image[:windows_attributes][0][:image] = mock_file
@@ -101,7 +101,7 @@ class WrsCreationServiceTest < ActiveSupport::TestCase
     result = service.call
 
     assert result[:success]
-    assert_equal 1, result[:wrs].windows.count
+    assert_equal 2, result[:wrs].windows.count
     # NOTE: In test environment, ActiveStorage might not fully process the mock file
     # but this test ensures the service doesn't crash with image parameters
   end

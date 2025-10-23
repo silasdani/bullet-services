@@ -15,17 +15,17 @@ module Api
           address: '123 Test St',
           total_vat_included_price: 1000
         )
-        sign_in @user
+        # Don't use sign_in for API tests - use token auth instead
       end
 
       test 'should get index' do
-        get api_v1_window_schedule_repairs_url, headers: { Authorization: "Bearer #{@user.create_new_auth_token}" }
+        get api_v1_window_schedule_repairs_url, headers: auth_headers(@user)
         assert_response :success
       end
 
       test 'should show window_schedule_repair' do
         get api_v1_window_schedule_repair_url(@window_schedule_repair),
-            headers: { Authorization: "Bearer #{@user.create_new_auth_token}" }
+            headers: auth_headers(@user)
         assert_response :success
       end
 

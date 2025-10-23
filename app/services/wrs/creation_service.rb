@@ -6,15 +6,22 @@ module Wrs
     attribute :params, default: -> { {} }
 
     def call
-      with_error_handling do
+      result = with_error_handling do
         with_transaction do
           create_wrs
           create_associated_windows
-          calculate_totals
+          recalculate_totals
         end
 
         trigger_webflow_sync if @wrs.persisted?
         success_result
+      end
+
+      if result.nil?
+        Rails.logger.error "Service failed with errors: #{errors.inspect}"
+        { success: false, errors: errors }
+      else
+        result
       end
     end
 
@@ -67,12 +74,12 @@ module Wrs
       end
     end
 
-    def calculate_totals
-      @wrs.calculate_totals!
-    end
-
     def trigger_webflow_sync
       WebflowSyncJob.perform_later(@wrs.class.name, @wrs.id)
+    end
+
+    def recalculate_totals
+      @wrs.save! # This will trigger the before_save callback to recalculate totals
     end
 
     def wrs_attributes
@@ -86,7 +93,7 @@ module Wrs
     end
 
     def success_result
-      { success: true, data: @wrs }
+      { success: true, wrs: @wrs }
     end
   end
 end
