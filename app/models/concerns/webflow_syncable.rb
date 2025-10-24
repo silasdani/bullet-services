@@ -8,7 +8,7 @@ module WebflowSyncable
 
     after_commit :auto_sync_to_webflow,
                  on: %i[create update],
-                 if: :should_sync_to_webflow?
+                 if: :should_auto_sync_to_webflow?
   end
 
   def webflow_formatted_data

@@ -117,6 +117,12 @@ class WindowScheduleRepair < ApplicationRecord
     end
   end
 
+  # Override WebflowSyncable method to include draft logic
+  def should_auto_sync_to_webflow?
+    # Only sync if it's a draft or has never been synced
+    draft? && !deleted? && !skip_webflow_sync && webflow_collection_id.present?
+  end
+
   # WebflowSyncable implementation
   def webflow_formatted_data
     to_webflow_formatted

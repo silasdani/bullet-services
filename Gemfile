@@ -59,6 +59,13 @@ group :development, :test do
   gem 'debug', platforms: %i[mri windows], require: 'debug/prelude'
   gem 'pry-rails'
   gem 'rubocop-rails-omakase', require: false
+
+  # RSpec testing framework
+  gem 'factory_bot_rails'
+  gem 'faker'
+  gem 'rspec-json_expectations'
+  gem 'rspec-rails'
+  gem 'shoulda-matchers'
 end
 
 # Asset pipeline gems

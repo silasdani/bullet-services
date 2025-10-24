@@ -10,12 +10,25 @@ module Webflow
       return failure_result('not_draft') unless should_auto_sync?
       return failure_result('invalid_data') unless valid_for_sync?
 
-      with_error_handling do
+      begin
         if wrs.webflow_item_id.present?
           update_webflow_item
         else
           create_webflow_item
         end
+      rescue WebflowApiError => e
+        {
+          success: false,
+          error: e.message,
+          status_code: e.status_code
+        }
+      rescue StandardError => e
+        log_error("Unexpected error: #{e.message}")
+        add_error(e.message)
+        {
+          success: false,
+          error: e.message
+        }
       end
     end
 
@@ -36,7 +49,7 @@ module Webflow
       log_image_status
 
       item_data = wrs.to_webflow_formatted.merge(isDraft: true)
-      response = item_service.create_item(item_data)
+      response = item_service.create_item(wrs.webflow_collection_id, item_data)
 
       wrs.update_column(:webflow_item_id, response['id'])
 
@@ -54,7 +67,7 @@ module Webflow
       log_image_status
 
       item_data = wrs.to_webflow_formatted.merge(isDraft: true)
-      item_service.update_item(wrs.webflow_item_id, item_data)
+      item_service.update_item(wrs.webflow_collection_id, wrs.webflow_item_id, item_data)
 
       log_info("Updated WRS ##{wrs.id} in Webflow (#{wrs.webflow_item_id})")
 
@@ -72,7 +85,7 @@ module Webflow
     end
 
     def item_service
-      @item_service ||= ItemService.new
+      @item_service ||= Webflow::ItemService.new
     end
 
     def success_result(action, webflow_item_id)
