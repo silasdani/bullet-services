@@ -23,6 +23,7 @@ module Webflow
 
       if attachment.respond_to?(:attached?) && attachment.attached?
         return if already_mirrored?(attachment)
+
         attachment.purge
       end
 
@@ -33,10 +34,10 @@ module Webflow
       case attachment
       when ActiveStorage::Attached::One
         current = attachment.blob
-        current&.metadata.is_a?(Hash) && current.metadata["source_url"] == source_url
+        current&.metadata.is_a?(Hash) && current.metadata['source_url'] == source_url
       when ActiveStorage::Attached::Many
         blobs = attachment.blobs
-        blobs.any? { |b| b.metadata.is_a?(Hash) && b.metadata["source_url"] == source_url }
+        blobs.any? { |b| b.metadata.is_a?(Hash) && b.metadata['source_url'] == source_url }
       else
         false
       end
@@ -68,8 +69,9 @@ module Webflow
       attempts = 0
       begin
         unless ActiveStorage::Blob.where(id: blob.id).exists?
-          raise ActiveRecord::RecordNotFound, "Blob not persisted yet"
+          raise ActiveRecord::RecordNotFound, 'Blob not persisted yet'
         end
+
         attachment.attach(blob)
       rescue ActiveRecord::InvalidForeignKey, PG::ForeignKeyViolation, ActiveRecord::RecordNotFound => e
         attempts += 1
@@ -86,12 +88,13 @@ module Webflow
 
     def download_image(url)
       uri = URI.parse(url)
-      raise ArgumentError, "Only HTTPS is allowed" unless uri.is_a?(URI::HTTPS)
+      raise ArgumentError, 'Only HTTPS is allowed' unless uri.is_a?(URI::HTTPS)
 
-      tempfile = Tempfile.new([ "webflow", File.extname(uri.path) ], binmode: true)
+      tempfile = Tempfile.new(['webflow', File.extname(uri.path)], binmode: true)
       Net::HTTP.start(uri.host, uri.port, use_ssl: true) do |http|
         http.request_get(uri.request_uri) do |resp|
           raise "Failed to download image: HTTP #{resp.code}" unless resp.code.to_i.between?(200, 299)
+
           resp.read_body { |chunk| tempfile.write(chunk) }
         end
       end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_08_194812) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_22_210502) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -40,6 +40,27 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_08_194812) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "invoices", force: :cascade do |t|
+    t.string "name"
+    t.string "slug"
+    t.string "webflow_item_id"
+    t.boolean "is_archived"
+    t.boolean "is_draft"
+    t.string "webflow_created_on"
+    t.string "webflow_published_on"
+    t.string "freshbooks_client_id"
+    t.string "job"
+    t.string "wrs_link"
+    t.decimal "included_vat_amount"
+    t.decimal "excluded_vat_amount"
+    t.string "status_color"
+    t.string "status"
+    t.string "final_status"
+    t.string "invoice_pdf_link"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
   end
 
   create_table "tools", force: :cascade do |t|

@@ -1,0 +1,53 @@
+#!/bin/bash
+
+# RSpec Test Runner
+# Usage: ./bin/test_runner_enhanced [format] [pattern]
+
+FORMAT=${1:-documentation}
+PATTERN=${2:-}
+
+echo "🧪 RSpec Test Runner"
+echo "🎨 Format: $FORMAT"
+echo "📁 Pattern: ${PATTERN:-'all tests'}"
+echo ""
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+run_rspec() {
+    echo -e "${BLUE}🔍 Running RSpec Tests${NC}"
+    echo "================================"
+    
+    case $FORMAT in
+        "doc"|"documentation")
+            bundle exec rspec $PATTERN --format documentation --color
+            ;;
+        "progress")
+            bundle exec rspec $PATTERN --format progress --color
+            ;;
+        "json")
+            bundle exec rspec $PATTERN --format json
+            ;;
+        "html")
+            bundle exec rspec $PATTERN --format html --out spec/reports/test_report.html
+            echo -e "${GREEN}📊 HTML report generated at spec/reports/test_report.html${NC}"
+            ;;
+        "junit")
+            bundle exec rspec $PATTERN --format RspecJunitFormatter --out spec/reports/junit.xml
+            echo -e "${GREEN}📊 JUnit report generated at spec/reports/junit.xml${NC}"
+            ;;
+        *)
+            bundle exec rspec $PATTERN --format documentation --color
+            ;;
+    esac
+}
+
+# Create reports directory if it doesn't exist
+mkdir -p spec/reports
+
+# Run RSpec tests
+run_rspec

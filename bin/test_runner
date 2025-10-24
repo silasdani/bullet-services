@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# Test Runner Script for Better Visualization
+# Usage: ./bin/test_runner [format] [file_pattern]
+
+FORMAT=${1:-documentation}
+PATTERN=${2:-spec/**/*_spec.rb}
+
+echo "🧪 Running RSpec tests with $FORMAT format..."
+echo "📁 Pattern: $PATTERN"
+echo ""
+
+case $FORMAT in
+  "doc"|"documentation")
+    bundle exec rspec $PATTERN --format documentation --color
+    ;;
+  "progress")
+    bundle exec rspec $PATTERN --format progress --color
+    ;;
+  "json")
+    bundle exec rspec $PATTERN --format json
+    ;;
+  "html")
+    bundle exec rspec $PATTERN --format html --out spec/reports/test_report.html
+    echo "📊 HTML report generated at spec/reports/test_report.html"
+    ;;
+  "junit")
+    bundle exec rspec $PATTERN --format RspecJunitFormatter --out spec/reports/junit.xml
+    echo "📊 JUnit report generated at spec/reports/junit.xml"
+    ;;
+  "watch")
+    bundle exec rspec $PATTERN --format documentation --color --watch
+    ;;
+  *)
+    echo "Available formats: doc, progress, json, html, junit, watch"
+    exit 1
+    ;;
+esac

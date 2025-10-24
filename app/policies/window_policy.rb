@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class WindowPolicy < ApplicationPolicy
   def index?
     user.present?
@@ -18,7 +20,6 @@ class WindowPolicy < ApplicationPolicy
   def destroy?
     user.present? && (user.is_admin? || record.window_schedule_repair.user == user)
   end
-
 
   class Scope < Scope
     def resolve
