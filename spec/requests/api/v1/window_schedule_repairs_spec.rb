@@ -9,19 +9,16 @@ RSpec.describe Api::V1::WindowScheduleRepairsController, type: :request do
 
   # Helper method for API authentication using Devise Token Auth
   def auth_headers(user)
-    # Create a token if none exists
-    if user.tokens.empty?
-      user.create_token
-      user.save!
-    end
+    # Ensure user is confirmed
+    user.confirm unless user.confirmed?
 
-    token_data = user.tokens.values.first
-    client_id = user.tokens.keys.first
+    # Create a token using Devise Token Auth
+    token = user.create_new_auth_token
 
     {
-      'access-token' => token_data['token'],
-      'client' => client_id,
-      'uid' => user.uid,
+      'access-token' => token['access-token'],
+      'client' => token['client'],
+      'uid' => token['uid'],
       'Content-Type' => 'application/json'
     }
   end
@@ -87,17 +84,17 @@ RSpec.describe Api::V1::WindowScheduleRepairsController, type: :request do
     context 'when user is authenticated' do
       it 'creates a new window schedule repair' do
         expect do
-          post api_v1_window_schedule_repairs_path, params: valid_params, headers: auth_headers(user)
+          post api_v1_window_schedule_repairs_path, params: valid_params.to_json, headers: auth_headers(user)
         end.to change(WindowScheduleRepair, :count).by(1)
       end
 
       it 'returns created status' do
-        post api_v1_window_schedule_repairs_path, params: valid_params, headers: auth_headers(user)
+        post api_v1_window_schedule_repairs_path, params: valid_params.to_json, headers: auth_headers(user)
         expect(response).to have_http_status(:created)
       end
 
       it 'returns the created window schedule repair data' do
-        post api_v1_window_schedule_repairs_path, params: valid_params, headers: auth_headers(user)
+        post api_v1_window_schedule_repairs_path, params: valid_params.to_json, headers: auth_headers(user)
         expect(response.body).to include('Test WRS')
       end
     end
@@ -114,12 +111,12 @@ RSpec.describe Api::V1::WindowScheduleRepairsController, type: :request do
 
       it 'does not create a window schedule repair' do
         expect do
-          post api_v1_window_schedule_repairs_path, params: invalid_params, headers: auth_headers(user)
+          post api_v1_window_schedule_repairs_path, params: invalid_params.to_json, headers: auth_headers(user)
         end.not_to change(WindowScheduleRepair, :count)
       end
 
       it 'returns unprocessable entity' do
-        post api_v1_window_schedule_repairs_path, params: invalid_params, headers: auth_headers(user)
+        post api_v1_window_schedule_repairs_path, params: invalid_params.to_json, headers: auth_headers(user)
         expect(response).to have_http_status(:unprocessable_entity)
       end
     end
@@ -136,14 +133,14 @@ RSpec.describe Api::V1::WindowScheduleRepairsController, type: :request do
 
     context 'when user owns the record' do
       it 'updates the window schedule repair' do
-        patch api_v1_window_schedule_repair_path(window_schedule_repair), params: update_params,
+        patch api_v1_window_schedule_repair_path(window_schedule_repair), params: update_params.to_json,
                                                                           headers: auth_headers(user)
         window_schedule_repair.reload
         expect(window_schedule_repair.name).to eq('Updated WRS')
       end
 
       it 'returns success status' do
-        patch api_v1_window_schedule_repair_path(window_schedule_repair), params: update_params,
+        patch api_v1_window_schedule_repair_path(window_schedule_repair), params: update_params.to_json,
                                                                           headers: auth_headers(user)
         expect(response).to have_http_status(:success)
       end
