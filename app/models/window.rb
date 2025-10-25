@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Window < ApplicationRecord
   belongs_to :window_schedule_repair
   has_many :tools, dependent: :destroy
@@ -28,7 +30,7 @@ class Window < ApplicationRecord
     return nil unless image.present?
 
     image.url
-  rescue => e
+  rescue StandardError => e
     Rails.logger.error "Error generating image URL: #{e.message}"
     nil
   end
@@ -39,22 +41,23 @@ class Window < ApplicationRecord
   end
 
   def tools_list
-    tools.map(&:name).join(", ")
+    tools.map(&:name).join(', ')
   end
 
   def tools_prices_list
-    tools.map(&:price).join(", ")
+    tools.map(&:price).join(', ')
   end
 
   def total_price
     return 0 if tools.empty?
+
     begin
       total = 0
       tools.each do |tool|
         total += tool.price.to_f if tool.price
       end
       total
-    rescue => e
+    rescue StandardError => e
       Rails.logger.error "Error calculating window total price: #{e.message}"
       0
     end
@@ -70,7 +73,7 @@ class Window < ApplicationRecord
       Rails.logger.debug "Window ##{id}: No ActiveStorage image, using webflow_image_url: #{url.inspect}"
       url
     end
-  rescue => e
+  rescue StandardError => e
     Rails.logger.error "Window ##{id}: Error in effective_image_url: #{e.message}"
     nil
   end
@@ -94,7 +97,6 @@ class Window < ApplicationRecord
     value
   end
 
-
   private
 
   def image_presence
@@ -103,9 +105,9 @@ class Window < ApplicationRecord
     return unless persisted? # Skip on creation
 
     # Only require image if it was previously present and now missing
-    if image_was_present? && !image.present?
-      errors.add(:image, "must be present")
-    end
+    return unless image_was_present? && !image.present?
+
+    errors.add(:image, 'must be present')
   end
 
   def image_was_present?

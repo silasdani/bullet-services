@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class WindowScheduleRepairPolicy < ApplicationPolicy
   def index?
     user.present?
@@ -34,7 +36,6 @@ class WindowScheduleRepairPolicy < ApplicationPolicy
   def unpublish_from_webflow?
     user.present? && user.webflow_access
   end
-
 
   class Scope < Scope
     def resolve

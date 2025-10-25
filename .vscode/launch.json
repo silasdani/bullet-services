@@ -1,0 +1,9 @@
+{
+  "name": "RSpec Tests",
+  "type": "node",
+  "request": "launch",
+  "program": "${workspaceFolder}/bin/test_runner",
+  "args": ["documentation"],
+  "console": "integratedTerminal",
+  "internalConsoleOptions": "neverOpen"
+}
