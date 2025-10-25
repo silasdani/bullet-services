@@ -6,9 +6,9 @@ module WebflowSyncable
   included do
     attr_accessor :skip_webflow_sync
 
-    after_commit :auto_sync_to_webflow,
-                 on: %i[create update],
-                 if: :should_auto_sync_to_webflow?
+    # after_commit :auto_sync_to_webflow,  # Disabled - manual sync only via API
+    #              on: %i[create update],
+    #              if: :should_auto_sync_to_webflow?
   end
 
   def webflow_formatted_data
@@ -32,7 +32,7 @@ module WebflowSyncable
       webflow_collection_id.present?
   end
 
-  def auto_sync_to_webflow
-    WebflowSyncJob.perform_later(self.class.name, id)
-  end
+  # def auto_sync_to_webflow  # Disabled - manual sync only via API
+  #   WebflowSyncJob.perform_later(self.class.name, id)
+  # end
 end

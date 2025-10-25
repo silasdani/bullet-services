@@ -13,7 +13,7 @@ module Wrs
           recalculate_totals
         end
 
-        trigger_webflow_sync if @wrs.persisted?
+        # trigger_webflow_sync if @wrs.persisted?  # Disabled - manual sync only via API
         success_result
       end
 
@@ -77,9 +77,9 @@ module Wrs
       end
     end
 
-    def trigger_webflow_sync
-      WebflowSyncJob.perform_later(@wrs.class.name, @wrs.id)
-    end
+    # def trigger_webflow_sync
+    #   WebflowSyncJob.perform_later(@wrs.class.name, @wrs.id)
+    # end
 
     def recalculate_totals
       @wrs.save! # This will trigger the before_save callback to recalculate totals
