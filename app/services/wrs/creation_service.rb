@@ -30,7 +30,7 @@ module Wrs
     def create_wrs
       @wrs = user.window_schedule_repairs.build(wrs_attributes)
 
-      unless @wrs.save
+      unless @wrs.save!
         add_errors(@wrs.errors.full_messages)
         return false
       end
@@ -41,13 +41,16 @@ module Wrs
     def create_associated_windows
       return unless params[:windows_attributes]
 
-      params[:windows_attributes].each do |window_attrs|
+      params[:windows_attributes].each do |_key, window_attrs|
         next if window_attrs[:location].blank?
 
         window = @wrs.windows.build(
           location: window_attrs[:location],
           webflow_image_url: window_attrs[:webflow_image_url]
         )
+
+        # Attach image if provided
+        window.image.attach(window_attrs[:image]) if window_attrs[:image].present?
 
         unless window.save
           add_errors(window.errors.full_messages)
@@ -59,7 +62,7 @@ module Wrs
     end
 
     def create_window_tools(window, tools_attributes)
-      tools_attributes.each do |tool_attrs|
+      tools_attributes.each do |_key, tool_attrs|
         next if tool_attrs[:name].blank?
 
         tool = window.tools.build(

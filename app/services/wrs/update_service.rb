@@ -41,15 +41,18 @@ module Wrs
 
       # Clear existing windows if we're providing new ones
       # This follows Rails convention for nested attributes
-      wrs.windows.destroy_all if params[:windows_attributes].any?
+      wrs.windows.destroy_all if params[:windows_attributes].present?
 
-      params[:windows_attributes].each do |window_attrs|
+      params[:windows_attributes].each do |_key, window_attrs|
         next if window_attrs[:_destroy] == '1' || window_attrs[:location].blank?
 
         window = wrs.windows.build(
           location: window_attrs[:location],
           webflow_image_url: window_attrs[:webflow_image_url]
         )
+
+        # Attach image if provided
+        window.image.attach(window_attrs[:image]) if window_attrs[:image].present?
 
         unless window.save
           add_errors(window.errors.full_messages)
@@ -66,6 +69,9 @@ module Wrs
       if window_attrs[:_destroy] == '1'
         window.destroy
       else
+        # Attach image if provided
+        window.image.attach(window_attrs[:image]) if window_attrs[:image].present?
+
         unless window.update(
           location: window_attrs[:location],
           webflow_image_url: window_attrs[:webflow_image_url]
@@ -86,6 +92,9 @@ module Wrs
         webflow_image_url: window_attrs[:webflow_image_url]
       )
 
+      # Attach image if provided
+      window.image.attach(window_attrs[:image]) if window_attrs[:image].present?
+
       unless window.save
         add_errors(window.errors.full_messages)
         raise ActiveRecord::Rollback
@@ -95,7 +104,7 @@ module Wrs
     end
 
     def update_window_tools(window, tools_attributes)
-      tools_attributes.each do |tool_attrs|
+      tools_attributes.each do |_key, tool_attrs|
         if tool_attrs[:id].present?
           update_existing_tool(window, tool_attrs)
         else
@@ -135,7 +144,7 @@ module Wrs
     end
 
     def create_window_tools(window, tools_attributes)
-      tools_attributes.each do |tool_attrs|
+      tools_attributes.each do |_key, tool_attrs|
         next if tool_attrs[:name].blank?
 
         tool = window.tools.build(

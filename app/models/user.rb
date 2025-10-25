@@ -19,6 +19,7 @@ class User < ApplicationRecord
 
   after_initialize :set_default_role, if: :new_record?
   after_create :set_confirmed
+  before_save :sync_uid_with_email
 
   # Role helper methods
   def is_admin?
@@ -52,5 +53,12 @@ class User < ApplicationRecord
 
   def set_default_role
     self.role ||= :client
+  end
+
+  def sync_uid_with_email
+    # For email-based authentication, UID should match the email
+    return unless email.present? && (uid.blank? || uid != email)
+
+    self.uid = email
   end
 end
