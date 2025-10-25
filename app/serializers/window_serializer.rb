@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class WindowSerializer < ActiveModel::Serializer
   attributes :id,
              :location,
@@ -35,7 +37,7 @@ class WindowSerializer < ActiveModel::Serializer
 
   def safe_call
     yield
-  rescue => e
+  rescue StandardError => e
     Rails.logger.error "Error serializing window image field: #{e.message}"
     nil
   end

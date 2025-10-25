@@ -3,10 +3,12 @@
 class User < ApplicationRecord
   extend Devise::Models
   include DeviseTokenAuth::Concerns::User
+  include SoftDeletable
+
   has_one_attached :image
 
   devise :database_authenticatable, :registerable,
-         :recoverable, :rememberable, :validatable # , :confirmable
+         :recoverable, :rememberable, :validatable
 
   validates :role, presence: true
 
@@ -15,47 +17,28 @@ class User < ApplicationRecord
   has_many :window_schedule_repairs, dependent: :restrict_with_error
   has_many :windows, through: :window_schedule_repairs
 
-  # Soft delete functionality
-  default_scope { where(deleted_at: nil) }
-  scope :active, -> { where(deleted_at: nil) }
-  scope :deleted, -> { unscoped.where.not(deleted_at: nil) }
-  scope :with_deleted, -> { unscoped }
-
   after_initialize :set_default_role, if: :new_record?
   after_create :set_confirmed
 
-
   # Role helper methods
   def is_admin?
-    role == "admin" || role == 2 || role == "super_admin" || role == 3
+    ['admin', 2, 'super_admin', 3].include?(role)
   end
 
   def is_employee?
-    role == "employee" || role == 1
+    ['employee', 1].include?(role)
   end
 
   def is_super_admin?
-    role == "super_admin" || role == 3
+    ['super_admin', 3].include?(role)
+  end
+
+  def webflow_access
+    is_admin? || is_employee?
   end
 
   def token_validation_response
     UserSerializer.new(self).as_json
-  end
-
-  def soft_delete!
-    update!(deleted_at: Time.current)
-  end
-
-  def restore!
-    update!(deleted_at: nil)
-  end
-
-  def deleted?
-    deleted_at.present?
-  end
-
-  def active?
-    deleted_at.nil?
   end
 
   def set_confirmed

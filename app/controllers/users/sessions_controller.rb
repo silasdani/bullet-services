@@ -1,29 +1,34 @@
-class Users::SessionsController < Devise::SessionsController
-  before_action :check_admin_access, only: [ :create ]
+# frozen_string_literal: true
 
-  private
+module Users
+  class SessionsController < Devise::SessionsController
+    before_action :check_admin_access, only: [:create]
 
-  def check_admin_access
-    email = params.dig(:user, :email) || params[:email]
-    return if email.blank?
-    user = User.find_by(email: email)
+    private
 
-    if user.nil?
-      # Don't set flash message here - let Devise handle authentication errors
+    def check_admin_access
+      email = params.dig(:user, :email) || params[:email]
+      return if email.blank?
+
+      user = User.find_by(email: email)
+
+      if user.nil?
+        # Don't set flash message here - let Devise handle authentication errors
+        redirect_to new_user_session_path and return
+      end
+
+      return if user.is_admin?
+
+      flash[:alert] = 'Access denied. This portal is restricted to administrators only.'
       redirect_to new_user_session_path and return
     end
 
-    unless user.is_admin?
-      flash[:alert] = "Access denied. This portal is restricted to administrators only."
-      redirect_to new_user_session_path and return
-    end
-  end
-
-  def after_sign_in_path_for(resource)
-    if resource.is_admin?
-      rails_admin_path
-    else
-      root_path
+    def after_sign_in_path_for(resource)
+      if resource.is_admin?
+        rails_admin_path
+      else
+        root_path
+      end
     end
   end
 end

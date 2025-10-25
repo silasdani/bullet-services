@@ -50,6 +50,12 @@ Rails.application.routes.draw do
           get :me
         end
       end
+
+      resources :invoices do
+        collection do
+          post :csv_import
+        end
+      end
     end
   end
 end
