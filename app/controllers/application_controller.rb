@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 class ApplicationController < ActionController::Base
   include Pundit::Authorization
 
@@ -10,16 +8,16 @@ class ApplicationController < ActionController::Base
 
   # Root route method
   def index
-    render json: { message: 'Bullet Services API', status: 'running' }
+    render json: { message: "Bullet Services API", status: "running" }
   end
 
   private
 
   def user_not_authorized(exception)
-    render json: { error: "#{exception.policy.class.to_s.underscore}.#{exception.query}" }, status: :forbidden
+    render json: { error: exception.policy.class.to_s.underscore + "." + exception.query }, status: :forbidden
   end
 
   def auth_request?
-    request.path.start_with?('/auth')
+    request.path.start_with?("/auth")
   end
 end
