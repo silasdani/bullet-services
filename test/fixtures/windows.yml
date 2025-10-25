@@ -1,0 +1,7 @@
+one:
+  location: "Test Location"
+  window_schedule_repair: one
+
+two:
+  location: "Another Location"
+  window_schedule_repair: one

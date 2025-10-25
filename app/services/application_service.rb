@@ -14,7 +14,7 @@ class ApplicationService
   end
 
   def call
-    raise NotImplementedError, 'Subclasses must implement #call method'
+    raise NotImplementedError, "Subclasses must implement #call method"
   end
 
   def success?
@@ -53,13 +53,13 @@ class ApplicationService
 
   def with_error_handling
     yield
-  rescue StandardError => e
+  rescue => e
     log_error("Unexpected error: #{e.message}")
     add_error(e.message)
     nil
   end
 
-  def with_transaction(&)
-    ActiveRecord::Base.transaction(&)
+  def with_transaction(&block)
+    ActiveRecord::Base.transaction(&block)
   end
 end

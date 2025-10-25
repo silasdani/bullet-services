@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 class WebflowUploadJob < ApplicationJob
   queue_as :default
 
@@ -22,11 +20,13 @@ class WebflowUploadJob < ApplicationJob
         )
 
         # Update the WRS with the Webflow item ID
-        window_schedule_repair.update(webflow_item_id: response['id']) if response && response['id']
+        if response && response["id"]
+          window_schedule_repair.update(webflow_item_id: response["id"])
+        end
       end
 
       Rails.logger.info "Successfully sent WRS #{window_schedule_repair.id} to Webflow"
-    rescue StandardError => e
+    rescue => e
       Rails.logger.error "Failed to send WRS #{window_schedule_repair.id} to Webflow: #{e.message}"
       # You might want to retry the job or notify admins
       raise e
