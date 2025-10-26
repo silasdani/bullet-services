@@ -15,12 +15,6 @@ RailsAdmin.config do |config|
 
   config.current_user_method(&:current_user)
 
-  config.authorize_with do
-    unless current_user&.is_admin?
-      redirect_to main_app.root_path, alert: "You are not authorized to access this page."
-    end
-  end
-
   config.actions do
     dashboard                     # mandatory
     index                         # mandatory

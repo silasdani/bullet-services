@@ -27,14 +27,12 @@
 threads_count = ENV.fetch("RAILS_MAX_THREADS", 3)
 threads threads_count, threads_count
 
-# Specifies the `port` that Puma will listen on to receive requests; default is 3000.
-port ENV.fetch("PORT", 3000)
+# Bind to all interfaces on the configured port (needed for Render and other cloud platforms)
+# Render automatically sets the PORT environment variable
+bind "tcp://0.0.0.0:#{ENV.fetch("PORT", 3000)}"
 
-# Bind to all interfaces when running in production with reverse proxy
+# Set environment variables for reverse proxy in production
 if ENV["RAILS_ENV"] == "production"
-  bind "tcp://0.0.0.0:#{ENV.fetch("PORT", 3000)}"
-
-  # Set environment variables for reverse proxy
   environment "RAILS_ENV" => "production"
   environment "RACK_ENV" => "production"
 end
