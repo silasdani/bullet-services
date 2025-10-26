@@ -129,7 +129,7 @@ class WindowScheduleRepair < ApplicationRecord
   end
 
   def webflow_collection_id
-    Rails.application.credentials.webflow&.dig(:wrs_collection_id)
+    ENV.fetch('WEBFLOW_WRS_COLLECTION_ID', nil)
   end
 
   private
