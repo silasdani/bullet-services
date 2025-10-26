@@ -24,12 +24,22 @@
 # Any libraries that use a connection pool or another resource pool should
 # be configured to provide at least as many connections as the number of
 # threads. This includes Active Record's `pool` parameter in `database.yml`.
-threads_count = ENV.fetch("RAILS_MAX_THREADS", 3)
+# Reduced default from 3 to 2 threads to reduce memory usage
+threads_count = ENV.fetch("RAILS_MAX_THREADS", 2)
 threads threads_count, threads_count
 
 # Bind to all interfaces on the configured port (needed for Render and other cloud platforms)
 # Render automatically sets the PORT environment variable
 bind "tcp://0.0.0.0:#{ENV.fetch("PORT", 3000)}"
+
+# Memory optimization for low-memory environments (e.g., 512MB Render instances)
+# Enable incremental GC and reduce memory allocation
+if ENV["RAILS_ENV"] == "production"
+  before_fork do
+    # More aggressive GC in production for memory-constrained environments
+    GC.auto_compact = true
+  end
+end
 
 # Set environment variables for reverse proxy in production
 if ENV["RAILS_ENV"] == "production"

@@ -13,7 +13,8 @@
 default: &default
   adapter: postgresql
   encoding: unicode
-  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  # Reduced default pool from 5 to 2 to save memory
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 2 } %>
   database: bullet-development
   template: template0
   host: localhost
