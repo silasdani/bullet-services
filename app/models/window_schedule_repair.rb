@@ -76,14 +76,16 @@ class WindowScheduleRepair < ApplicationRecord
   def mark_as_draft!
     update!(
       is_draft: true,
-      is_archived: false
+      is_archived: false,
+      last_published: nil
     )
   end
 
   def mark_as_archived!
     update!(
       is_archived: true,
-      is_draft: false
+      is_draft: false,
+      last_published: nil
     )
   end
 
