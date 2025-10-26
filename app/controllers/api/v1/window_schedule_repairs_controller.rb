@@ -8,12 +8,28 @@ module Api
       def index
         authorize WindowScheduleRepair
 
+        # Start with policy scoped collection
         wrs_collection = policy_scope(WindowScheduleRepair)
                          .includes(:user, :windows, windows: %i[tools image_attachment])
 
-        render json: {
-          data: wrs_collection.map { |wrs| { id: wrs.id, name: wrs.name } }
-        }
+        # Apply Ransack filtering if params[:q] is present
+        if params[:q].present?
+          wrs_collection = wrs_collection.ransack(params[:q]).result
+        end
+
+        # Apply pagination
+        paginated_collection = wrs_collection.page(@page).per(@per_page)
+
+        # Serialize the results
+        serialized_data = paginated_collection.map do |wrs|
+          WindowScheduleRepairSerializer.new(wrs).serializable_hash
+        end
+
+        # Return paginated response with meta
+        render_success(
+          data: serialized_data,
+          meta: pagination_meta(paginated_collection)
+        )
       end
 
       def show

@@ -6,13 +6,20 @@ module Api
       before_action :set_window, only: %i[show update destroy]
 
       def index
-        @windows = policy_scope(Window)
-        render json: @windows
+        @windows = policy_scope(Window).includes(:tools, :image_attachment)
+
+        serialized_data = @windows.map do |window|
+          WindowSerializer.new(window).serializable_hash
+        end
+
+        render_success(data: serialized_data)
       end
 
       def show
         authorize @window
-        render json: @window
+
+        serialized_data = WindowSerializer.new(@window).serializable_hash
+        render_success(data: serialized_data)
       end
 
       def create
@@ -20,18 +27,34 @@ module Api
         authorize @window
 
         if @window.save
-          render json: @window, status: :created
+          serialized_data = WindowSerializer.new(@window).serializable_hash
+          render_success(
+            data: serialized_data,
+            message: 'Window created successfully',
+            status: :created
+          )
         else
-          render json: { errors: @window.errors }, status: :unprocessable_content
+          render_error(
+            message: 'Failed to create window',
+            details: @window.errors.full_messages
+          )
         end
       end
 
       def update
         authorize @window
+
         if @window.update(window_params)
-          render json: @window
+          serialized_data = WindowSerializer.new(@window).serializable_hash
+          render_success(
+            data: serialized_data,
+            message: 'Window updated successfully'
+          )
         else
-          render json: { errors: @window.errors }, status: :unprocessable_content
+          render_error(
+            message: 'Failed to update window',
+            details: @window.errors.full_messages
+          )
         end
       end
 
@@ -44,7 +67,7 @@ module Api
       private
 
       def set_window
-        @window = Window.find(params[:id])
+        @window = Window.includes(:tools, :image_attachment).find(params[:id])
       end
 
       def window_params
