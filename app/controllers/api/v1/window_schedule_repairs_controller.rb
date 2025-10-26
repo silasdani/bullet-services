@@ -3,7 +3,7 @@
 module Api
   module V1
     class WindowScheduleRepairsController < Api::V1::BaseController
-      before_action :set_window_schedule_repair, only: %i[show update restore]
+      before_action :set_window_schedule_repair, only: %i[show update restore publish_to_webflow unpublish_from_webflow send_to_webflow]
 
       def index
         authorize WindowScheduleRepair
@@ -114,6 +114,108 @@ module Api
           data: WindowScheduleRepairSerializer.new(@window_schedule_repair).serializable_hash,
           message: 'WRS restored successfully'
         )
+      end
+
+      def publish_to_webflow
+        authorize @window_schedule_repair, :publish_to_webflow?
+
+        unless @window_schedule_repair.webflow_item_id.present?
+          render_error(
+            message: 'WRS has not been synced to Webflow yet',
+            status: :unprocessable_entity
+          )
+          return
+        end
+
+        begin
+          item_service = Webflow::ItemService.new
+          item_service.publish_items(
+            @window_schedule_repair.webflow_collection_id,
+            [@window_schedule_repair.webflow_item_id]
+          )
+
+          # Update the record to mark as published
+          @window_schedule_repair.mark_as_published!
+          @window_schedule_repair.reload
+
+          render_success(
+            data: WindowScheduleRepairSerializer.new(@window_schedule_repair).serializable_hash,
+            message: 'WRS published to Webflow successfully'
+          )
+        rescue StandardError => e
+          Rails.logger.error "Error publishing to Webflow: #{e.message}"
+          render_error(
+            message: 'Failed to publish to Webflow',
+            details: e.message,
+            status: :internal_server_error
+          )
+        end
+      end
+
+      def unpublish_from_webflow
+        authorize @window_schedule_repair, :unpublish_from_webflow?
+
+        unless @window_schedule_repair.webflow_item_id.present?
+          render_error(
+            message: 'WRS has not been synced to Webflow yet',
+            status: :unprocessable_entity
+          )
+          return
+        end
+
+        begin
+          item_service = Webflow::ItemService.new
+          item_service.unpublish_items(
+            @window_schedule_repair.webflow_collection_id,
+            [@window_schedule_repair.webflow_item_id]
+          )
+
+          # Update the record to mark as draft
+          @window_schedule_repair.mark_as_draft!
+          @window_schedule_repair.reload
+
+          render_success(
+            data: WindowScheduleRepairSerializer.new(@window_schedule_repair).serializable_hash,
+            message: 'WRS unpublished from Webflow successfully'
+          )
+        rescue StandardError => e
+          Rails.logger.error "Error unpublishing from Webflow: #{e.message}"
+          render_error(
+            message: 'Failed to unpublish from Webflow',
+            details: e.message,
+            status: :internal_server_error
+          )
+        end
+      end
+
+      def send_to_webflow
+        authorize @window_schedule_repair, :send_to_webflow?
+
+        # This triggers the sync to Webflow
+        begin
+          service = Webflow::AutoSyncService.new(wrs: @window_schedule_repair)
+          result = service.call
+
+          if result[:success]
+            @window_schedule_repair.reload
+            render_success(
+              data: WindowScheduleRepairSerializer.new(@window_schedule_repair).serializable_hash,
+              message: 'WRS sent to Webflow successfully'
+            )
+          else
+            render_error(
+              message: 'Failed to send to Webflow',
+              details: result[:reason] || result[:error]
+            )
+          end
+        rescue StandardError => e
+          Rails.logger.error "Error sending to Webflow: #{e.message}"
+          render_error(
+            message: 'Failed to send to Webflow',
+            details: e.message,
+            status: :internal_server_error
+          )
+        end
       end
 
       private
