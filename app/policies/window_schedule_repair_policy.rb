@@ -6,7 +6,7 @@ class WindowScheduleRepairPolicy < ApplicationPolicy
   end
 
   def show?
-    user.present? && (user.is_admin? || user.is_employee? || record.user == user)
+    user.present?
   end
 
   def create?
@@ -39,13 +39,8 @@ class WindowScheduleRepairPolicy < ApplicationPolicy
 
   class Scope < Scope
     def resolve
-      if user.is_admin?
-        scope.all
-      elsif user.is_employee?
-        scope.where(user: user)
-      else
-        scope.where(user: user)
-      end
+      # Allow all users to see all WRS
+      scope.all
     end
   end
 end
