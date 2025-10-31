@@ -106,30 +106,6 @@ RailsAdmin.config do |config|
       field :is_draft
       field :is_archived
       field :webflow_item_id
-      field :main_image_url do
-        pretty_value do
-          if bindings[:object].main_image_url.present?
-            bindings[:view].tag(:img, { src: bindings[:object].main_image_url, style: 'max-width: 500px; max-height: 500px;' }) +
-            bindings[:view].tag(:br) +
-            bindings[:view].link_to(bindings[:object].main_image_url, bindings[:object].main_image_url, target: '_blank')
-          else
-            'No image available'
-          end
-        end
-      end
-      field :images do
-        pretty_value do
-          if bindings[:object].images.attached?
-            bindings[:view].content_tag(:div, style: 'display: flex; flex-wrap: wrap; gap: 10px;') do
-              bindings[:object].images.map do |image|
-                bindings[:view].tag(:img, { src: image.url, style: 'max-width: 200px; max-height: 200px; object-fit: contain;' })
-              end.join.html_safe
-            end
-          else
-            'No images attached'
-          end
-        end
-      end
       field :created_at
       field :updated_at
       field :deleted_at

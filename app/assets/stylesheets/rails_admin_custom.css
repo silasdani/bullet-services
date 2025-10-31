@@ -20,7 +20,6 @@
   border-bottom: 1px solid #e5e5e5;
   padding-bottom: 10px;
 }
-
 /* Make the entire row display inline */
 .rails_admin .show .form-horizontal .control-group {
   display: flex;
@@ -31,7 +30,6 @@
 .rails_admin .show .form-horizontal .control-label {
   flex: 0 0 200px;
 }
-
 .rails_admin .show .form-horizontal .controls {
   flex: 1 1 auto;
 }
