@@ -8,6 +8,8 @@ module WebflowPublishing
     return unless webflow_synced?
 
     execute_webflow_action(:publish, 'published')
+  rescue Pundit::NotAuthorizedError
+    handle_webflow_authorization_error('publish')
   rescue StandardError => e
     handle_webflow_error('publish', e)
   end
@@ -17,6 +19,8 @@ module WebflowPublishing
     return unless webflow_synced?
 
     execute_webflow_action(:unpublish, 'unpublished')
+  rescue Pundit::NotAuthorizedError
+    handle_webflow_authorization_error('unpublish')
   rescue StandardError => e
     handle_webflow_error('unpublish', e)
   end
@@ -25,6 +29,8 @@ module WebflowPublishing
     authorize @window_schedule_repair, :send_to_webflow?
     result = sync_to_webflow
     result[:success] ? handle_sync_success : handle_sync_error(result)
+  rescue Pundit::NotAuthorizedError
+    handle_webflow_authorization_error('send')
   rescue StandardError => e
     handle_sync_exception(e)
   end
@@ -54,6 +60,25 @@ module WebflowPublishing
     render_success(
       data: WindowScheduleRepairSerializer.new(@window_schedule_repair).serializable_hash,
       message: "WRS #{past_tense} to Webflow successfully"
+    )
+  end
+
+  def handle_webflow_authorization_error(action)
+    action_text = case action
+                  when 'publish'
+                    'publish to'
+                  when 'unpublish'
+                    'unpublish from'
+                  when 'send'
+                    'send to'
+                  else
+                    'access'
+                  end
+
+    render_error(
+      message: "You don't have permission to #{action_text} Webflow",
+      details: 'Webflow access is required for this action. Please contact your administrator.',
+      status: :forbidden
     )
   end
 
