@@ -170,7 +170,7 @@ module Wrs
     def wrs_attributes
       {
         name: params[:name],
-        address: params[:address],
+        building_id: params[:building_id],
         flat_number: params[:flat_number],
         details: params[:details],
         status: params[:status]

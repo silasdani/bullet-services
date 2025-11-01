@@ -56,6 +56,12 @@ Rails.application.routes.draw do
           post :csv_import
         end
       end
+
+      resources :buildings do
+        member do
+          get :window_schedule_repairs
+        end
+      end
     end
   end
 end

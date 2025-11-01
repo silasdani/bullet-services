@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_26_134906) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_01_001603) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -40,6 +40,21 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_26_134906) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "buildings", force: :cascade do |t|
+    t.string "name"
+    t.string "street"
+    t.string "city"
+    t.string "country"
+    t.string "zipcode"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+    t.index "lower(TRIM(BOTH FROM street)), lower(TRIM(BOTH FROM city)), lower(TRIM(BOTH FROM COALESCE(zipcode, ''::character varying)))", name: "index_buildings_on_unique_address", unique: true, where: "(deleted_at IS NULL)"
+    t.index ["deleted_at"], name: "index_buildings_on_deleted_at"
+    t.index ["name"], name: "index_buildings_on_name"
+    t.index ["street", "city", "zipcode"], name: "index_buildings_on_address_fields"
   end
 
   create_table "invoices", force: :cascade do |t|
@@ -123,6 +138,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_26_134906) do
     t.boolean "is_draft", default: true, null: false
     t.boolean "is_archived", default: false, null: false
     t.string "webflow_main_image_url"
+    t.bigint "building_id", null: false
+    t.index ["building_id"], name: "index_window_schedule_repairs_on_building_id"
     t.index ["deleted_at"], name: "index_window_schedule_repairs_on_deleted_at"
     t.index ["user_id"], name: "index_window_schedule_repairs_on_user_id"
   end
@@ -139,6 +156,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_26_134906) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "tools", "windows"
+  add_foreign_key "window_schedule_repairs", "buildings"
   add_foreign_key "window_schedule_repairs", "users"
   add_foreign_key "windows", "window_schedule_repairs"
 end

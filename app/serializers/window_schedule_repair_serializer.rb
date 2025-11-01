@@ -8,6 +8,7 @@ class WindowScheduleRepairSerializer < ActiveModel::Serializer
              :published, :draft, :archived, :webflow_item_id
 
   belongs_to :user
+  belongs_to :building
   has_many :windows, serializer: WindowSerializer
 
   # Ensure windows are loaded properly
@@ -28,6 +29,16 @@ class WindowScheduleRepairSerializer < ActiveModel::Serializer
     object.user
   rescue StandardError => e
     Rails.logger.error "Error loading user in serializer: #{e.message}"
+    nil
+  end
+
+  # Ensure building is loaded
+  def building
+    return nil unless object.respond_to?(:building)
+
+    object.building
+  rescue StandardError => e
+    Rails.logger.error "Error loading building in serializer: #{e.message}"
     nil
   end
 
