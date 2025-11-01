@@ -14,7 +14,7 @@ class BuildingPolicy < ApplicationPolicy
   end
 
   def update?
-    user.present? && (user.is_admin? || user.is_employee?)
+    user.present?
   end
 
   def destroy?
