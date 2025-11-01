@@ -39,43 +39,40 @@ module Wrs
     def update_associated_windows
       return unless params[:windows_attributes]
 
-      # Clear existing windows if we're providing new ones
-      # This follows Rails convention for nested attributes
-      wrs.windows.destroy_all if params[:windows_attributes].present?
-
       params[:windows_attributes].each do |_key, window_attrs|
-        next if window_attrs[:_destroy] == '1' || window_attrs[:location].blank?
-
-        window = wrs.windows.build(
-          location: window_attrs[:location],
-          webflow_image_url: window_attrs[:webflow_image_url]
-        )
-
-        # Attach image if provided
-        window.image.attach(window_attrs[:image]) if window_attrs[:image].present?
-
-        unless window.save
-          add_errors(window.errors.full_messages)
-          raise ActiveRecord::Rollback
+        if window_attrs[:id].present?
+          # Update existing window
+          update_existing_window(window_attrs)
+        else
+          # Create new window (skip if marked for destroy or location is blank)
+          next if window_attrs[:_destroy] == '1' || window_attrs[:location].blank?
+          create_new_window(window_attrs)
         end
-
-        create_window_tools(window, window_attrs[:tools_attributes]) if window_attrs[:tools_attributes]
       end
     end
 
     def update_existing_window(window_attrs)
-      window = wrs.windows.find(window_attrs[:id])
+      window = wrs.windows.find_by(id: window_attrs[:id])
+
+      unless window
+        add_errors("Window with id #{window_attrs[:id]} not found")
+        raise ActiveRecord::Rollback
+      end
 
       if window_attrs[:_destroy] == '1'
         window.destroy
       else
-        # Attach image if provided
-        window.image.attach(window_attrs[:image]) if window_attrs[:image].present?
+        # Only attach new image if one is provided - preserve existing image otherwise
+        if window_attrs[:image].present?
+          window.image.attach(window_attrs[:image])
+        end
 
-        unless window.update(
+        update_params = {
           location: window_attrs[:location],
           webflow_image_url: window_attrs[:webflow_image_url]
-        )
+        }.compact
+
+        unless window.update(update_params)
           add_errors(window.errors.full_messages)
           raise ActiveRecord::Rollback
         end
