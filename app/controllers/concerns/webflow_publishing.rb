@@ -8,6 +8,8 @@ module WebflowPublishing
     return unless webflow_synced?
 
     execute_webflow_action(:publish, 'published')
+  rescue Pundit::NotAuthorizedError
+    handle_webflow_authorization_error('publish')
   rescue StandardError => e
     handle_webflow_error('publish', e)
   end
@@ -17,6 +19,8 @@ module WebflowPublishing
     return unless webflow_synced?
 
     execute_webflow_action(:unpublish, 'unpublished')
+  rescue Pundit::NotAuthorizedError
+    handle_webflow_authorization_error('unpublish')
   rescue StandardError => e
     handle_webflow_error('unpublish', e)
   end
@@ -25,6 +29,8 @@ module WebflowPublishing
     authorize @window_schedule_repair, :send_to_webflow?
     result = sync_to_webflow
     result[:success] ? handle_sync_success : handle_sync_error(result)
+  rescue Pundit::NotAuthorizedError
+    handle_webflow_authorization_error('send')
   rescue StandardError => e
     handle_sync_exception(e)
   end
@@ -46,6 +52,14 @@ module WebflowPublishing
     collection_id = @window_schedule_repair.webflow_collection_id
     item_ids = [@window_schedule_repair.webflow_item_id]
 
+    # When publishing, sync the latest data first
+    if action == :publish
+      sync_result = sync_to_webflow_with_publish
+      unless sync_result[:success]
+        return handle_publish_sync_error(sync_result)
+      end
+    end
+
     item_service.public_send("#{action}_items", collection_id, item_ids)
 
     @window_schedule_repair.public_send("mark_as_#{action == :publish ? 'published' : 'draft'}!")
@@ -54,6 +68,25 @@ module WebflowPublishing
     render_success(
       data: WindowScheduleRepairSerializer.new(@window_schedule_repair).serializable_hash,
       message: "WRS #{past_tense} to Webflow successfully"
+    )
+  end
+
+  def handle_webflow_authorization_error(action)
+    action_text = case action
+                  when 'publish'
+                    'publish to'
+                  when 'unpublish'
+                    'unpublish from'
+                  when 'send'
+                    'send to'
+                  else
+                    'access'
+                  end
+
+    render_error(
+      message: "You don't have permission to #{action_text} Webflow",
+      details: 'Webflow access is required for this action. Please contact your administrator.',
+      status: :forbidden
     )
   end
 
@@ -70,6 +103,28 @@ module WebflowPublishing
     Webflow::AutoSyncService.new(wrs: @window_schedule_repair).call
   end
 
+  def sync_to_webflow_with_publish
+    # Force sync even if published, as we're about to republish
+    item_service = Webflow::ItemService.new
+
+    begin
+      item_data = @window_schedule_repair.to_webflow_formatted.merge(isDraft: true)
+      item_service.update_item(
+        @window_schedule_repair.webflow_collection_id,
+        @window_schedule_repair.webflow_item_id,
+        item_data
+      )
+
+      { success: true }
+    rescue WebflowApiError => e
+      Rails.logger.error "Error syncing before publish: #{e.message}"
+      { success: false, error: e.message, status_code: e.status_code }
+    rescue StandardError => e
+      Rails.logger.error "Unexpected error syncing before publish: #{e.message}"
+      { success: false, error: e.message }
+    end
+  end
+
   def handle_sync_success
     @window_schedule_repair.reload
     render_success(
@@ -82,6 +137,14 @@ module WebflowPublishing
     render_error(
       message: 'Failed to send to Webflow',
       details: result[:reason] || result[:error]
+    )
+  end
+
+  def handle_publish_sync_error(result)
+    render_error(
+      message: 'Failed to sync data before publishing',
+      details: result[:error] || result[:reason],
+      status: :unprocessable_entity
     )
   end
 

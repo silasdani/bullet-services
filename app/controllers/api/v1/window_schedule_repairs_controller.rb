@@ -108,7 +108,7 @@ module Api
 
       def build_wrs_collection
         collection = policy_scope(WindowScheduleRepair)
-                     .includes(:user, :windows, windows: %i[tools image_attachment])
+                     .includes(:user, :building, :windows, windows: %i[tools image_attachment])
         collection = collection.ransack(params[:q]).result if params[:q].present?
         collection
       end
@@ -123,10 +123,10 @@ module Api
         # For restore action, we need to find deleted records too
         if action_name == 'restore'
           @window_schedule_repair = WindowScheduleRepair.with_deleted
-                                                        .includes(:user, :windows, windows: %i[tools image_attachment])
+                                                        .includes(:user, :building, :windows, windows: %i[tools image_attachment])
                                                         .find(params[:id])
         else
-          @window_schedule_repair = WindowScheduleRepair.includes(:user, :windows, windows: %i[tools image_attachment])
+          @window_schedule_repair = WindowScheduleRepair.includes(:user, :building, :windows, windows: %i[tools image_attachment])
                                                         .find(params[:id])
         end
       end
@@ -142,7 +142,7 @@ module Api
       def wrs_permitted_params
         [
           :name, :slug, :webflow_item_id, :reference_number,
-          :address, :flat_number, :details,
+          :building_id, :flat_number, :details,
           :total_vat_excluded_price, :status, :status_color, :grand_total,
           { images: [],
             windows_attributes: [

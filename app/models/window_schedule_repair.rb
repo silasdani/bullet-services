@@ -6,6 +6,7 @@ class WindowScheduleRepair < ApplicationRecord
   include WebflowSyncable
 
   belongs_to :user
+  belongs_to :building
   has_many :windows, dependent: :destroy
   has_many :tools, through: :windows
   has_many_attached :images
@@ -15,13 +16,13 @@ class WindowScheduleRepair < ApplicationRecord
   enum :status, pending: 0, approved: 1, rejected: 2, completed: 3
 
   validates :name, presence: true
-  validates :address, presence: true
+  validates :building, presence: true
   validates :slug, presence: true, uniqueness: true
 
   before_validation :generate_slug, on: :create
   before_validation :generate_reference_number
   before_validation :set_default_webflow_flags, on: :create
-
+  before_save :sync_address_from_building
   before_save :calculate_totals
 
   scope :for_user, lambda { |user|
@@ -134,6 +135,18 @@ class WindowScheduleRepair < ApplicationRecord
     ENV.fetch('WEBFLOW_WRS_COLLECTION_ID', nil)
   end
 
+  # Backwards compatibility: return address string from building in Webflow format
+  # Format: "{building.name}, {building.street}, {building.zipcode}"
+  def address
+    if building.present?
+      # Format: building name, street, postcode
+      parts = [building.name, building.street, building.zipcode].compact.reject(&:blank?)
+      parts.join(', ')
+    else
+      read_attribute(:address) rescue nil
+    end
+  end
+
   private
 
   def calculate_totals
@@ -167,10 +180,13 @@ class WindowScheduleRepair < ApplicationRecord
 
   def generate_slug
     return if slug.present?
-    return if address.blank?
+    return unless building
+    return if building.address_string.blank?
     return if flat_number.blank?
 
-    self.slug = "#{address.parameterize}-#{flat_number.parameterize}-#{SecureRandom.hex(2)}"
+    # Use building address in Webflow format for slug
+    address_part = building.address_string.parameterize
+    self.slug = "#{address_part}-#{flat_number.parameterize}-#{SecureRandom.hex(2)}"
   end
 
   def generate_reference_number
@@ -193,6 +209,16 @@ class WindowScheduleRepair < ApplicationRecord
     self.is_archived = false if is_archived.nil?
   end
 
+  def sync_address_from_building
+    # Sync address column with building address (Webflow format) for backwards compatibility
+    # Format: "{building.name}, {building.street}, {building.zipcode}"
+    if building.present?
+      parts = [building.name, building.street, building.zipcode].compact.reject(&:blank?)
+      new_address = parts.join(', ')
+      write_attribute(:address, new_address) if new_address.present?
+    end
+  end
+
   # Ransack configuration for filtering
   def self.ransackable_attributes(_auth_object = nil)
     %w[name slug flat_number reference_number address details status created_at updated_at total_vat_included_price
@@ -200,6 +226,6 @@ class WindowScheduleRepair < ApplicationRecord
   end
 
   def self.ransackable_associations(_auth_object = nil)
-    %w[user windows tools]
+    %w[user windows tools building]
   end
 end
