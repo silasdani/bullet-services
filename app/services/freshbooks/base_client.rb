@@ -62,6 +62,15 @@ module Freshbooks
 
     def refresh_access_token
       config = Rails.application.config.freshbooks
+
+      if config[:client_id].blank? || config[:client_secret].blank?
+        raise FreshbooksError.new(
+          'FreshBooks OAuth credentials not configured (CLIENT_ID and CLIENT_SECRET required for token refresh)',
+          nil,
+          nil
+        )
+      end
+
       response = HTTParty.post(
         "#{config[:auth_base_url]}/oauth/token",
         body: {
@@ -69,7 +78,7 @@ module Freshbooks
           refresh_token: @refresh_token,
           client_id: config[:client_id],
           client_secret: config[:client_secret]
-        },
+        }.to_json,
         headers: { 'Content-Type' => 'application/json' }
       )
 
@@ -89,8 +98,19 @@ module Freshbooks
           )
         end
       else
+        error_message = "Failed to refresh access token: #{response.code}"
+        begin
+          parsed = JSON.parse(response.body) if response.body.present?
+          error_message += " - #{parsed['error_description'] || parsed['error'] || response.body}"
+        rescue JSON::ParserError
+          error_message += " - #{response.body}"
+        end
+
+        Rails.logger.error "FreshBooks token refresh failed: #{error_message}"
+        Rails.logger.error "Response body: #{response.body}"
+
         raise FreshbooksError.new(
-          'Failed to refresh access token',
+          error_message,
           response.code,
           response.body
         )
@@ -100,6 +120,10 @@ module Freshbooks
     def make_request(method, path, options = {})
       options[:headers] = headers.merge(options[:headers] || {})
 
+      Rails.logger.debug "FreshBooks API Request: #{method.upcase} #{path}"
+      Rails.logger.debug "Business ID: #{business_id}"
+      Rails.logger.debug "Headers: #{options[:headers].except('Authorization').inspect}"
+
       response = self.class.send(method, path, options)
 
       case response.code
@@ -108,28 +132,61 @@ module Freshbooks
       when 401
         # Token might be expired, try refreshing once if we have refresh token
         if @refresh_token.present?
+          Rails.logger.info 'FreshBooks API returned 401, attempting token refresh...'
           refresh_access_token
+          Rails.logger.info 'Token refreshed successfully, retrying request...'
+
+          # Update headers with new token
           options[:headers] = headers.merge(options[:headers] || {})
           response = self.class.send(method, path, options)
+
           if response.success?
             response.parsed_response
           else
+            error_message = "FreshBooks API error after token refresh: #{response.code}"
+            begin
+              parsed = JSON.parse(response.body) if response.body.present?
+              error_message += " - #{parsed['error'] || parsed['message'] || response.body}"
+            rescue JSON::ParserError
+              error_message += " - #{response.body}"
+            end
+
+            Rails.logger.error "FreshBooks API request failed after refresh: #{error_message}"
+            Rails.logger.error "Request: #{method.upcase} #{path}"
+            Rails.logger.error "Response: #{response.body}"
+
             raise FreshbooksError.new(
-              "FreshBooks API error: #{response.code}",
+              error_message,
               response.code,
               response.body
             )
           end
         else
+          error_message = 'FreshBooks API error: Unauthorized (401). Token may be expired and no refresh token available.'
+          begin
+            parsed = JSON.parse(response.body) if response.body.present?
+            error_message += " - #{parsed['error'] || parsed['message'] || response.body}"
+          rescue JSON::ParserError
+            error_message += " - #{response.body}"
+          end
+
           raise FreshbooksError.new(
-            'FreshBooks API error: Unauthorized (401). Token may be expired and no refresh token available.',
+            error_message,
             response.code,
             response.body
           )
         end
       else
+        error_message = "FreshBooks API error: #{response.code}"
+        begin
+          parsed = JSON.parse(response.body) if response.body.present?
+          error_message += " - #{parsed['error'] || parsed['message'] || response.body}"
+        rescue JSON::ParserError
+          error_message += " - #{response.body}"
+        end
+
         raise FreshbooksError.new(
-          "FreshBooks API error: #{response.code}",
+          error_message,
           response.code,
           response.body
         )

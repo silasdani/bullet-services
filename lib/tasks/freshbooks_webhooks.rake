@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# rubocop:disable Metrics/BlockLength
 namespace :freshbooks do
   namespace :webhooks do
     desc 'List all registered webhooks'
@@ -94,7 +95,7 @@ namespace :freshbooks do
     end
 
     desc 'Verify a webhook with verification code'
-    task :verify, [:callback_id, :verification_code] => :environment do |_t, args|
+    task :verify, %i[callback_id verification_code] => :environment do |_t, args|
       callback_id = args[:callback_id]
       verification_code = args[:verification_code]
 
@@ -109,9 +110,9 @@ namespace :freshbooks do
         result = webhooks.verify(callback_id, verification_code)
 
         if result['verified']
-          puts "✅ Webhook verified successfully!"
+          puts '✅ Webhook verified successfully!'
         else
-          puts "⚠️  Webhook verification returned, but status is still unverified"
+          puts '⚠️  Webhook verification returned, but status is still unverified'
         end
       rescue FreshbooksError => e
         puts "❌ Error: #{e.message}"
@@ -132,8 +133,8 @@ namespace :freshbooks do
       begin
         webhooks = Freshbooks::Webhooks.new
         result = webhooks.resend_verification(callback_id)
-        puts "✅ Verification code resent!"
-        puts "FreshBooks will send a new verification request to your webhook URL."
+        puts '✅ Verification code resent!'
+        puts 'FreshBooks will send a new verification request to your webhook URL.'
       rescue FreshbooksError => e
         puts "❌ Error: #{e.message}"
         exit 1
@@ -166,6 +167,6 @@ namespace :freshbooks do
       print 'Enter your webhook URL (e.g., https://yourdomain.com/api/v1/webhooks/freshbooks): '
       $stdin.gets.chomp
     end
-
   end
 end
+# rubocop:enable Metrics/BlockLength

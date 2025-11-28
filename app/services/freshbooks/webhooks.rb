@@ -51,8 +51,8 @@ module Freshbooks
       )
 
       if response.success?
-        result = response.parsed_response.dig('response', 'result', 'callback')
-        result
+        response.parsed_response.dig('response', 'result', 'callback')
+
       else
         error_body = response.body || '(empty response)'
         raise FreshbooksError.new(
