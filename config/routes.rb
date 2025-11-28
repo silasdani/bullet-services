@@ -19,10 +19,23 @@ Rails.application.routes.draw do
     registrations: "users/registrations"
   }
 
+  # FreshBooks OAuth callback (for capturing authorization code)
+  get '/freshbooks/callback', to: 'freshbooks_callback#callback', as: :freshbooks_callback
+
   namespace :api do
     namespace :v1 do
       # Webflow webhooks (no authentication required)
       post "webhooks/webflow/collection_item_published", to: "webhooks#webflow_collection_item_published"
+
+      # FreshBooks webhooks (no authentication required, signature verified)
+      post "webhooks/freshbooks", to: "freshbooks_webhooks#create"
+
+      # FreshBooks management endpoints
+      get "freshbooks/status", to: "freshbooks#status"
+      post "freshbooks/sync_clients", to: "freshbooks#sync_clients"
+      post "freshbooks/sync_invoices", to: "freshbooks#sync_invoices"
+      post "freshbooks/sync_payments", to: "freshbooks#sync_payments"
+      post "freshbooks/create_invoice", to: "freshbooks#create_invoice"
 
       resources :window_schedule_repairs do
         member do

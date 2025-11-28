@@ -30,4 +30,20 @@ class Invoice < ApplicationRecord
   def published?
     !draft?
   end
+
+  # Create invoice in FreshBooks and optionally send email with payment link
+  def create_in_freshbooks!(client_id:, lines: [], send_email: false, email_to: nil)
+    service = Freshbooks::InvoiceCreationService.new(
+      invoice: self,
+      client_id: client_id,
+      lines: lines,
+      send_email: send_email,
+      email_to: email_to
+    )
+
+    result = service.call
+    raise StandardError, service.errors.join(', ') unless service.success?
+
+    result
+  end
 end
