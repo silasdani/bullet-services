@@ -136,8 +136,11 @@ module Freshbooks
           refresh_access_token
           Rails.logger.info 'Token refreshed successfully, retrying request...'
 
-          # Update headers with new token
-          options[:headers] = headers.merge(options[:headers] || {})
+          # Rebuild headers with new token - ensure fresh Authorization header is used
+          existing_headers = (options[:headers] || {}).dup
+          existing_headers.delete('Authorization') # Remove old token
+          options[:headers] = headers.merge(existing_headers) # Merge with new token
+          Rails.logger.debug "Retry with new token (first 20 chars): #{options[:headers]['Authorization']&.first(20)}..."
           response = self.class.send(method, path, options)
 
           if response.success?
