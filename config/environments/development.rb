@@ -29,9 +29,12 @@ Rails.application.configure do
   # Store uploaded files on the local file system (see config/storage.yml for options).
   config.active_storage.service = :amazon
 
-  # Don't care if the mailer can't send.
-  config.action_mailer.perform_deliveries = false
-  config.action_mailer.raise_delivery_errors = false
+  # Enable email delivery in development (set ENABLE_EMAIL_DELIVERY=true to enable)
+  config.action_mailer.perform_deliveries = ENV.fetch('ENABLE_EMAIL_DELIVERY', 'false') == 'true'
+  config.action_mailer.raise_delivery_errors = true
+  # In development, we keep ActionMailer on :test by default to avoid accidental sends.
+  # MailerSend is used via a dedicated service object, not as an ActionMailer delivery method.
+  config.action_mailer.delivery_method = :test
 
   # Make template changes take effect immediately.
   config.action_mailer.perform_caching = false
@@ -45,7 +48,7 @@ Rails.application.configure do
   # Set routes default URL options for ActiveStorage
   # Note: ActiveStorage URL options are now handled in config/initializers/active_storage.rb
 
-  # Print deprecatio    n notices to the Rails logger.
+  # Print deprecation notices to the Rails logger.
   config.active_support.deprecation = :log
 
   # Raise an error on page load if there are pending migrations.

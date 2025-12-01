@@ -80,14 +80,10 @@ Rails.application.configure do
     port: ENV.fetch("DEFAULT_URL_PORT", 443)
   }
 
-  # Specify outgoing SMTP server. Remember to add smtp/* credentials via rails credentials:edit.
-  # config.action_mailer.smtp_settings = {
-  #   user_name: Rails.application.credentials.dig(:smtp, :user_name),
-  #   password: Rails.application.credentials.dig(:smtp, :password),
-  #   address: "smtp.example.com",
-  #   port: 587,
-  #   authentication: :plain
-  # }
+  # Use SMTP or API-based providers via service objects; ActionMailer itself can remain on :smtp or :test.
+  # For now, we keep ActionMailer configuration minimal; MailerSend is used via a dedicated service object.
+  config.action_mailer.perform_deliveries = true
+  config.action_mailer.raise_delivery_errors = true
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
   # the I18n.default_locale when a translation cannot be found).

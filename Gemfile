@@ -77,4 +77,5 @@ gem 'turbolinks'
 gem 'uglifier'
 
 gem 'csv'
+gem 'mailersend-ruby'
 gem 'ruby-progressbar'
