@@ -1,5 +1,9 @@
 Rails.application.routes.draw do
-  root "application#index"
+  root "website#home"
+
+  # Public website pages
+  get "/about", to: "website#about", as: :about
+  post "/contact", to: "website#contact_submit", as: :contact_submit
 
   # Admin panel (authentication handled in RailsAdmin initializer)
   mount RailsAdmin::Engine => "/admin", as: "rails_admin"

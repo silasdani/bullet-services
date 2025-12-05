@@ -1,0 +1,19 @@
+<nav class="flex items-center justify-between px-6 py-4 bg-white shadow-sm">
+  <div class="flex items-center space-x-8">
+    <%= link_to root_path, class: "flex items-center" do %>
+      <%= image_tag "bll-logo.svg", alt: "Bullet Services", class: "h-8" %>
+    <% end %>
+
+    <div class="hidden md:flex items-center space-x-6">
+      <%= link_to "Home", root_path, class: "text-gray-700 hover:text-gray-900 #{active_class(root_path)}" %>
+      <%= link_to "About", about_path, class: "text-gray-700 hover:text-gray-900 #{active_class(about_path)}" %>
+      <%= link_to "Contacts", root_path(anchor: "contact"), class: "text-gray-700 hover:text-gray-900" %>
+    </div>
+  </div>
+
+  <div class="flex items-center space-x-4">
+    <a href="mailto:office@bulletservices.co.uk" class="text-gray-700 hover:text-gray-900 text-sm">
+      office@bulletservices.co.uk
+    </a>
+  </div>
+</nav>
