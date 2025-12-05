@@ -7,8 +7,8 @@
 // This file uses Sprockets asset pipeline
 // Learn more: https://github.com/rails/sprockets
 
-// Load all JavaScript files in this directory
-//= require_tree .
+// Load hero carousel
+//= require hero_carousel
 //= require_self
 
 // Modern ES6+ code can be added below

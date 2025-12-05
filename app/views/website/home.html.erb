@@ -2,13 +2,9 @@
 
 <%= render NavigationComponent.new(current_path: request.path) %>
 
-<!-- Hero Section -->
-<section class="relative h-screen flex items-center justify-center bg-cover bg-center" style="background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('<%= asset_path('black-white-exterior-building.jpg') %>');">
-  <div class="text-center px-6">
-    <h1 class="text-6xl md:text-8xl font-light text-white mb-4">
-      We build<br>exteriors.
-    </h1>
-  </div>
+<!-- Hero Carousel Section -->
+<section class="relative">
+  <%= render HeroCarouselComponent.new %>
 </section>
 
 <!-- Projects Section -->

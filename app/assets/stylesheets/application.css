@@ -13,6 +13,13 @@
  *= require_self
  */
 
+/* Ensure body has no margins that could affect full-width carousel */
+body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
 .alert {
   padding: 15px;
   margin-bottom: 20px;

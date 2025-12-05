@@ -1,0 +1,15 @@
+/* Hero Carousel - Minimal custom styles, primarily using Tailwind */
+
+/* Large screens (1920px+) - change background repeat */
+@media screen and (min-width: 1920px) {
+  #hero-carousel .hero-slide [style*="background-image"] {
+    background-repeat: repeat, repeat !important;
+  }
+}
+
+/* Mobile screens */
+@media screen and (max-width: 479px) {
+  #hero-carousel .hero-slide [style*="background-image"] {
+    background-repeat: repeat, no-repeat !important;
+  }
+}
