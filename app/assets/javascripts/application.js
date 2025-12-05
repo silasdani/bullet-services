@@ -7,8 +7,9 @@
 // This file uses Sprockets asset pipeline
 // Learn more: https://github.com/rails/sprockets
 
-// Load hero carousel
+// Load hero carousel and typewriter animation
 //= require hero_carousel
+//= require typewriter
 //= require_self
 
 // Modern ES6+ code can be added below
