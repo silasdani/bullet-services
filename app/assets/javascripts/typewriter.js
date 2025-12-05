@@ -5,7 +5,7 @@
   let globalTypewriterInstance = null;
 
   class TypewriterAnimation {
-    constructor(element, words = ["interiors.", "exteriors.", "dreams."]) {
+    constructor(element, words = ["interiors.", "exteriors.", "homes.", "dreams."]) {
       this.element = element;
       this.words = words;
       this.currentWordIndex = 0;

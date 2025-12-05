@@ -4,7 +4,7 @@
       <!-- Clone last slide for seamless loop -->
       <% last_slide = slides.last %>
       <div class="hero-slide flex-shrink-0 w-screen h-full" data-slide="clone-last">
-        <div 
+        <div
           class="h-full w-full bg-cover bg-center bg-no-repeat"
           style="background-image: radial-gradient(circle at 100% 100%, transparent, rgb(0, 0, 0)), url('<%= asset_path(last_slide[:image]) %>'); background-position: 0px 0px, 50% 50%; background-size: auto, cover;"
         ></div>
@@ -13,7 +13,7 @@
       <!-- Real slides -->
       <% slides.each_with_index do |slide, index| %>
         <div class="hero-slide flex-shrink-0 w-screen h-full" data-slide="<%= index %>">
-          <div 
+          <div
             class="h-full w-full bg-cover bg-center bg-no-repeat"
             style="background-image: radial-gradient(circle at 100% 100%, transparent, rgb(0, 0, 0)), url('<%= asset_path(slide[:image]) %>'); background-position: 0px 0px, 50% 50%; background-size: auto, cover;"
           ></div>
@@ -23,7 +23,7 @@
       <!-- Clone first slide for seamless loop -->
       <% first_slide = slides.first %>
       <div class="hero-slide flex-shrink-0 w-screen h-full" data-slide="clone-first">
-        <div 
+        <div
           class="h-full w-full bg-cover bg-center bg-no-repeat"
           style="background-image: radial-gradient(circle at 100% 100%, transparent, rgb(0, 0, 0)), url('<%= asset_path(first_slide[:image]) %>'); background-position: 0px 0px, 50% 50%; background-size: auto, cover;"
         ></div>

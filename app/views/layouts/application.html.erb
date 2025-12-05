@@ -11,6 +11,19 @@
     <!-- Tailwind CSS via CDN (simple, robust, production-ready) -->
     <script src="https://cdn.tailwindcss.com"></script>
     
+    <!-- Configure Tailwind to use Aileron font -->
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              'sans': ['Aileron', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+            }
+          }
+        }
+      }
+    </script>
+    
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
     <%= javascript_include_tag "application", "data-turbo-track": "reload", defer: true %>
     
@@ -22,7 +35,7 @@
     </script>
   </head>
 
-  <body class="antialiased">
+  <body class="antialiased font-sans">
     <% unless (defined?(devise_controller?) && devise_controller? && controller_name == 'sessions' && action_name == 'new') %>
       <% if notice %>
         <div class="alert alert-success" role="alert"><%= notice %></div>
