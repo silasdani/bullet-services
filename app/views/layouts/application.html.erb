@@ -1,22 +1,34 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <title>Bullet Services</title>
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title><%= content_for?(:title) ? yield(:title) : "Bullet Services" %></title>
+    
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
+    <!-- Tailwind CSS via CDN (simple, robust, production-ready) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
-    <%= javascript_include_tag "application", "data-turbo-track": "reload" %>
+    <%= javascript_include_tag "application", "data-turbo-track": "reload", defer: true %>
+    
+    <!-- Stimulus via CDN (simple, robust, works with Sprockets) -->
+    <!-- Turbo is automatically loaded via turbo-rails gem -->
+    <script type="module">
+      import { Application } from 'https://cdn.skypack.dev/@hotwired/stimulus@3.2.1';
+      window.Stimulus = Application.start();
+    </script>
   </head>
 
-  <body>
+  <body class="antialiased">
     <% unless (defined?(devise_controller?) && devise_controller? && controller_name == 'sessions' && action_name == 'new') %>
       <% if notice %>
-        <p class="alert alert-success"><%= notice %></p>
+        <div class="alert alert-success" role="alert"><%= notice %></div>
       <% end %>
       <% if alert %>
-        <p class="alert alert-danger"><%= alert %></p>
+        <div class="alert alert-danger" role="alert"><%= alert %></div>
       <% end %>
     <% end %>
 

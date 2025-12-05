@@ -68,12 +68,15 @@ group :development, :test do
   gem 'shoulda-matchers'
 end
 
+# Modern frontend stack (Hotwire)
+gem 'turbo-rails'                    # Modern SPA-like navigation (Stimulus via CDN for simplicity)
+
+# Component-based views
+gem 'view_component', '~> 3.13'
+
 # Asset pipeline gems
-gem 'coffee-rails'
-gem 'jquery-rails'
 gem 'sassc-rails'
 gem 'sprockets-rails'
-gem 'turbolinks'
 gem 'uglifier'
 
 gem 'csv'
