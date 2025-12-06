@@ -1,6 +1,9 @@
-<nav class="absolute top-0 left-0 right-0 z-30 px-6 py-8 min-h-[9vh] flex items-center">
-  <!-- Gradient overlay from top to bottom (black) -->
-  <div class="absolute inset-0 bg-gradient-to-b from-black/80 to-transparent pointer-events-none"></div>
+<% is_home_page = current_path == root_path || current_path == '/' %>
+<nav class="absolute top-0 left-0 right-0 z-30 px-6 py-8 min-h-[9vh] flex items-center <%= is_home_page ? '' : 'bg-black' %>">
+  <% if is_home_page %>
+    <!-- Gradient overlay from top to bottom (black) - only on home page -->
+    <div class="absolute inset-0 bg-gradient-to-b from-black/80 to-transparent pointer-events-none"></div>
+  <% end %>
   
   <div class="relative flex items-center justify-between w-full">
     <!-- Logo on the left -->
@@ -12,9 +15,9 @@
 
     <!-- Navigation links on the right (white, uppercase) -->
     <div class="flex items-center space-x-8 relative z-10">
-      <%= link_to "HOME", root_path, class: "text-white hover:text-gray-200 transition-colors uppercase tracking-wider text-sm font-light #{active_class(root_path)}" %>
-      <%= link_to "ABOUT", about_path, class: "text-white hover:text-gray-200 transition-colors uppercase tracking-wider text-sm font-light #{active_class(about_path)}" %>
-      <%= link_to "CONTACT", "mailto:office@bulletservices.co.uk", class: "text-white hover:text-gray-200 transition-colors uppercase tracking-wider text-sm font-light" %>
+      <%= link_to "HOME", root_path, class: "text-white hover:text-gray-200 transition-colors uppercase tracking-wider text-lg font-light #{active_class(root_path)}" %>
+      <%= link_to "ABOUT", about_path, class: "text-white hover:text-gray-200 transition-colors uppercase tracking-wider text-lg font-light #{active_class(about_path)}" %>
+      <%= link_to "CONTACT", "mailto:office@bulletservices.co.uk", class: "text-white hover:text-gray-200 transition-colors uppercase tracking-wider text-lg font-light" %>
     </div>
   </div>
 </nav>

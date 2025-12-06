@@ -12,6 +12,16 @@ class WebsiteController < ApplicationController
     # About page
   end
 
+  def wrs_show
+    # Find WRS by slug, excluding soft-deleted records
+    @wrs = WindowScheduleRepair.active.includes(windows: :tools).find_by(slug: params[:slug])
+
+    return if @wrs
+
+    redirect_to root_path, alert: 'Window Schedule Repair not found.'
+    nil
+  end
+
   def contact_submit
     service = Website::ContactFormService.new(contact_params)
     result = service.call

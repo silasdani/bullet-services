@@ -4,6 +4,7 @@ Rails.application.routes.draw do
   # Public website pages
   get "/about", to: "website#about", as: :about
   post "/contact", to: "website#contact_submit", as: :contact_submit
+  get "/wrs/:slug", to: "website#wrs_show", as: :wrs_show
 
   # Admin panel (authentication handled in RailsAdmin initializer)
   mount RailsAdmin::Engine => "/admin", as: "rails_admin"
