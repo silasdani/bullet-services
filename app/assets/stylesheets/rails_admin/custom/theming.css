@@ -1,19 +1,63 @@
 /* Custom RailsAdmin Styles - Bullet Services Theme */
 
 /* ============================================
-   Typography - Aileron Font
+   Font Awesome Icons - Ensure they display
    ============================================ */
-.rails_admin,
-.rails_admin * {
+.rails_admin .fas,
+.rails_admin .far,
+.rails_admin .fab,
+.rails_admin .fal,
+.rails_admin .fa,
+.rails_admin i[class*="fa-"] {
+  font-family: "Font Awesome 6 Free", "Font Awesome 6 Pro", "Font Awesome 5 Free", "Font Awesome 5 Pro", "FontAwesome" !important;
+  font-weight: 900;
+  font-style: normal;
+  display: inline-block;
+  text-rendering: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.rails_admin .far {
+  font-weight: 400;
+}
+
+/* ============================================
+   Typography - Aileron Font (but preserve icon fonts)
+   ============================================ */
+.rails_admin {
   font-family: 'Aileron', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Apply Aileron to text elements, but exclude icons */
+.rails_admin p,
+.rails_admin span:not([class*="fa-"]):not(.fas):not(.far):not(.fab):not(.fa),
+.rails_admin div:not([class*="fa-"]),
+.rails_admin a:not([class*="fa-"]):not(.fas):not(.far):not(.fab):not(.fa),
+.rails_admin h1,
+.rails_admin h2,
+.rails_admin h3,
+.rails_admin h4,
+.rails_admin h5,
+.rails_admin h6,
+.rails_admin label,
+.rails_admin input,
+.rails_admin select,
+.rails_admin textarea,
+.rails_admin button:not([class*="fa-"]),
+.rails_admin td,
+.rails_admin th {
+  font-family: 'Aileron', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
 /* ============================================
    Navigation Bar - Dark Theme
    ============================================ */
-.rails_admin .navbar {
+.rails_admin .navbar,
+.rails_admin .navbar.bg-primary,
+.rails_admin .navbar.navbar-dark {
   background-color: #000000 !important;
   border-bottom: 1px solid #1f1f1f !important;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -33,7 +77,8 @@
   margin-left: 8px;
 }
 
-.rails_admin .navbar-nav .nav-link {
+.rails_admin .navbar-nav .nav-link,
+.rails_admin .navbar.navbar-dark .nav-link {
   color: #ffffff !important;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -41,13 +86,21 @@
   transition: color 0.2s ease;
 }
 
-.rails_admin .navbar-nav .nav-link:hover {
+.rails_admin .navbar-nav .nav-link:hover,
+.rails_admin .navbar.navbar-dark .nav-link:hover {
   color: #d1d5db !important;
 }
 
-.rails_admin .navbar-nav .nav-link.active {
+.rails_admin .navbar-nav .nav-link.active,
+.rails_admin .navbar.navbar-dark .nav-link.active {
   color: #ffffff !important;
   font-weight: 500;
+}
+
+/* Hide admin user image/gravatar */
+.rails_admin .edit_user_root_link img,
+.rails_admin .navbar-nav .nav-link img {
+  display: none !important;
 }
 
 .rails_admin .navbar-toggler {
@@ -61,7 +114,8 @@
 /* ============================================
    Sidebar Navigation - Dark Theme
    ============================================ */
-.rails_admin .sidebar {
+.rails_admin .sidebar,
+.rails_admin .sidebar.bg-light {
   background-color: #111111 !important;
   border-right: 1px solid #1f1f1f;
 }

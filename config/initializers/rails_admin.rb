@@ -84,7 +84,11 @@ RailsAdmin.config do |config|
       field :id
       field :reference_number
       field :name
-      field :slug
+      field :slug do
+        pretty_value do
+          bindings[:view].link_to(bindings[:object].slug, bindings[:view].main_app.wrs_show_path(bindings[:object].slug), target: '_blank')
+        end
+      end
       field :address
       field :flat_number
       field :details
