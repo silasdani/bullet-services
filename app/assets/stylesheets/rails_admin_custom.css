@@ -228,9 +228,18 @@
   letter-spacing: 0.05em;
   font-size: 0.8125rem;
   font-weight: 500;
-  padding: 8px 16px;
+  padding: 10px 20px;
   border-radius: 6px;
   transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
+  outline: none;
+}
+
+.rails_admin .btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
 }
 
 .rails_admin .btn-primary {
@@ -243,18 +252,37 @@
   background-color: #1f1f1f;
   border-color: #1f1f1f;
   color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.rails_admin .btn-primary:focus {
+  background-color: #1f1f1f;
+  border-color: #1f1f1f;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.25);
+}
+
+.rails_admin .btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .rails_admin .btn-secondary {
-  background-color: #6b7280;
-  border-color: #6b7280;
+  background-color: #374151;
+  border-color: #374151;
   color: #ffffff;
 }
 
 .rails_admin .btn-secondary:hover {
-  background-color: #4b5563;
-  border-color: #4b5563;
+  background-color: #1f2937;
+  border-color: #1f2937;
   color: #ffffff;
+}
+
+.rails_admin .btn-secondary:focus {
+  background-color: #1f2937;
+  border-color: #1f2937;
+  box-shadow: 0 0 0 3px rgba(55, 65, 81, 0.25);
 }
 
 .rails_admin .btn-danger {
@@ -267,6 +295,44 @@
   background-color: #dc2626;
   border-color: #dc2626;
   color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.25);
+}
+
+.rails_admin .btn-danger:focus {
+  background-color: #dc2626;
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25);
+}
+
+.rails_admin .btn-danger:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.15);
+}
+
+.rails_admin .btn-info {
+  background-color: #374151;
+  border-color: #374151;
+  color: #ffffff;
+}
+
+.rails_admin .btn-info:hover {
+  background-color: #1f2937;
+  border-color: #1f2937;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(55, 65, 81, 0.2);
+}
+
+.rails_admin .btn-info:focus {
+  background-color: #1f2937;
+  border-color: #1f2937;
+  box-shadow: 0 0 0 3px rgba(55, 65, 81, 0.25);
+}
+
+.rails_admin .btn-info:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(55, 65, 81, 0.15);
 }
 
 /* ============================================
@@ -323,8 +389,16 @@
   color: #111827;
 }
 
+.rails_admin .table tbody tr {
+  transition: background-color 0.15s ease;
+}
+
 .rails_admin .table tbody tr:hover {
-  background-color: #f9fafb;
+  background-color: #f3f4f6;
+}
+
+.rails_admin .table tbody tr:active {
+  background-color: #e5e7eb;
 }
 
 /* ============================================
@@ -344,6 +418,19 @@
   border-color: #000000;
   box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
   outline: none;
+  background-color: #ffffff;
+}
+
+.rails_admin .form-control:hover,
+.rails_admin .form-select:hover {
+  border-color: #9ca3af;
+}
+
+.rails_admin .form-control:disabled,
+.rails_admin .form-select:disabled {
+  background-color: #f3f4f6;
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .rails_admin .form-label {
@@ -442,6 +529,310 @@
 }
 
 /* ============================================
+   Dropdowns & Modals - Enhanced UX
+   ============================================ */
+.rails_admin .dropdown-menu {
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e5e7eb;
+  padding: 8px;
+  margin-top: 4px;
+}
+
+.rails_admin .dropdown-item {
+  padding: 10px 16px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.rails_admin .dropdown-item:hover {
+  background-color: #f3f4f6;
+  color: #000000;
+}
+
+.rails_admin .dropdown-item:active {
+  background-color: #e5e7eb;
+}
+
+.rails_admin .dropdown-divider {
+  margin: 8px 0;
+  border-color: #e5e7eb;
+}
+
+.rails_admin .modal-content {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.rails_admin .modal-header {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 20px 24px;
+}
+
+.rails_admin .modal-title {
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: #000000;
+}
+
+.rails_admin .modal-body {
+  padding: 24px;
+  color: #374151;
+  line-height: 1.6;
+}
+
+.rails_admin .modal-footer {
+  border-top: 1px solid #e5e7eb;
+  padding: 16px 24px;
+  gap: 12px;
+}
+
+.rails_admin .btn-close {
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+}
+
+.rails_admin .btn-close:hover {
+  opacity: 1;
+}
+
+/* ============================================
+   Badge Improvements
+   ============================================ */
+.rails_admin .badge.bg-info {
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+}
+
+.rails_admin .badge.bg-primary {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+/* ============================================
+   Action Links & Buttons in Tables
+   ============================================ */
+.rails_admin .table .btn-sm {
+  padding: 6px 12px;
+  font-size: 0.75rem;
+}
+
+.rails_admin .table a.btn {
+  text-decoration: none;
+}
+
+.rails_admin .table a.btn:hover {
+  text-decoration: none;
+}
+
+/* ============================================
+   Improved Spacing & Layout
+   ============================================ */
+.rails_admin .content {
+  padding: 24px;
+}
+
+.rails_admin .page-header {
+  margin-bottom: 24px;
+}
+
+.rails_admin .form-group {
+  margin-bottom: 20px;
+}
+
+.rails_admin .form-group:last-child {
+  margin-bottom: 0;
+}
+
+/* ============================================
+   Checkbox & Radio Improvements
+   ============================================ */
+.rails_admin .form-check-input {
+  border-color: #d1d5db;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.rails_admin .form-check-input:checked {
+  background-color: #000000;
+  border-color: #000000;
+}
+
+.rails_admin .form-check-input:focus {
+  border-color: #000000;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+}
+
+.rails_admin .form-check-label {
+  cursor: pointer;
+  margin-left: 8px;
+  color: #374151;
+}
+
+/* ============================================
+   Pagination
+   ============================================ */
+.rails_admin .pagination {
+  gap: 8px;
+}
+
+.rails_admin .page-link {
+  color: #000000;
+  border-color: #e5e7eb;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.rails_admin .page-link:hover {
+  background-color: #f3f4f6;
+  border-color: #d1d5db;
+  color: #000000;
+}
+
+.rails_admin .page-item.active .page-link {
+  background-color: #000000;
+  border-color: #000000;
+  color: #ffffff;
+}
+
+.rails_admin .page-item.disabled .page-link {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #f9fafb;
+}
+
+/* ============================================
+   Alerts & Notifications
+   ============================================ */
+.rails_admin .alert {
+  border-radius: 8px;
+  padding: 16px 20px;
+  border-left: 4px solid;
+  margin-bottom: 20px;
+}
+
+.rails_admin .alert-success {
+  background-color: #f0fdf4;
+  border-left-color: #10b981;
+  color: #065f46;
+}
+
+.rails_admin .alert-danger {
+  background-color: #fef2f2;
+  border-left-color: #ef4444;
+  color: #991b1b;
+}
+
+.rails_admin .alert-warning {
+  background-color: #fffbeb;
+  border-left-color: #f59e0b;
+  color: #92400e;
+}
+
+.rails_admin .alert-info {
+  background-color: #eff6ff;
+  border-left-color: #3b82f6;
+  color: #1e40af;
+}
+
+/* ============================================
+   Action Bar & Toolbar
+   ============================================ */
+.rails_admin .content-header {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.rails_admin .content-header .btn {
+  margin-left: 8px;
+}
+
+.rails_admin .content-header .btn:first-child {
+  margin-left: 0;
+}
+
+/* ============================================
+   List View Enhancements
+   ============================================ */
+.rails_admin .table-responsive {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.rails_admin .table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+/* ============================================
+   Input Groups
+   ============================================ */
+.rails_admin .input-group-text {
+  background-color: #f9fafb;
+  border-color: #d1d5db;
+  color: #374151;
+  font-weight: 500;
+}
+
+.rails_admin .input-group .form-control:focus + .input-group-text,
+.rails_admin .input-group .form-control:focus ~ .input-group-text {
+  border-color: #000000;
+}
+
+/* ============================================
+   Select & Multi-select Improvements
+   ============================================ */
+.rails_admin .form-select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px 12px;
+  padding-right: 40px;
+}
+
+.rails_admin .form-select:focus {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23000000' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+}
+
+/* ============================================
+   File Input Improvements
+   ============================================ */
+.rails_admin .form-control[type="file"] {
+  padding: 8px;
+  cursor: pointer;
+}
+
+.rails_admin .form-control[type="file"]:hover {
+  border-color: #9ca3af;
+}
+
+.rails_admin .form-control[type="file"]::file-selector-button {
+  background-color: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  padding: 6px 12px;
+  margin-right: 12px;
+  cursor: pointer;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.75rem;
+  transition: all 0.2s ease;
+}
+
+.rails_admin .form-control[type="file"]::file-selector-button:hover {
+  background-color: #e5e7eb;
+  border-color: #9ca3af;
+}
+
+/* ============================================
    Responsive Adjustments
    ============================================ */
 @media (max-width: 768px) {
@@ -456,5 +847,28 @@
   
   .rails_admin header h1 {
     font-size: 1.5rem;
+  }
+  
+  .rails_admin .btn {
+    padding: 8px 16px;
+    font-size: 0.75rem;
+  }
+  
+  .rails_admin .content {
+    padding: 16px;
+  }
+  
+  .rails_admin .modal-body {
+    padding: 20px;
+  }
+  
+  .rails_admin .modal-footer {
+    padding: 12px 20px;
+    flex-direction: column;
+  }
+  
+  .rails_admin .modal-footer .btn {
+    width: 100%;
+    margin: 4px 0;
   }
 }
