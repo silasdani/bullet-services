@@ -358,6 +358,26 @@
 .rails_admin .table {
   border-collapse: separate;
   border-spacing: 0;
+  width: 100%;
+}
+
+/* Ensure table containers don't clip dropdowns */
+.rails_admin .table-responsive,
+.rails_admin .table-wrapper,
+.rails_admin .content,
+.rails_admin .row,
+.rails_admin .col,
+.rails_admin [class*="col-"],
+.rails_admin .container,
+.rails_admin .container-fluid {
+  overflow: visible !important;
+}
+
+/* Ensure Rails Admin list view containers allow dropdown overflow */
+.rails_admin .content > .row,
+.rails_admin .content > .container,
+.rails_admin .content > .container-fluid {
+  overflow: visible !important;
 }
 
 .rails_admin .table thead th {
@@ -368,17 +388,190 @@
   letter-spacing: 0.05em;
   font-size: 0.75rem;
   border-bottom: 2px solid #e5e7eb;
-  padding: 12px;
+  padding: 14px 16px;
+  white-space: nowrap;
+  vertical-align: middle;
 }
 
 .rails_admin .table tbody td {
-  padding: 12px;
+  padding: 14px 16px;
   border-bottom: 1px solid #e5e7eb;
   color: #111827;
+  position: relative;
+  overflow: visible;
+  vertical-align: middle;
+}
+
+.rails_admin .table tbody tr {
+  transition: background-color 0.15s ease;
 }
 
 .rails_admin .table tbody tr:hover {
   background-color: #f9fafb;
+}
+
+/* Professional invoice table styling */
+.rails_admin .table tbody td .btn {
+  font-size: 0.8125rem;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.rails_admin .table tbody td .btn-primary {
+  background-color: #000000;
+  border-color: #000000;
+}
+
+.rails_admin .table tbody td .btn-primary:hover {
+  background-color: #1f1f1f;
+  border-color: #1f1f1f;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.rails_admin .table tbody td .btn-outline-primary {
+  color: #000000;
+  border-color: #000000;
+}
+
+.rails_admin .table tbody td .btn-outline-primary:hover {
+  background-color: #000000;
+  border-color: #000000;
+  color: #ffffff;
+}
+
+.rails_admin .table tbody td .badge {
+  font-size: 0.6875rem;
+  padding: 4px 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.rails_admin .table tbody td .fw-semibold {
+  font-weight: 600;
+  color: #111827;
+}
+
+/* Invoice table specific improvements */
+.rails_admin .table tbody td .text-muted {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.rails_admin .table tbody td .text-danger {
+  color: #ef4444;
+}
+
+.rails_admin .table tbody td .text-danger.fw-bold {
+  font-weight: 700;
+}
+
+/* Better spacing for invoice table */
+.rails_admin .table tbody td {
+  font-size: 0.875rem;
+}
+
+.rails_admin .table tbody td:first-child {
+  font-weight: 500;
+  color: #111827;
+}
+
+/* Icon spacing */
+.rails_admin .table tbody td .fas,
+.rails_admin .table tbody td .fa {
+  margin-right: 4px;
+}
+
+/* ============================================
+   Invoice Action Modals
+   ============================================ */
+.rails_admin .modal {
+  z-index: 1060;
+}
+
+.rails_admin .modal-dialog {
+  max-width: 500px;
+}
+
+.rails_admin .modal-header {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 1rem 1.5rem;
+}
+
+.rails_admin .modal-title {
+  font-weight: 600;
+  font-size: 1.125rem;
+  color: #111827;
+  display: flex;
+  align-items: center;
+}
+
+.rails_admin .modal-body {
+  padding: 1.5rem;
+  color: #374151;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+.rails_admin .modal-body p {
+  margin-bottom: 0;
+}
+
+.rails_admin .modal-body .text-danger {
+  color: #ef4444;
+}
+
+.rails_admin .modal-footer {
+  border-top: 1px solid #e5e7eb;
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.rails_admin .modal-footer .btn {
+  min-width: 120px;
+  font-weight: 500;
+}
+
+.rails_admin .modal-footer .btn-primary {
+  background-color: #000000;
+  border-color: #000000;
+}
+
+.rails_admin .modal-footer .btn-primary:hover {
+  background-color: #1f1f1f;
+  border-color: #1f1f1f;
+}
+
+.rails_admin .modal-footer .btn-danger {
+  background-color: #ef4444;
+  border-color: #ef4444;
+}
+
+.rails_admin .modal-footer .btn-danger:hover {
+  background-color: #dc2626;
+  border-color: #dc2626;
+}
+
+.rails_admin .modal-footer .btn-secondary {
+  background-color: #6b7280;
+  border-color: #6b7280;
+}
+
+.rails_admin .modal-footer .btn-secondary:hover {
+  background-color: #4b5563;
+  border-color: #4b5563;
+}
+
+.rails_admin .btn-close {
+  opacity: 0.5;
+}
+
+.rails_admin .btn-close:hover {
+  opacity: 0.75;
 }
 
 /* ============================================
@@ -498,6 +691,10 @@
 /* ============================================
    Invoice Actions Dropdown
    ============================================ */
+.rails_admin .dropdown {
+  position: relative;
+}
+
 .rails_admin .dropdown-menu {
   background-color: #ffffff;
   border: 1px solid #e5e7eb;
@@ -505,6 +702,22 @@
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   padding: 4px 0;
   min-width: 180px;
+  position: absolute;
+  z-index: 1050;
+  top: 100%;
+  left: 0;
+  margin-top: 0.125rem;
+}
+
+/* Allow dropdown to appear above when space is limited */
+.rails_admin .dropdown-menu.dropdown-menu-end {
+  left: auto;
+  right: 0;
+}
+
+/* Ensure dropdown positioning works correctly with Bootstrap Popper */
+.rails_admin .dropdown-menu.show {
+  display: block;
 }
 
 .rails_admin .dropdown-item {
