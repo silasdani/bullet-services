@@ -20,6 +20,9 @@ Devise.setup do |config|
   # Configure the parent class to the devise controllers.
   # config.parent_controller = 'DeviseController'
 
+  # Use admin layout for all Devise views
+  config.layout = 'admin'
+
   # ==> Mailer Configuration
   # Configure the e-mail address which will be shown in Devise::Mailer.
   # This should be a verified sender in your MailerSend (or SMTP) account.

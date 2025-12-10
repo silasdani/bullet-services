@@ -1,16 +1,26 @@
-<h2>Resend confirmation instructions</h2>
+<% content_for :title, "Resend Confirmation - Bullet Services" %>
+<% content_for :page_title, "Resend Confirmation" %>
+<% content_for :page_subtitle, "Resend confirmation instructions" %>
+
+<% if notice %>
+  <div class="alert alert-success"><%= notice %></div>
+<% end %>
+
+<% if alert %>
+  <div class="alert alert-danger"><%= alert %></div>
+<% end %>
 
 <%= form_for(resource, as: resource_name, url: confirmation_path(resource_name), html: { method: :post }) do |f| %>
   <%= render "devise/shared/error_messages", resource: resource %>
 
-  <div class="field">
-    <%= f.label :email %><br />
-    <%= f.email_field :email, autofocus: true, autocomplete: "email", value: (resource.pending_reconfirmation? ? resource.unconfirmed_email : resource.email) %>
+  <div class="form-group">
+    <%= f.label :email %>
+    <%= f.email_field :email, autofocus: true, autocomplete: "email", value: (resource.pending_reconfirmation? ? resource.unconfirmed_email : resource.email), placeholder: "Enter your email" %>
   </div>
 
-  <div class="actions">
-    <%= f.submit "Resend confirmation instructions" %>
-  </div>
+  <%= f.submit "Resend Confirmation Instructions", class: "admin-button" %>
 <% end %>
 
-<%= render "devise/shared/links" %>
+<div class="admin-links">
+  <%= link_to "Back to Admin Login", new_session_path(resource_name) %>
+</div>

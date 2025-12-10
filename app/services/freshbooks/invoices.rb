@@ -65,7 +65,7 @@ module Freshbooks
     private
 
     def build_invoice_payload(params)
-      {
+      payload = {
         invoice: {
           customerid: params[:client_id] || params[:customerid],
           create_date: params[:date] || Date.current.to_s,
@@ -76,6 +76,11 @@ module Freshbooks
           lines: build_lines(params[:lines] || [])
         }.compact
       }
+
+      # Add status if provided (for voided, paid, etc.)
+      payload[:invoice][:status] = params[:status] if params[:status].present?
+
+      payload
     end
 
     def build_lines(lines_data)
@@ -108,7 +113,7 @@ module Freshbooks
     def build_payment_url_from_invoice(invoice_data)
       # FreshBooks payment URL format
       # Format: https://my.freshbooks.com/view/{business_id}/{invoice_id}
-      business_id = FreshbooksToken.current&.business_id || ENV['FRESHBOOKS_BUSINESS_ID']
+      business_id = FreshbooksToken.current&.business_id || ENV.fetch('FRESHBOOKS_BUSINESS_ID', nil)
       invoice_id = invoice_data['id'] || invoice_data['invoiceid']
       return nil unless business_id && invoice_id
 

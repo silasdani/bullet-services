@@ -1,11 +1,18 @@
 # frozen_string_literal: true
 
+# Ignore this file from Zeitwerk autoloading since it's explicitly required
+# and doesn't follow Zeitwerk naming conventions
+Rails.autoloaders.main.ignore(Rails.root.join('lib/rails_admin/invoice_actions.rb'))
+
+# Load custom Rails Admin actions
+require Rails.root.join('lib/rails_admin/invoice_actions')
+
 RailsAdmin.config do |config|
   # Explicitly set asset_source for RailsAdmin 3.x to silence warnings
   config.asset_source = :sprockets
 
   # Only include User and WindowScheduleRepair models (Window and Tool are nested)
-  config.included_models = ['User', 'WindowScheduleRepair', 'Window', 'Tool']
+  config.included_models = ['User', 'WindowScheduleRepair', 'Window', 'Tool', 'Invoice']
 
   # Authenticate: ensure user is logged in via Devise session
   config.authenticate_with do
@@ -28,6 +35,11 @@ RailsAdmin.config do |config|
     show
     edit
     delete
+
+    # Custom invoice actions
+    send_invoice
+    void_invoice
+    mark_paid
   end
 
   # Configure User model
@@ -231,6 +243,167 @@ RailsAdmin.config do |config|
   config.model 'Tool' do
     visible false
     object_label_method :name
+  end
+
+  # Configure Invoice model
+  config.model 'Invoice' do
+    label 'Invoice'
+    navigation_label 'Invoices'
+    weight 1
+
+    list do
+      field :id
+      field :name
+      field :slug
+      field :status
+      field :final_status
+      field :freshbooks_client_id
+      field :included_vat_amount
+      field :excluded_vat_amount do
+        formatted_value do
+          value ? "£#{value.round(2)}" : '-'
+        end
+      end
+      field :is_draft
+      field :is_archived
+      field :created_at
+      field :actions do
+        label 'Actions'
+        pretty_value do
+          invoice = bindings[:object]
+          view = bindings[:view]
+
+          view.content_tag(:div, class: 'dropdown') do
+            view.content_tag(:button,
+              class: 'btn btn-sm btn-secondary dropdown-toggle',
+              type: 'button',
+              id: "invoice-actions-#{invoice.id}",
+              'data-bs-toggle': 'dropdown',
+              'aria-expanded': 'false'
+            ) do
+              'Actions'
+            end +
+            view.content_tag(:ul,
+              class: 'dropdown-menu',
+              'aria-labelledby': "invoice-actions-#{invoice.id}"
+            ) do
+              html = ''
+              html += view.content_tag(:li) do
+                view.link_to(
+                  view.rails_admin.send_invoice_path(model_name: 'invoice', id: invoice.id),
+                  method: :post,
+                  class: 'dropdown-item',
+                  data: { turbo: false }
+                ) do
+                  view.content_tag(:i, '', class: 'fas fa-paper-plane me-2') + 'Send'
+                end
+              end
+
+              html += view.content_tag(:li) do
+                view.link_to(
+                  view.rails_admin.mark_paid_path(model_name: 'invoice', id: invoice.id),
+                  method: :post,
+                  class: 'dropdown-item',
+                  data: { turbo: false }
+                ) do
+                  view.content_tag(:i, '', class: 'fas fa-check me-2') + 'Mark as Paid'
+                end
+              end
+
+              html += view.content_tag(:li) do
+                view.content_tag(:hr, '', class: 'dropdown-divider')
+              end
+
+              html += view.content_tag(:li) do
+                view.link_to(
+                  view.rails_admin.void_invoice_path(model_name: 'invoice', id: invoice.id),
+                  method: :post,
+                  class: 'dropdown-item text-danger',
+                  data: {
+                    turbo: false,
+                    confirm: 'Are you sure you want to void this invoice?'
+                  }
+                ) do
+                  view.content_tag(:i, '', class: 'fas fa-ban me-2') + 'Void'
+                end
+              end
+
+              html.html_safe
+            end
+          end
+        end
+      end
+    end
+
+    show do
+      field :id
+      field :name
+      field :slug
+      field :status
+      field :final_status
+      field :freshbooks_client_id
+      field :included_vat_amount
+      field :excluded_vat_amount
+      field :total_amount do
+        formatted_value do
+          bindings[:object].total_amount ? "£#{bindings[:object].total_amount.round(2)}" : '-'
+        end
+      end
+      field :is_draft
+      field :is_archived
+      field :webflow_item_id
+      field :invoice_pdf_link do
+        pretty_value do
+          if value.present?
+            bindings[:view].link_to(value, value, target: '_blank')
+          else
+            '-'
+          end
+        end
+      end
+      field :created_at
+      field :updated_at
+    end
+
+    edit do
+      field :name
+      field :slug
+      field :status
+      field :final_status
+      field :freshbooks_client_id
+      field :included_vat_amount
+      field :excluded_vat_amount
+      field :is_draft
+      field :is_archived
+      field :webflow_item_id
+      field :invoice_pdf_link
+    end
+
+    create do
+      field :name
+      field :slug
+      field :status
+      field :final_status
+      field :freshbooks_client_id
+      field :included_vat_amount
+      field :excluded_vat_amount
+      field :is_draft
+      field :is_archived
+    end
+
+    update do
+      field :name
+      field :slug
+      field :status
+      field :final_status
+      field :freshbooks_client_id
+      field :included_vat_amount
+      field :excluded_vat_amount
+      field :is_draft
+      field :is_archived
+      field :webflow_item_id
+      field :invoice_pdf_link
+    end
   end
 
 end

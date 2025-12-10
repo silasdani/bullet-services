@@ -496,6 +496,51 @@
 }
 
 /* ============================================
+   Invoice Actions Dropdown
+   ============================================ */
+.rails_admin .dropdown-menu {
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 4px 0;
+  min-width: 180px;
+}
+
+.rails_admin .dropdown-item {
+  padding: 8px 16px;
+  color: #374151;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  font-size: 0.875rem;
+}
+
+.rails_admin .dropdown-item:hover {
+  background-color: #f9fafb;
+  color: #000000;
+}
+
+.rails_admin .dropdown-item.text-danger {
+  color: #ef4444;
+}
+
+.rails_admin .dropdown-item.text-danger:hover {
+  background-color: #fef2f2;
+  color: #dc2626;
+}
+
+.rails_admin .dropdown-divider {
+  margin: 4px 0;
+  border-top: 1px solid #e5e7eb;
+}
+
+.rails_admin .dropdown-toggle::after {
+  margin-left: 8px;
+}
+
+/* ============================================
    Responsive Adjustments
    ============================================ */
 @media (max-width: 768px) {

@@ -11,7 +11,10 @@ Rails.application.routes.draw do
 
   # HTML Devise routes for admin/superadmin browser login (keep default helpers like new_user_session_path)
   devise_for :users, controllers: {
-    sessions: "users/sessions"
+    sessions: "users/sessions",
+    passwords: "users/passwords",
+    confirmations: "users/confirmations",
+    unlocks: "users/unlocks"
   }
 
   # Redirect accidental GETs on token auth sign-in to Devise HTML sign-in

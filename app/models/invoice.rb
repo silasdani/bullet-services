@@ -31,6 +31,8 @@ class Invoice < ApplicationRecord
     !draft?
   end
 
+  has_many :freshbooks_invoices, foreign_key: :invoice_id, dependent: :destroy
+
   # Create invoice in FreshBooks and optionally send email with payment link
   def create_in_freshbooks!(client_id:, lines: [], send_email: false, email_to: nil)
     service = Freshbooks::InvoiceCreationService.new(
