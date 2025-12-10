@@ -380,6 +380,26 @@
   overflow: visible !important;
 }
 
+/* Ensure table and its parent containers allow dropdown overflow */
+.rails_admin .table-container,
+.rails_admin .table-responsive,
+.rails_admin table,
+.rails_admin .table-wrapper {
+  overflow: visible !important;
+}
+
+/* Ensure the main content area allows overflow */
+.rails_admin .content {
+  overflow: visible !important;
+  position: relative;
+}
+
+/* Ensure body and html allow overflow for dropdowns */
+body.rails_admin,
+html.rails_admin {
+  overflow-x: visible !important;
+}
+
 .rails_admin .table thead th {
   background-color: #f9fafb;
   color: #374151;
@@ -491,13 +511,75 @@
   z-index: 1060;
 }
 
+/* Hide modals in table cells to prevent tooltip issues */
+.rails_admin .table tbody td .modal {
+  display: none !important;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Only show modals when they're actually opened (Bootstrap adds .show class) */
+.rails_admin .table tbody td .modal.show {
+  display: block !important;
+  pointer-events: auto;
+}
+
+/* Prevent tooltips and text selection on modal elements in table cells */
+.rails_admin .table tbody td .modal * {
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.rails_admin .table tbody td .modal.show * {
+  pointer-events: auto;
+  user-select: auto;
+  -webkit-user-select: auto;
+  -moz-user-select: auto;
+  -ms-user-select: auto;
+}
+
 .rails_admin .modal-dialog {
   max-width: 500px;
+  width: 90%;
+  margin: 1.75rem auto;
+}
+
+.rails_admin .modal-dialog-centered {
+  display: flex;
+  align-items: center;
+  min-height: calc(100% - 3.5rem);
+}
+
+.rails_admin .modal-content {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  overflow: hidden;
+  width: 100%;
+}
+
+.rails_admin .modal-header,
+.rails_admin .modal-body,
+.rails_admin .modal-footer {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .rails_admin .modal-header {
   border-bottom: 1px solid #e5e7eb;
   padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
 }
 
 .rails_admin .modal-title {
@@ -506,6 +588,17 @@
   color: #111827;
   display: flex;
   align-items: center;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: calc(100% - 40px);
+  flex: 1;
+  min-width: 0;
+}
+
+.rails_admin .modal-title .fas,
+.rails_admin .modal-title .fa {
+  flex-shrink: 0;
+  margin-right: 0.5rem;
 }
 
 .rails_admin .modal-body {
@@ -513,10 +606,69 @@
   color: #374151;
   font-size: 0.9375rem;
   line-height: 1.6;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .rails_admin .modal-body p {
   margin-bottom: 0;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.rails_admin .modal-body .text-danger {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+  display: block;
+}
+
+.rails_admin .modal-body strong {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  display: inline;
+}
+
+/* Force text wrapping on all modal text elements */
+.rails_admin .modal {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.rails_admin .modal * {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.rails_admin .modal h5,
+.rails_admin .modal p,
+.rails_admin .modal span,
+.rails_admin .modal div,
+.rails_admin .modal strong {
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+  hyphens: auto;
+  white-space: normal !important;
+  overflow: hidden;
+}
+
+/* Ensure modal content doesn't overflow */
+.rails_admin .modal-content {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.rails_admin .modal-dialog {
+  max-width: 500px !important;
+  width: 90% !important;
 }
 
 .rails_admin .modal-body .text-danger {
@@ -529,6 +681,9 @@
   display: flex;
   justify-content: flex-end;
   gap: 0.5rem;
+  flex-wrap: wrap;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .rails_admin .modal-footer .btn {
@@ -693,6 +848,7 @@
    ============================================ */
 .rails_admin .dropdown {
   position: relative;
+  z-index: 1000;
 }
 
 .rails_admin .dropdown-menu {
@@ -708,6 +864,43 @@
   left: 0;
   margin-top: 0.125rem;
 }
+
+/* Invoice table dropdowns use fixed positioning to escape table boundaries */
+.rails_admin .table tbody td .dropdown {
+  position: relative;
+  z-index: 1001;
+}
+
+.rails_admin .table tbody td .dropdown-menu {
+  z-index: 99999 !important;
+  position: fixed !important;
+  display: none;
+}
+
+/* When dropdown is shown, use fixed positioning to escape table boundaries */
+.rails_admin .table tbody td .dropdown.show .dropdown-menu,
+.rails_admin .table tbody td .dropdown-menu.show,
+.rails_admin .table tbody td .dropdown-menu[data-bs-popper] {
+  z-index: 99999 !important;
+  position: fixed !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+
+/* Ensure table body allows overflow */
+.rails_admin .table tbody {
+  position: relative;
+  overflow: visible !important;
+}
+
+/* Ensure table itself allows overflow */
+.rails_admin .table {
+  overflow: visible !important;
+  position: relative;
+}
+
 
 /* Allow dropdown to appear above when space is limited */
 .rails_admin .dropdown-menu.dropdown-menu-end {
