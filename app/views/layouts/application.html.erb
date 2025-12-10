@@ -31,12 +31,38 @@
   </head>
   <body class="antialiased font-sans">
     <% unless (defined?(devise_controller?) && devise_controller? && controller_name == 'sessions' && action_name == 'new') %>
-      <% if notice %>
-        <div class="alert alert-success" role="alert"><%= notice %></div>
-      <% end %>
-      <% if alert %>
-        <div class="alert alert-danger" role="alert"><%= alert %></div>
-      <% end %>
+      <div class="alert-container">
+        <% if notice %>
+          <div class="alert alert-success" role="alert">
+            <div class="alert-content">
+              <svg class="alert-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span class="alert-message"><%= notice %></span>
+            </div>
+            <button type="button" class="alert-close" aria-label="Close" onclick="this.closest('.alert').style.animation='fadeOut 0.3s ease-out'; setTimeout(() => this.closest('.alert').remove(), 300)">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        <% end %>
+        <% if alert %>
+          <div class="alert alert-danger" role="alert">
+            <div class="alert-content">
+              <svg class="alert-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span class="alert-message"><%= alert %></span>
+            </div>
+            <button type="button" class="alert-close" aria-label="Close" onclick="this.closest('.alert').style.animation='fadeOut 0.3s ease-out'; setTimeout(() => this.closest('.alert').remove(), 300)">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        <% end %>
+      </div>
     <% end %>
     <%= yield %>
   </body>

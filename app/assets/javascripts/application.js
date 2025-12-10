@@ -13,6 +13,8 @@
 //= require accordion
 // Load Rails Admin mobile sidebar (only runs on Rails Admin pages)
 //= require rails_admin_mobile_sidebar
+// Load auto-dismiss alerts
+//= require alerts
 //= require_self
 
 // Modern ES6+ code can be added below
