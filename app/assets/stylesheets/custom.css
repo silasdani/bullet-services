@@ -1,0 +1,20 @@
+/* Custom Styles - Aileron Font Configuration */
+
+/* Set Aileron as default font family */
+* {
+  font-family: 'Aileron', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+body {
+  font-family: 'Aileron', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Navigation uppercase styling */
+.nav-link {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 400;
+}

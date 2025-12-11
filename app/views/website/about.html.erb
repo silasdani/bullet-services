@@ -1,0 +1,36 @@
+<% content_for :title, "About Us - Bullet Services" %>
+
+<%= render NavigationComponent.new(current_path: request.path) %>
+
+<!-- About Hero Section -->
+<section class="py-20 bg-white">
+  <div class="container mx-auto px-6 max-w-4xl">
+    <h1 class="text-5xl md:text-6xl font-light mb-8 text-gray-800">
+      About us.
+    </h1>
+    <h2 class="text-3xl md:text-4xl font-light mb-12 text-gray-700">
+      # brief.
+    </h2>
+  </div>
+</section>
+
+<!-- About Content Section -->
+<section class="py-12 bg-gray-50">
+  <div class="container mx-auto px-6 max-w-4xl">
+    <div class="prose prose-lg max-w-none text-gray-700 space-y-6">
+      <p class="text-lg leading-relaxed">
+        Founded in 2020 in the heart of London, our construction company specializes in restoring buildings with a passion for excellence and an unwavering commitment to quality. Since our inception, we have dedicated ourselves to reviving architectural gems and transforming them into timeless masterpieces. Our expertise lies in blending traditional craftsmanship with modern techniques to breathe new life into historic structures.
+      </p>
+      
+      <p class="text-lg leading-relaxed">
+        What sets us apart is our proven ability to deliver. We pride ourselves on our reliability and our track record of completing projects on time and within budget. Our clients trust us to turn their visions into reality, knowing that we are equipped to handle even the most challenging of restorations. Whether it's a grand historic landmark or a charming heritage property, we approach every project with the same level of dedication and professionalism.
+      </p>
+      
+      <p class="text-lg leading-relaxed">
+        In every brick we lay and every detail we restore, we bring our passion for construction and our commitment to quality to the forefront. Join us in our journey to preserve the architectural heritage of London, one building at a time.
+      </p>
+    </div>
+  </div>
+</section>
+
+<%= render FooterComponent.new %>

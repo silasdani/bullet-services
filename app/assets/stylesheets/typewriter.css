@@ -1,0 +1,33 @@
+/* Typewriter Animation Styles */
+
+.static-text {
+  display: inline-block;
+}
+
+.typewriter-container {
+  display: inline-block;
+  min-width: 400px; /* Enough width for longest word (exteriors.) to prevent layout shift */
+  text-align: center;
+  position: relative;
+}
+
+.typewriter-text {
+  position: relative;
+  display: inline-block;
+  text-align: center;
+}
+
+.typewriter-text::after {
+  content: "|";
+  display: inline-block;
+  margin-left: 4px;
+  font-weight: 300;
+  color: white;
+}
+
+/* Responsive min-width */
+@media (max-width: 768px) {
+  .typewriter-container {
+    min-width: 250px;
+  }
+}

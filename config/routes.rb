@@ -1,12 +1,20 @@
 Rails.application.routes.draw do
-  root "application#index"
+  root "website#home"
+
+  # Public website pages
+  get "/about", to: "website#about", as: :about
+  post "/contact", to: "website#contact_submit", as: :contact_submit
+  get "/wrs/:slug", to: "website#wrs_show", as: :wrs_show
 
   # Admin panel (authentication handled in RailsAdmin initializer)
   mount RailsAdmin::Engine => "/admin", as: "rails_admin"
 
   # HTML Devise routes for admin/superadmin browser login (keep default helpers like new_user_session_path)
   devise_for :users, controllers: {
-    sessions: "users/sessions"
+    sessions: "users/sessions",
+    passwords: "users/passwords",
+    confirmations: "users/confirmations",
+    unlocks: "users/unlocks"
   }
 
   # Redirect accidental GETs on token auth sign-in to Devise HTML sign-in
