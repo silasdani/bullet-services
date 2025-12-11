@@ -3,7 +3,8 @@
 module Api
   module V1
     class FreshbooksWebhooksController < ActionController::API
-      skip_before_action :verify_authenticity_token, if: :verify_webhook_signature
+      # ActionController::API doesn't include CSRF protection by default,
+      # so verify_authenticity_token callback doesn't exist
 
       def create
         # Handle webhook verification (FreshBooks sends a verification request first)

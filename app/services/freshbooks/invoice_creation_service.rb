@@ -2,9 +2,9 @@
 
 module Freshbooks
   class InvoiceCreationService < ApplicationService
-    attribute :invoice, :object
+    attribute :invoice
     attribute :client_id, :string
-    attribute :lines, :array, default: -> { [] }
+    attribute :lines, default: -> { [] }
     attribute :send_email, :boolean, default: -> { false }
     attribute :email_to, :string
 
@@ -89,7 +89,7 @@ module Freshbooks
 
     def extract_pdf_url(freshbooks_data)
       # FreshBooks PDF URL format
-      business_id = FreshbooksToken.current&.business_id || ENV['FRESHBOOKS_BUSINESS_ID']
+      business_id = FreshbooksToken.current&.business_id || ENV.fetch('FRESHBOOKS_BUSINESS_ID', nil)
       invoice_id = freshbooks_data['id'] || freshbooks_data['invoiceid']
       return nil unless business_id && invoice_id
 
