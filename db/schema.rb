@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_01_001603) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_12_120156) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -144,6 +144,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_01_001603) do
     t.string "invoice_pdf_link"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "webflow_collection_id"
+    t.string "webflow_updated_on"
+    t.string "flat_address"
+    t.string "generated_by"
   end
 
   create_table "tools", force: :cascade do |t|
