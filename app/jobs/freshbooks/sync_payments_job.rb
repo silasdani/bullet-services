@@ -35,6 +35,7 @@ module Freshbooks
         payments.each { |payment_data| create_or_update_payment(payment_data) }
 
         break if page >= result[:pages]
+
         page += 1
       end
     end

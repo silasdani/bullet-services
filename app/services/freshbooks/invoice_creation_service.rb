@@ -96,7 +96,7 @@ module Freshbooks
       "https://my.freshbooks.com/#/invoices/#{business_id}/#{invoice_id}/pdf"
     end
 
-    def sync_freshbooks_invoice_record(freshbooks_data, payment_link = nil)
+    def sync_freshbooks_invoice_record(freshbooks_data, _payment_link = nil)
       invoice_id = freshbooks_data['id'] || freshbooks_data['invoiceid']
       FreshbooksInvoice.find_or_initialize_by(freshbooks_id: invoice_id).tap do |fb_invoice|
         fb_invoice.assign_attributes(

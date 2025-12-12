@@ -35,6 +35,7 @@ module Freshbooks
         clients.each { |client_data| create_or_update_client(client_data) }
 
         break if page >= result[:pages]
+
         page += 1
       end
     end
@@ -47,11 +48,11 @@ module Freshbooks
           last_name: client_data['lname'],
           organization: client_data['organization'],
           phone: client_data['phone'],
-          address: client_data.dig('p_street'),
-          city: client_data.dig('p_city'),
-          province: client_data.dig('p_province'),
-          postal_code: client_data.dig('p_code'),
-          country: client_data.dig('p_country'),
+          address: client_data['p_street'],
+          city: client_data['p_city'],
+          province: client_data['p_province'],
+          postal_code: client_data['p_code'],
+          country: client_data['p_country'],
           raw_data: client_data
         )
         client.save!

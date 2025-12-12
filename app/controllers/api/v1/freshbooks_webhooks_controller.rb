@@ -71,12 +71,10 @@ module Api
           )
 
           # Update local invoice if linked
-          if freshbooks_invoice.invoice
-            freshbooks_invoice.invoice.update!(
-              final_status: 'paid',
-              status: 'paid'
-            )
-          end
+          freshbooks_invoice.invoice&.update!(
+            final_status: 'paid',
+            status: 'paid'
+          )
 
           # Create or update payment record
           FreshbooksPayment.find_or_create_by(freshbooks_id: payment_id) do |payment|
@@ -132,8 +130,6 @@ module Api
       rescue ArgumentError
         nil
       end
-
-      private
 
       def handle_verification
         # FreshBooks sends a verification request with callback_id and verifier

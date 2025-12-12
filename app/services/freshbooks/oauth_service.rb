@@ -48,9 +48,7 @@ module Freshbooks
       business_info = fetch_business_info(access_token)
       business_id = business_info['business_id']
 
-      if business_id.blank?
-        raise FreshbooksError, 'Could not fetch business_id from FreshBooks API'
-      end
+      raise FreshbooksError, 'Could not fetch business_id from FreshBooks API' if business_id.blank?
 
       token = FreshbooksToken.find_or_initialize_by(business_id: business_id)
       token.update!(

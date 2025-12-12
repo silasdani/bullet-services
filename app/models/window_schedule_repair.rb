@@ -143,7 +143,11 @@ class WindowScheduleRepair < ApplicationRecord
       parts = [building.name, building.street, building.zipcode].compact.reject(&:blank?)
       parts.join(', ')
     else
-      read_attribute(:address) rescue nil
+      begin
+        read_attribute(:address)
+      rescue StandardError
+        nil
+      end
     end
   end
 
@@ -212,11 +216,11 @@ class WindowScheduleRepair < ApplicationRecord
   def sync_address_from_building
     # Sync address column with building address (Webflow format) for backwards compatibility
     # Format: "{building.name}, {building.street}, {building.zipcode}"
-    if building.present?
-      parts = [building.name, building.street, building.zipcode].compact.reject(&:blank?)
-      new_address = parts.join(', ')
-      write_attribute(:address, new_address) if new_address.present?
-    end
+    return unless building.present?
+
+    parts = [building.name, building.street, building.zipcode].compact.reject(&:blank?)
+    new_address = parts.join(', ')
+    write_attribute(:address, new_address) if new_address.present?
   end
 
   # Ransack configuration for filtering

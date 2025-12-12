@@ -22,22 +22,22 @@ module Website
 
     def valid?
       if name.blank?
-        add_error("Name is required")
+        add_error('Name is required')
         return false
       end
 
       if email.blank?
-        add_error("Email is required")
+        add_error('Email is required')
         return false
       end
 
-      unless email.match?(/\A[\w+\-.]+@[a-z\d\-]+(\.[a-z\d\-]+)*\.[a-z]+\z/i)
-        add_error("Email format is invalid")
+      unless email.match?(/\A[\w+\-.]+@[a-z\d-]+(\.[a-z\d-]+)*\.[a-z]+\z/i)
+        add_error('Email format is invalid')
         return false
       end
 
       if message.blank?
-        add_error("Message is required")
+        add_error('Message is required')
         return false
       end
 
@@ -45,14 +45,14 @@ module Website
     end
 
     def send_notification_email
-      recipient_email = ENV.fetch("CONTACT_EMAIL", "office@bulletservices.co.uk")
+      recipient_email = ENV.fetch('CONTACT_EMAIL', 'office@bulletservices.co.uk')
 
       html_content = <<~HTML
         <h2>New Contact Form Submission</h2>
         <p><strong>Name:</strong> #{name}</p>
         <p><strong>Email:</strong> #{email}</p>
         <p><strong>Message:</strong></p>
-        <p>#{message.gsub(/\n/, '<br>')}</p>
+        <p>#{message.gsub("\n", '<br>')}</p>
       HTML
 
       text_content = <<~TEXT
@@ -72,7 +72,7 @@ module Website
       ).call
     rescue StandardError => e
       log_error("Failed to send contact form email: #{e.message}")
-      add_error("Failed to send email. Please try again later.")
+      add_error('Failed to send email. Please try again later.')
     end
   end
 end

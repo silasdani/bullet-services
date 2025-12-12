@@ -6,7 +6,7 @@ module InputValidation
 
   private
 
-  def sanitize_params(params_to_sanitize = nil)
+  def sanitize_params(_params_to_sanitize = nil)
     # Don't modify params directly as it might be frozen
     # This method is here for future use but not actively used
     true

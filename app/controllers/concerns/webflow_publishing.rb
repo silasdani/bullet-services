@@ -55,9 +55,7 @@ module WebflowPublishing
     # When publishing, sync the latest data first
     if action == :publish
       sync_result = sync_to_webflow_with_publish
-      unless sync_result[:success]
-        return handle_publish_sync_error(sync_result)
-      end
+      return handle_publish_sync_error(sync_result) unless sync_result[:success]
     end
 
     item_service.public_send("#{action}_items", collection_id, item_ids)

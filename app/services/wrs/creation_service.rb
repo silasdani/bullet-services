@@ -41,7 +41,7 @@ module Wrs
     def create_associated_windows
       return unless params[:windows_attributes]
 
-      params[:windows_attributes].each do |_key, window_attrs|
+      params[:windows_attributes].each_value do |window_attrs|
         next if window_attrs[:location].blank?
 
         window = @wrs.windows.build(
@@ -62,7 +62,7 @@ module Wrs
     end
 
     def create_window_tools(window, tools_attributes)
-      tools_attributes.each do |_key, tool_attrs|
+      tools_attributes.each_value do |tool_attrs|
         next if tool_attrs[:name].blank?
 
         tool = window.tools.build(

@@ -35,6 +35,7 @@ module Freshbooks
         invoices.each { |invoice_data| create_or_update_invoice(invoice_data) }
 
         break if page >= result[:pages]
+
         page += 1
       end
     end

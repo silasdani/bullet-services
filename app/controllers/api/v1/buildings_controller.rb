@@ -14,7 +14,7 @@ module Api
         # Optional search/filter
         if params[:q].present?
           collection = collection.where('buildings.name ILIKE ? OR buildings.street ILIKE ? OR buildings.city ILIKE ?',
-                                       "%#{params[:q]}%", "%#{params[:q]}%", "%#{params[:q]}%")
+                                        "%#{params[:q]}%", "%#{params[:q]}%", "%#{params[:q]}%")
         end
 
         paginated_collection = collection.page(@page).per(@per_page)

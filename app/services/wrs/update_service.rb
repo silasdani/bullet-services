@@ -39,13 +39,14 @@ module Wrs
     def update_associated_windows
       return unless params[:windows_attributes]
 
-      params[:windows_attributes].each do |_key, window_attrs|
+      params[:windows_attributes].each_value do |window_attrs|
         if window_attrs[:id].present?
           # Update existing window
           update_existing_window(window_attrs)
         else
           # Create new window (skip if marked for destroy or location is blank)
           next if window_attrs[:_destroy] == '1' || window_attrs[:location].blank?
+
           create_new_window(window_attrs)
         end
       end
@@ -63,9 +64,7 @@ module Wrs
         window.destroy
       else
         # Only attach new image if one is provided - preserve existing image otherwise
-        if window_attrs[:image].present?
-          window.image.attach(window_attrs[:image])
-        end
+        window.image.attach(window_attrs[:image]) if window_attrs[:image].present?
 
         update_params = {
           location: window_attrs[:location],
@@ -101,7 +100,7 @@ module Wrs
     end
 
     def update_window_tools(window, tools_attributes)
-      tools_attributes.each do |_key, tool_attrs|
+      tools_attributes.each_value do |tool_attrs|
         if tool_attrs[:id].present?
           update_existing_tool(window, tool_attrs)
         else
@@ -141,7 +140,7 @@ module Wrs
     end
 
     def create_window_tools(window, tools_attributes)
-      tools_attributes.each do |_key, tool_attrs|
+      tools_attributes.each_value do |tool_attrs|
         next if tool_attrs[:name].blank?
 
         tool = window.tools.build(
