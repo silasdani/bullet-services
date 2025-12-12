@@ -10,7 +10,7 @@ namespace :freshbooks do
         To get your FreshBooks tokens, follow these steps:
 
         1. Visit this URL in your browser (replace YOUR_CLIENT_ID):
-           https://auth.freshbooks.com/oauth/authorize?client_id=#{ENV['FRESHBOOKS_CLIENT_ID']}&response_type=code&redirect_uri=#{CGI.escape(ENV['FRESHBOOKS_REDIRECT_URI'] || '')}
+           https://auth.freshbooks.com/oauth/authorize?client_id=#{ENV.fetch('FRESHBOOKS_CLIENT_ID', nil)}&response_type=code&redirect_uri=#{CGI.escape(ENV['FRESHBOOKS_REDIRECT_URI'] || '')}
 
         2. Authorize the application
 
@@ -58,11 +58,11 @@ namespace :freshbooks do
     rescue FreshbooksError => e
       puts "❌ Error: #{e.message}"
       puts "\nCommon issues:"
-      puts "  - Authorization code expired (codes expire in ~10 minutes)"
-      puts "  - Code already used"
-      puts "  - Redirect URI mismatch (must match exactly)"
-      puts "  - Invalid client credentials"
-      puts "  - OAuth credentials not configured (FRESHBOOKS_CLIENT_ID, FRESHBOOKS_CLIENT_SECRET, FRESHBOOKS_REDIRECT_URI)"
+      puts '  - Authorization code expired (codes expire in ~10 minutes)'
+      puts '  - Code already used'
+      puts '  - Redirect URI mismatch (must match exactly)'
+      puts '  - Invalid client credentials'
+      puts '  - OAuth credentials not configured (FRESHBOOKS_CLIENT_ID, FRESHBOOKS_CLIENT_SECRET, FRESHBOOKS_REDIRECT_URI)'
       exit 1
     rescue StandardError => e
       puts "❌ Unexpected error: #{e.message}"
@@ -72,7 +72,7 @@ namespace :freshbooks do
   end
 
   desc 'Get business ID from existing access token'
-  task :get_business_id => :environment do
+  task get_business_id: :environment do
     access_token = ENV['FRESHBOOKS_ACCESS_TOKEN'] || FreshbooksToken.current&.access_token
 
     if access_token.blank?
@@ -97,15 +97,15 @@ namespace :freshbooks do
       end
     else
       puts "\n❌ Could not fetch business ID"
-      puts "Make sure your access token is valid"
+      puts 'Make sure your access token is valid'
     end
   end
 
   desc 'Refresh access token using refresh token'
-  task :refresh_token => :environment do
-    refresh_token = ENV['FRESHBOOKS_REFRESH_TOKEN']
-    client_id = ENV['FRESHBOOKS_CLIENT_ID']
-    client_secret = ENV['FRESHBOOKS_CLIENT_SECRET']
+  task refresh_token: :environment do
+    refresh_token = ENV.fetch('FRESHBOOKS_REFRESH_TOKEN', nil)
+    client_id = ENV.fetch('FRESHBOOKS_CLIENT_ID', nil)
+    client_secret = ENV.fetch('FRESHBOOKS_CLIENT_SECRET', nil)
 
     if refresh_token.blank? || client_id.blank? || client_secret.blank?
       puts 'Error: FRESHBOOKS_REFRESH_TOKEN, FRESHBOOKS_CLIENT_ID, and FRESHBOOKS_CLIENT_SECRET must be set'
@@ -144,7 +144,7 @@ namespace :freshbooks do
   end
 
   desc 'Test FreshBooks connection'
-  task :test => :environment do
+  task test: :environment do
     puts 'Testing FreshBooks connection...'
     puts "Business ID: #{ENV['FRESHBOOKS_BUSINESS_ID'] || FreshbooksToken.current&.business_id}"
 
@@ -169,7 +169,7 @@ namespace :freshbooks do
       if response.success?
         result = response.parsed_response
         total = result.dig('response', 'result', 'total') || 0
-        puts "✅ Connection successful!"
+        puts '✅ Connection successful!'
         puts "Found #{total} clients"
       else
         puts "❌ API Error: #{response.code}"
@@ -188,7 +188,7 @@ namespace :freshbooks do
         )
 
         if response2.success?
-          puts "✅ Connection successful with API version 2023-02-20!"
+          puts '✅ Connection successful with API version 2023-02-20!'
         else
           puts "❌ Also failed: #{response2.code}"
           puts "Response: #{response2.body}"

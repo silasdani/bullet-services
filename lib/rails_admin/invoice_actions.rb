@@ -117,7 +117,7 @@ module RailsAdmin
 
             begin
               # Update local records first
-              freshbooks_invoice.update!(status: 'voided') if freshbooks_invoice
+              freshbooks_invoice&.update!(status: 'voided')
               invoice.update!(status: 'voided', final_status: 'voided')
 
               # Try to update in FreshBooks if we have the invoice ID
@@ -141,11 +141,11 @@ module RailsAdmin
 
                     invoices_client.update(
                       freshbooks_invoice.freshbooks_id,
-                      client_id: current_invoice.dig('customerid') || invoice.freshbooks_client_id,
-                      date: current_invoice.dig('create_date') || invoice.created_at&.to_date&.to_s,
-                      due_date: current_invoice.dig('due_date'),
-                      currency: current_invoice.dig('currency_code') || 'USD',
-                      notes: current_invoice.dig('notes'),
+                      client_id: current_invoice['customerid'] || invoice.freshbooks_client_id,
+                      date: current_invoice['create_date'] || invoice.created_at&.to_date&.to_s,
+                      due_date: current_invoice['due_date'],
+                      currency: current_invoice['currency_code'] || 'USD',
+                      notes: current_invoice['notes'],
                       lines: lines,
                       status: 'voided'
                     )
@@ -207,7 +207,7 @@ module RailsAdmin
 
             begin
               # Update local records first
-              freshbooks_invoice.update!(status: 'paid') if freshbooks_invoice
+              freshbooks_invoice&.update!(status: 'paid')
               invoice.update!(status: 'paid', final_status: 'paid')
 
               # Try to update in FreshBooks if we have the invoice ID
@@ -231,11 +231,11 @@ module RailsAdmin
 
                     invoices_client.update(
                       freshbooks_invoice.freshbooks_id,
-                      client_id: current_invoice.dig('customerid') || invoice.freshbooks_client_id,
-                      date: current_invoice.dig('create_date') || invoice.created_at&.to_date&.to_s,
-                      due_date: current_invoice.dig('due_date'),
-                      currency: current_invoice.dig('currency_code') || 'USD',
-                      notes: current_invoice.dig('notes'),
+                      client_id: current_invoice['customerid'] || invoice.freshbooks_client_id,
+                      date: current_invoice['create_date'] || invoice.created_at&.to_date&.to_s,
+                      due_date: current_invoice['due_date'],
+                      currency: current_invoice['currency_code'] || 'USD',
+                      notes: current_invoice['notes'],
                       lines: lines,
                       status: 'paid'
                     )
@@ -316,7 +316,7 @@ module RailsAdmin
               invoices_client = Freshbooks::Invoices.new
 
               # Update local records first
-              freshbooks_invoice.update!(status: 'voided') if freshbooks_invoice
+              freshbooks_invoice&.update!(status: 'voided')
               invoice.update!(status: 'voided', final_status: 'voided')
 
               # Try to update in FreshBooks if we have the invoice ID
@@ -339,11 +339,11 @@ module RailsAdmin
 
                     invoices_client.update(
                       freshbooks_invoice.freshbooks_id,
-                      client_id: current_invoice.dig('customerid') || invoice.freshbooks_client_id,
-                      date: current_invoice.dig('create_date') || invoice.created_at&.to_date&.to_s,
-                      due_date: current_invoice.dig('due_date'),
-                      currency: current_invoice.dig('currency_code') || 'USD',
-                      notes: current_invoice.dig('notes'),
+                      client_id: current_invoice['customerid'] || invoice.freshbooks_client_id,
+                      date: current_invoice['create_date'] || invoice.created_at&.to_date&.to_s,
+                      due_date: current_invoice['due_date'],
+                      currency: current_invoice['currency_code'] || 'USD',
+                      notes: current_invoice['notes'],
                       lines: lines,
                       status: 'voided'
                     )
@@ -444,11 +444,11 @@ module RailsAdmin
               # Update invoice in FreshBooks
               invoices_client.update(
                 freshbooks_invoice.freshbooks_id,
-                client_id: current_invoice.dig('customerid') || invoice.freshbooks_client_id,
-                date: current_invoice.dig('create_date') || invoice.created_at&.to_date&.to_s,
-                due_date: current_invoice.dig('due_date'),
-                currency: current_invoice.dig('currency_code') || 'USD',
-                notes: current_invoice.dig('notes'),
+                client_id: current_invoice['customerid'] || invoice.freshbooks_client_id,
+                date: current_invoice['create_date'] || invoice.created_at&.to_date&.to_s,
+                due_date: current_invoice['due_date'],
+                currency: current_invoice['currency_code'] || 'USD',
+                notes: current_invoice['notes'],
                 lines: lines,
                 status: current_invoice['status'] || invoice.status
               )

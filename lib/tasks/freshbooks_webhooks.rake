@@ -132,7 +132,7 @@ namespace :freshbooks do
 
       begin
         webhooks = Freshbooks::Webhooks.new
-        result = webhooks.resend_verification(callback_id)
+        webhooks.resend_verification(callback_id)
         puts '✅ Verification code resent!'
         puts 'FreshBooks will send a new verification request to your webhook URL.'
       rescue FreshbooksError => e

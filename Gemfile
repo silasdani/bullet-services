@@ -69,7 +69,7 @@ group :development, :test do
 end
 
 # Modern frontend stack (Hotwire)
-gem 'turbo-rails'                    # Modern SPA-like navigation (Stimulus via CDN for simplicity)
+gem 'turbo-rails' # Modern SPA-like navigation (Stimulus via CDN for simplicity)
 
 # Component-based views
 gem 'view_component', '~> 3.13'
