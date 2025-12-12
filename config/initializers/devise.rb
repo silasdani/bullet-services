@@ -20,11 +20,13 @@ Devise.setup do |config|
   # Configure the parent class to the devise controllers.
   # config.parent_controller = 'DeviseController'
 
+  # Note: Layout is set in individual controllers (app/controllers/users/*_controller.rb)
+  # using `layout 'admin'` rather than here, as Devise doesn't support config.layout
+
   # ==> Mailer Configuration
-  # Configure the e-mail address which will be shown in Devise::Mailer,
-  # note that it will be overwritten if you use your own mailer class
-  # with default "from" parameter.
-  config.mailer_sender = "please-change-me-at-config-initializers-devise@example.com"
+  # Configure the e-mail address which will be shown in Devise::Mailer.
+  # This should be a verified sender in your MailerSend (or SMTP) account.
+  config.mailer_sender = ENV.fetch('MAILERSEND_FROM_EMAIL', 'no-reply@example.com')
 
   # Configure the class responsible to send e-mails.
   # config.mailer = 'Devise::Mailer'

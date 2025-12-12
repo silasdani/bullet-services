@@ -64,7 +64,10 @@ module Api
 
       def user_params
         if params[:user].present?
-          params.require(:user).permit(:email, :name, :nickname, :role, :password, :password_confirmation)
+          permitted = params.require(:user).permit(:email, :name, :nickname, :password, :password_confirmation)
+          # Only allow admins to update role
+          permitted[:role] = params[:user][:role] if current_user&.admin? && params[:user][:role].present?
+          permitted
         else
           {}
         end

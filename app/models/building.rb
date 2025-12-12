@@ -12,7 +12,7 @@ class Building < ApplicationRecord
 
   # Ensure only one building per unique address (case-insensitive, ignoring deleted)
   validates :street, uniqueness: {
-    scope: [:city, :zipcode],
+    scope: %i[city zipcode],
     case_sensitive: false,
     conditions: -> { where(deleted_at: nil) },
     message: 'A building with this address already exists'

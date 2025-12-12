@@ -46,32 +46,47 @@ module Api
       def csv_import
         authorize Invoice, :create?
 
-        if params[:csv_file].blank?
-          render json: { error: 'CSV file is required' }, status: :unprocessable_entity
-          return
-        end
+        return render_csv_file_error if params[:csv_file].blank?
 
+        result = perform_csv_import
+        render_csv_import_result(result)
+      end
+
+      def render_csv_file_error
+        render json: { error: 'CSV file is required' }, status: :unprocessable_entity
+      end
+
+      def perform_csv_import
         import_service = InvoiceCsvImportService.new(
           csv_file: params[:csv_file],
           user: current_user
         )
+        import_service.call
+      end
 
-        result = import_service.call
-
+      def render_csv_import_result(result)
         if result.success?
-          render json: {
-            success: true,
-            message: 'CSV import completed',
-            results: result.import_results
-          }
+          render json: build_success_response(result)
         else
-          render json: {
-            success: false,
-            error: 'CSV import failed',
-            message: result.errors.join(', '),
-            results: result.import_results
-          }, status: :unprocessable_entity
+          render json: build_failure_response(result), status: :unprocessable_entity
         end
+      end
+
+      def build_success_response(result)
+        {
+          success: true,
+          message: 'CSV import completed',
+          results: result.import_results
+        }
+      end
+
+      def build_failure_response(result)
+        {
+          success: false,
+          error: 'CSV import failed',
+          message: result.errors.join(', '),
+          results: result.import_results
+        }
       end
 
       private

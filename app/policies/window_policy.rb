@@ -25,8 +25,6 @@ class WindowPolicy < ApplicationPolicy
     def resolve
       if user.is_admin?
         scope.all
-      elsif user.is_employee?
-        scope.joins(:window_schedule_repair).where(window_schedule_repairs: { user: user })
       else
         scope.joins(:window_schedule_repair).where(window_schedule_repairs: { user: user })
       end

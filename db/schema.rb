@@ -57,6 +57,74 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_01_001603) do
     t.index ["street", "city", "zipcode"], name: "index_buildings_on_address_fields"
   end
 
+  create_table "freshbooks_clients", force: :cascade do |t|
+    t.string "freshbooks_id", null: false
+    t.string "email"
+    t.string "first_name"
+    t.string "last_name"
+    t.string "organization"
+    t.string "phone"
+    t.text "address"
+    t.string "city"
+    t.string "province"
+    t.string "postal_code"
+    t.string "country"
+    t.jsonb "raw_data"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["email"], name: "index_freshbooks_clients_on_email"
+    t.index ["freshbooks_id"], name: "index_freshbooks_clients_on_freshbooks_id", unique: true
+  end
+
+  create_table "freshbooks_invoices", force: :cascade do |t|
+    t.string "freshbooks_id", null: false
+    t.string "freshbooks_client_id", null: false
+    t.string "invoice_number"
+    t.string "status"
+    t.decimal "amount", precision: 10, scale: 2
+    t.decimal "amount_outstanding", precision: 10, scale: 2
+    t.date "date"
+    t.date "due_date"
+    t.string "currency_code"
+    t.text "notes"
+    t.string "pdf_url"
+    t.jsonb "raw_data"
+    t.bigint "invoice_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["freshbooks_client_id"], name: "index_freshbooks_invoices_on_freshbooks_client_id"
+    t.index ["freshbooks_id"], name: "index_freshbooks_invoices_on_freshbooks_id", unique: true
+    t.index ["invoice_id"], name: "index_freshbooks_invoices_on_invoice_id"
+    t.index ["status"], name: "index_freshbooks_invoices_on_status"
+  end
+
+  create_table "freshbooks_payments", force: :cascade do |t|
+    t.string "freshbooks_id", null: false
+    t.string "freshbooks_invoice_id", null: false
+    t.decimal "amount", precision: 10, scale: 2, null: false
+    t.date "date", null: false
+    t.string "payment_method"
+    t.string "currency_code"
+    t.text "notes"
+    t.jsonb "raw_data"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["date"], name: "index_freshbooks_payments_on_date"
+    t.index ["freshbooks_id"], name: "index_freshbooks_payments_on_freshbooks_id", unique: true
+    t.index ["freshbooks_invoice_id"], name: "index_freshbooks_payments_on_freshbooks_invoice_id"
+  end
+
+  create_table "freshbooks_tokens", force: :cascade do |t|
+    t.text "access_token", null: false
+    t.text "refresh_token", null: false
+    t.datetime "token_expires_at", null: false
+    t.string "business_id", null: false
+    t.string "user_freshbooks_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["business_id"], name: "index_freshbooks_tokens_on_business_id", unique: true
+  end
+
   create_table "invoices", force: :cascade do |t|
     t.string "name"
     t.string "slug"

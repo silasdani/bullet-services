@@ -1,25 +1,69 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <title>Bullet Services</title>
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title><%= content_for?(:title) ? yield(:title) : "Bullet Services" %></title>
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
-
+    <!-- Tailwind CSS via CDN (simple, robust, production-ready) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Configure Tailwind to use Aileron font -->
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              'sans': ['Aileron', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+            }
+          }
+        }
+      }
+    </script>
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
-    <%= javascript_include_tag "application", "data-turbo-track": "reload" %>
+    <%= javascript_include_tag "application", "data-turbo-track": "reload", defer: true %>
+    <!-- Stimulus via CDN (simple, robust, works with Sprockets) -->
+    <!-- Turbo is automatically loaded via turbo-rails gem -->
+    <script type="module">
+      import { Application } from 'https://cdn.skypack.dev/@hotwired/stimulus@3.2.1';
+      window.Stimulus = Application.start();
+    </script>
   </head>
-
-  <body>
+  <body class="antialiased font-sans">
     <% unless (defined?(devise_controller?) && devise_controller? && controller_name == 'sessions' && action_name == 'new') %>
-      <% if notice %>
-        <p class="alert alert-success"><%= notice %></p>
-      <% end %>
-      <% if alert %>
-        <p class="alert alert-danger"><%= alert %></p>
-      <% end %>
+      <div class="alert-container">
+        <% if notice %>
+          <div class="alert alert-success" role="alert">
+            <div class="alert-content">
+              <svg class="alert-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span class="alert-message"><%= notice %></span>
+            </div>
+            <button type="button" class="alert-close" aria-label="Close" onclick="this.closest('.alert').style.animation='fadeOut 0.3s ease-out'; setTimeout(() => this.closest('.alert').remove(), 300)">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        <% end %>
+        <% if alert %>
+          <div class="alert alert-danger" role="alert">
+            <div class="alert-content">
+              <svg class="alert-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span class="alert-message"><%= alert %></span>
+            </div>
+            <button type="button" class="alert-close" aria-label="Close" onclick="this.closest('.alert').style.animation='fadeOut 0.3s ease-out'; setTimeout(() => this.closest('.alert').remove(), 300)">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        <% end %>
+      </div>
     <% end %>
-
     <%= yield %>
   </body>
 </html>

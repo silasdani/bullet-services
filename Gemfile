@@ -55,7 +55,7 @@ gem 'ransack'
 gem 'rails_admin', '~> 3.1'
 
 group :development, :test do
-  gem 'brakeman', require: false
+  gem 'brakeman', '~> 7.1', require: false
   gem 'debug', platforms: %i[mri windows], require: 'debug/prelude'
   gem 'pry-rails'
   gem 'rubocop-rails-omakase', require: false
@@ -68,13 +68,17 @@ group :development, :test do
   gem 'shoulda-matchers'
 end
 
+# Modern frontend stack (Hotwire)
+gem 'turbo-rails' # Modern SPA-like navigation (Stimulus via CDN for simplicity)
+
+# Component-based views
+gem 'view_component', '~> 3.13'
+
 # Asset pipeline gems
-gem 'coffee-rails'
-gem 'jquery-rails'
 gem 'sassc-rails'
 gem 'sprockets-rails'
-gem 'turbolinks'
 gem 'uglifier'
 
 gem 'csv'
+gem 'mailersend-ruby'
 gem 'ruby-progressbar'

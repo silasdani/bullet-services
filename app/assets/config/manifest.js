@@ -2,4 +2,4 @@
 //= link_directory ../javascripts .js
 //= link_directory ../stylesheets .css
 //= link application.js
-//= link rails_admin_custom.css
+//= link application.css

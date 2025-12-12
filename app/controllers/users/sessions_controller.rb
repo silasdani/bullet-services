@@ -2,6 +2,7 @@
 
 module Users
   class SessionsController < Devise::SessionsController
+    layout 'admin'
     before_action :check_admin_access, only: [:create]
 
     private

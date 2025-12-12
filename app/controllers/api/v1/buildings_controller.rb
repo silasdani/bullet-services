@@ -8,24 +8,31 @@ module Api
       def index
         authorize Building
 
-        collection = policy_scope(Building)
-                     .order(created_at: :desc)
-
-        # Optional search/filter
-        if params[:q].present?
-          collection = collection.where('buildings.name ILIKE ? OR buildings.street ILIKE ? OR buildings.city ILIKE ?',
-                                       "%#{params[:q]}%", "%#{params[:q]}%", "%#{params[:q]}%")
-        end
-
+        collection = build_buildings_collection
         paginated_collection = collection.page(@page).per(@per_page)
-        serialized_data = paginated_collection.map do |building|
-          BuildingSerializer.new(building).serializable_hash
-        end
+        serialized_data = serialize_buildings(paginated_collection)
 
         render_success(
           data: serialized_data,
           meta: pagination_meta(paginated_collection)
         )
+      end
+
+      def build_buildings_collection
+        collection = policy_scope(Building).order(created_at: :desc)
+        apply_search_filter(collection)
+      end
+
+      def apply_search_filter(collection)
+        return collection unless params[:q].present?
+
+        search_term = "%#{params[:q]}%"
+        collection.where('buildings.name ILIKE ? OR buildings.street ILIKE ? OR buildings.city ILIKE ?',
+                         search_term, search_term, search_term)
+      end
+
+      def serialize_buildings(buildings)
+        buildings.map { |building| BuildingSerializer.new(building).serializable_hash }
       end
 
       def show
@@ -39,30 +46,34 @@ module Api
       def create
         authorize Building
 
-        # Find or create building by address fields (street, city, zipcode)
-        building = Building.find_or_initialize_by(
-          street: building_params[:street] || '',
-          city: building_params[:city] || '',
-          zipcode: building_params[:zipcode] || ''
-        )
+        building = find_or_initialize_building
+        update_building_fields(building)
 
-        # Update or set building fields
-        building.name = building_params[:name] if building_params[:name].present?
-        building.country = building_params[:country] || 'UK' if building.country.blank?
-
-        unless building.save
+        if building.save
+          render_success(
+            data: BuildingSerializer.new(building.reload).serializable_hash,
+            message: 'Building created successfully',
+            status: :created
+          )
+        else
           render_error(
             message: 'Failed to create building',
             details: building.errors.full_messages
           )
-          return
         end
+      end
 
-        render_success(
-          data: BuildingSerializer.new(building.reload).serializable_hash,
-          message: 'Building created successfully',
-          status: :created
+      def find_or_initialize_building
+        Building.find_or_initialize_by(
+          street: building_params[:street] || '',
+          city: building_params[:city] || '',
+          zipcode: building_params[:zipcode] || ''
         )
+      end
+
+      def update_building_fields(building)
+        building.name = building_params[:name] if building_params[:name].present?
+        building.country = building_params[:country] || 'UK' if building.country.blank?
       end
 
       def update

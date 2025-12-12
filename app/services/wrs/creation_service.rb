@@ -8,7 +8,8 @@ module Wrs
     def call
       result = with_error_handling do
         with_transaction do
-          create_wrs
+          return nil unless create_wrs?
+
           create_associated_windows
           recalculate_totals
         end
@@ -27,7 +28,7 @@ module Wrs
 
     private
 
-    def create_wrs
+    def create_wrs?
       @wrs = user.window_schedule_repairs.build(wrs_attributes)
 
       unless @wrs.save!
@@ -41,28 +42,43 @@ module Wrs
     def create_associated_windows
       return unless params[:windows_attributes]
 
-      params[:windows_attributes].each do |_key, window_attrs|
+      params[:windows_attributes].each_value do |window_attrs|
         next if window_attrs[:location].blank?
 
-        window = @wrs.windows.build(
-          location: window_attrs[:location],
-          webflow_image_url: window_attrs[:webflow_image_url]
-        )
+        create_single_window(window_attrs)
+      end
+    end
 
-        # Attach image if provided
-        window.image.attach(window_attrs[:image]) if window_attrs[:image].present?
+    def create_single_window(window_attrs)
+      window = build_window(window_attrs)
+      attach_window_image(window, window_attrs[:image])
+      return unless save_window(window)
 
-        unless window.save
-          add_errors(window.errors.full_messages)
-          raise ActiveRecord::Rollback
-        end
+      create_window_tools(window, window_attrs[:tools_attributes]) if window_attrs[:tools_attributes]
+    end
 
-        create_window_tools(window, window_attrs[:tools_attributes]) if window_attrs[:tools_attributes]
+    def build_window(window_attrs)
+      @wrs.windows.build(
+        location: window_attrs[:location],
+        webflow_image_url: window_attrs[:webflow_image_url]
+      )
+    end
+
+    def attach_window_image(window, image)
+      window.image.attach(image) if image.present?
+    end
+
+    def save_window(window)
+      if window.save
+        true
+      else
+        add_errors(window.errors.full_messages)
+        raise ActiveRecord::Rollback
       end
     end
 
     def create_window_tools(window, tools_attributes)
-      tools_attributes.each do |_key, tool_attrs|
+      tools_attributes.each_value do |tool_attrs|
         next if tool_attrs[:name].blank?
 
         tool = window.tools.build(

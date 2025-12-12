@@ -8,7 +8,8 @@ module Wrs
     def call
       result = with_error_handling do
         with_transaction do
-          update_wrs
+          return nil unless update_wrs?
+
           update_associated_windows
           calculate_totals
         end
@@ -27,7 +28,7 @@ module Wrs
 
     private
 
-    def update_wrs
+    def update_wrs?
       unless wrs.update(wrs_attributes)
         add_errors(wrs.errors.full_messages)
         return false
@@ -39,69 +40,87 @@ module Wrs
     def update_associated_windows
       return unless params[:windows_attributes]
 
-      params[:windows_attributes].each do |_key, window_attrs|
+      params[:windows_attributes].each_value do |window_attrs|
         if window_attrs[:id].present?
           # Update existing window
           update_existing_window(window_attrs)
         else
           # Create new window (skip if marked for destroy or location is blank)
           next if window_attrs[:_destroy] == '1' || window_attrs[:location].blank?
+
           create_new_window(window_attrs)
         end
       end
     end
 
     def update_existing_window(window_attrs)
-      window = wrs.windows.find_by(id: window_attrs[:id])
-
-      unless window
-        add_errors("Window with id #{window_attrs[:id]} not found")
-        raise ActiveRecord::Rollback
-      end
+      window = find_window(window_attrs[:id])
+      return unless window
 
       if window_attrs[:_destroy] == '1'
         window.destroy
       else
-        # Only attach new image if one is provided - preserve existing image otherwise
-        if window_attrs[:image].present?
-          window.image.attach(window_attrs[:image])
-        end
-
-        update_params = {
-          location: window_attrs[:location],
-          webflow_image_url: window_attrs[:webflow_image_url]
-        }.compact
-
-        unless window.update(update_params)
-          add_errors(window.errors.full_messages)
-          raise ActiveRecord::Rollback
-        end
-
-        update_window_tools(window, window_attrs[:tools_attributes]) if window_attrs[:tools_attributes]
+        update_window_attributes(window, window_attrs)
       end
+    end
+
+    def find_window(window_id)
+      window = wrs.windows.find_by(id: window_id)
+      return window if window
+
+      add_errors("Window with id #{window_id} not found")
+      raise ActiveRecord::Rollback
+    end
+
+    def update_window_attributes(window, window_attrs)
+      attach_window_image_if_provided(window, window_attrs[:image])
+      return unless update_window_fields?(window, window_attrs)
+
+      update_window_tools(window, window_attrs[:tools_attributes]) if window_attrs[:tools_attributes]
+    end
+
+    def attach_window_image_if_provided(window, image)
+      window.image.attach(image) if image.present?
+    end
+
+    def update_window_fields?(window, window_attrs)
+      update_params = {
+        location: window_attrs[:location],
+        webflow_image_url: window_attrs[:webflow_image_url]
+      }.compact
+
+      return true if window.update(update_params)
+
+      add_errors(window.errors.full_messages)
+      raise ActiveRecord::Rollback
     end
 
     def create_new_window(window_attrs)
       return if window_attrs[:location].blank?
 
-      window = wrs.windows.build(
-        location: window_attrs[:location],
-        webflow_image_url: window_attrs[:webflow_image_url]
-      )
-
-      # Attach image if provided
-      window.image.attach(window_attrs[:image]) if window_attrs[:image].present?
-
-      unless window.save
-        add_errors(window.errors.full_messages)
-        raise ActiveRecord::Rollback
-      end
+      window = build_new_window(window_attrs)
+      attach_window_image_if_provided(window, window_attrs[:image])
+      return unless save_new_window?(window)
 
       create_window_tools(window, window_attrs[:tools_attributes]) if window_attrs[:tools_attributes]
     end
 
+    def build_new_window(window_attrs)
+      wrs.windows.build(
+        location: window_attrs[:location],
+        webflow_image_url: window_attrs[:webflow_image_url]
+      )
+    end
+
+    def save_new_window?(window)
+      return true if window.save
+
+      add_errors(window.errors.full_messages)
+      raise ActiveRecord::Rollback
+    end
+
     def update_window_tools(window, tools_attributes)
-      tools_attributes.each do |_key, tool_attrs|
+      tools_attributes.each_value do |tool_attrs|
         if tool_attrs[:id].present?
           update_existing_tool(window, tool_attrs)
         else
@@ -141,7 +160,7 @@ module Wrs
     end
 
     def create_window_tools(window, tools_attributes)
-      tools_attributes.each do |_key, tool_attrs|
+      tools_attributes.each_value do |tool_attrs|
         next if tool_attrs[:name].blank?
 
         tool = window.tools.build(

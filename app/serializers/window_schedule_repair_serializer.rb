@@ -4,8 +4,8 @@ class WindowScheduleRepairSerializer < ActiveModel::Serializer
   attributes :id, :name, :slug, :address, :flat_number, :details,
              :total_vat_included_price, :total_vat_excluded_price,
              :status, :status_color, :grand_total, :created_at, :updated_at,
-             :deleted_at, :deleted, :active, :last_published, :is_draft, :is_archived,
-             :published, :draft, :archived, :webflow_item_id
+             :deleted_at, :deleted?, :active?, :last_published, :is_draft, :is_archived,
+             :published?, :draft?, :archived?, :webflow_item_id
 
   belongs_to :user
   belongs_to :building
@@ -43,24 +43,24 @@ class WindowScheduleRepairSerializer < ActiveModel::Serializer
   end
 
   # Soft delete status methods
-  def deleted
+  def deleted?
     object.deleted?
   end
 
-  def active
+  def active?
     object.active?
   end
 
   # Webflow status methods
-  def published
+  def published?
     object.published?
   end
 
-  def draft
+  def draft?
     object.draft?
   end
 
-  def archived
+  def archived?
     object.archived?
   end
 end

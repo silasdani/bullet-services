@@ -8,9 +8,9 @@ class ApplicationController < ActionController::Base
 
   rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
 
-  # Root route method
+  # Root route method (redirected to website#home in routes)
   def index
-    render json: { message: 'Bullet Services API', status: 'running' }
+    redirect_to root_path
   end
 
   private

@@ -7,7 +7,7 @@ module Webflow
       make_request(:get, "/sites/#{@site_id}/collections")
     end
 
-    def get_collection
+    def collection
       make_request(:get, "/sites/#{@site_id}/collections/#{@collection_id}")
     end
   end

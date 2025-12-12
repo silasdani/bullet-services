@@ -44,7 +44,8 @@ class InvoiceCsvImportService < ApplicationService
       end
     end
 
-    log_info("CSV import completed. Success: #{@import_results[:successful_imports]}, Failed: #{@import_results[:failed_imports]}")
+    log_info("CSV import completed. Success: #{@import_results[:successful_imports]}, " \
+             "Failed: #{@import_results[:failed_imports]}")
   end
 
   def parse_csv_file
@@ -60,44 +61,87 @@ class InvoiceCsvImportService < ApplicationService
   def process_row(row, row_number)
     invoice_attributes = map_csv_row_to_attributes(row)
 
-    if invoice_attributes.blank?
-      @import_results[:failed_imports] += 1
-      @import_results[:errors] << "Row #{row_number}: Invalid data format"
-      return
-    end
+    return handle_invalid_row(row_number) if invoice_attributes.blank?
 
+    save_invoice_row(row_number, invoice_attributes)
+  end
+
+  def handle_invalid_row(row_number)
+    @import_results[:failed_imports] += 1
+    @import_results[:errors] << "Row #{row_number}: Invalid data format"
+  end
+
+  def save_invoice_row(row_number, invoice_attributes)
     invoice = Invoice.new(invoice_attributes)
 
     if invoice.save
-      @import_results[:successful_imports] += 1
-      log_info("Successfully imported invoice: #{invoice.name}")
+      handle_successful_import(invoice)
     else
-      @import_results[:failed_imports] += 1
-      error_message = "Row #{row_number}: #{invoice.errors.full_messages.join(', ')}"
-      @import_results[:errors] << error_message
-      log_error("Failed to import invoice: #{error_message}")
+      handle_failed_import(row_number, invoice)
     end
+  end
+
+  def handle_successful_import(invoice)
+    @import_results[:successful_imports] += 1
+    log_info("Successfully imported invoice: #{invoice.name}")
+  end
+
+  def handle_failed_import(row_number, invoice)
+    @import_results[:failed_imports] += 1
+    error_message = "Row #{row_number}: #{invoice.errors.full_messages.join(', ')}"
+    @import_results[:errors] << error_message
+    log_error("Failed to import invoice: #{error_message}")
   end
 
   def map_csv_row_to_attributes(row)
     {
+      **map_basic_attributes(row),
+      **map_webflow_attributes(row),
+      **map_freshbooks_attributes(row),
+      **map_status_attributes(row),
+      **map_financial_attributes(row)
+    }.compact
+  end
+
+  def map_basic_attributes(row)
+    {
       name: row[:name]&.strip,
       slug: row[:slug]&.strip,
+      job: row[:job]&.strip,
+      wrs_link: row[:wrs_link]&.strip
+    }
+  end
+
+  def map_webflow_attributes(row)
+    {
       webflow_item_id: row[:webflow_item_id]&.strip,
       is_archived: parse_boolean(row[:is_archived]),
       is_draft: parse_boolean(row[:is_draft]),
       webflow_created_on: row[:webflow_created_on]&.strip,
-      webflow_published_on: row[:webflow_published_on]&.strip,
+      webflow_published_on: row[:webflow_published_on]&.strip
+    }
+  end
+
+  def map_freshbooks_attributes(row)
+    {
       freshbooks_client_id: row[:freshbooks_client_id]&.strip,
-      job: row[:job]&.strip,
-      wrs_link: row[:wrs_link]&.strip,
-      included_vat_amount: parse_decimal(row[:included_vat_amount]),
-      excluded_vat_amount: parse_decimal(row[:excluded_vat_amount]),
+      invoice_pdf_link: row[:invoice_pdf_link]&.strip
+    }
+  end
+
+  def map_status_attributes(row)
+    {
       status_color: row[:status_color]&.strip,
       status: row[:status]&.strip,
-      final_status: row[:final_status]&.strip,
-      invoice_pdf_link: row[:invoice_pdf_link]&.strip
-    }.compact
+      final_status: row[:final_status]&.strip
+    }
+  end
+
+  def map_financial_attributes(row)
+    {
+      included_vat_amount: parse_decimal(row[:included_vat_amount]),
+      excluded_vat_amount: parse_decimal(row[:excluded_vat_amount])
+    }
   end
 
   def parse_boolean(value)
