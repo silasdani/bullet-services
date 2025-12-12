@@ -6,6 +6,7 @@ Bundler.require(*Rails.groups)
 module BulletServices
   class Application < Rails::Application
     config.hosts << "fb133ddd2e97.ngrok-free.app"
+    config.hosts << "bullet-services.onrender.com"
 
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 8.0
