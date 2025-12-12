@@ -30,7 +30,6 @@ module FreshbooksWebhookVerification
     Rails.logger.info 'FreshBooks webhook verification request received'
     Rails.logger.info "  Callback ID: #{callback_id}"
     Rails.logger.info "  Verification code: #{verification_code.present? ? 'present' : 'missing'}"
-    Rails.logger.info "  All params: #{params.inspect}"
   end
 
   def verify_webhook_via_api(callback_id, verification_code)
