@@ -41,22 +41,29 @@ module Freshbooks
     end
 
     def create_or_update_invoice(invoice_data)
-      FreshbooksInvoice.find_or_initialize_by(freshbooks_id: invoice_data['id']).tap do |invoice|
-        invoice.assign_attributes(
-          freshbooks_client_id: invoice_data['clientid'],
-          invoice_number: invoice_data['invoice_number'],
-          status: invoice_data['status'],
-          amount: extract_amount(invoice_data['amount']),
-          amount_outstanding: extract_amount(invoice_data['amount_outstanding']),
-          date: parse_date(invoice_data['date']),
-          due_date: parse_date(invoice_data['due_date']),
-          currency_code: invoice_data.dig('amount', 'code'),
-          notes: invoice_data['notes'],
-          pdf_url: build_pdf_url(invoice_data['id']),
-          raw_data: invoice_data
-        )
-        invoice.save!
-      end
+      invoice = find_or_initialize_invoice(invoice_data)
+      assign_invoice_attributes(invoice, invoice_data)
+      invoice.save!
+    end
+
+    def find_or_initialize_invoice(invoice_data)
+      FreshbooksInvoice.find_or_initialize_by(freshbooks_id: invoice_data['id'])
+    end
+
+    def assign_invoice_attributes(invoice, invoice_data)
+      invoice.assign_attributes(
+        freshbooks_client_id: invoice_data['clientid'],
+        invoice_number: invoice_data['invoice_number'],
+        status: invoice_data['status'],
+        amount: extract_amount(invoice_data['amount']),
+        amount_outstanding: extract_amount(invoice_data['amount_outstanding']),
+        date: parse_date(invoice_data['date']),
+        due_date: parse_date(invoice_data['due_date']),
+        currency_code: invoice_data.dig('amount', 'code'),
+        notes: invoice_data['notes'],
+        pdf_url: build_pdf_url(invoice_data['id']),
+        raw_data: invoice_data
+      )
     end
 
     def extract_amount(amount_data)

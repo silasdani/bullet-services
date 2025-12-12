@@ -10,26 +10,36 @@ module Webflow
       return failure_result('not_draft') unless should_auto_sync?
       return failure_result('invalid_data') unless valid_for_sync?
 
-      begin
-        if wrs.webflow_item_id.present?
-          update_webflow_item
-        else
-          create_webflow_item
-        end
-      rescue WebflowApiError => e
-        {
-          success: false,
-          error: e.message,
-          status_code: e.status_code
-        }
-      rescue StandardError => e
-        log_error("Unexpected error: #{e.message}")
-        add_error(e.message)
-        {
-          success: false,
-          error: e.message
-        }
+      sync_to_webflow
+    rescue WebflowApiError => e
+      handle_webflow_error(e)
+    rescue StandardError => e
+      handle_unexpected_sync_error(e)
+    end
+
+    def sync_to_webflow
+      if wrs.webflow_item_id.present?
+        update_webflow_item
+      else
+        create_webflow_item
       end
+    end
+
+    def handle_webflow_error(error)
+      {
+        success: false,
+        error: error.message,
+        status_code: error.status_code
+      }
+    end
+
+    def handle_unexpected_sync_error(error)
+      log_error("Unexpected error: #{error.message}")
+      add_error(error.message)
+      {
+        success: false,
+        error: error.message
+      }
     end
 
     private
@@ -47,31 +57,42 @@ module Webflow
 
     def create_webflow_item
       log_image_status
-
-      item_data = wrs.to_webflow_formatted.merge(isDraft: true)
+      item_data = build_draft_item_data
       response = item_service.create_item(wrs.webflow_collection_id, item_data)
-
-      wrs.update_column(:webflow_item_id, response['id'])
-
-      log_info("Created WRS ##{wrs.id} in Webflow as draft (#{response['id']})")
-
+      update_webflow_item_id(response['id'])
+      log_creation_success(response['id'])
       success_result('created', response['id'])
     end
 
+    def build_draft_item_data
+      wrs.to_webflow_formatted.merge(isDraft: true)
+    end
+
+    def update_webflow_item_id(webflow_id)
+      wrs.update_column(:webflow_item_id, webflow_id)
+    end
+
+    def log_creation_success(webflow_id)
+      log_info("Created WRS ##{wrs.id} in Webflow as draft (#{webflow_id})")
+    end
+
     def update_webflow_item
-      unless wrs.is_draft?
-        log_info("Skipping WRS ##{wrs.id} - item is published")
-        return failure_result('item_published')
-      end
+      return handle_published_item if wrs.published?
 
       log_image_status
-
-      item_data = wrs.to_webflow_formatted.merge(isDraft: true)
+      item_data = build_draft_item_data
       item_service.update_item(wrs.webflow_collection_id, wrs.webflow_item_id, item_data)
-
-      log_info("Updated WRS ##{wrs.id} in Webflow (#{wrs.webflow_item_id})")
-
+      log_update_success
       success_result('updated', wrs.webflow_item_id)
+    end
+
+    def handle_published_item
+      log_info("Skipping WRS ##{wrs.id} - item is published")
+      failure_result('item_published')
+    end
+
+    def log_update_success
+      log_info("Updated WRS ##{wrs.id} in Webflow (#{wrs.webflow_item_id})")
     end
 
     def log_image_status

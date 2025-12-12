@@ -87,19 +87,41 @@ module Webflow
     end
 
     def download_image(url)
+      uri = validate_and_parse_url(url)
+      download_to_tempfile(uri)
+    end
+
+    def validate_and_parse_url(url)
       uri = URI.parse(url)
       raise ArgumentError, 'Only HTTPS is allowed' unless uri.is_a?(URI::HTTPS)
 
-      tempfile = Tempfile.new(['webflow', File.extname(uri.path)], binmode: true)
+      uri
+    end
+
+    def download_to_tempfile(uri)
+      tempfile = create_tempfile(uri)
+      perform_http_download(uri, tempfile)
+      tempfile.rewind
+      tempfile
+    end
+
+    def create_tempfile(uri)
+      Tempfile.new(['webflow', File.extname(uri.path)], binmode: true)
+    end
+
+    def perform_http_download(uri, tempfile)
       Net::HTTP.start(uri.host, uri.port, use_ssl: true) do |http|
         http.request_get(uri.request_uri) do |resp|
-          raise "Failed to download image: HTTP #{resp.code}" unless resp.code.to_i.between?(200, 299)
-
+          validate_response_code(resp)
           resp.read_body { |chunk| tempfile.write(chunk) }
         end
       end
-      tempfile.rewind
-      tempfile
+    end
+
+    def validate_response_code(resp)
+      return if resp.code.to_i.between?(200, 299)
+
+      raise "Failed to download image: HTTP #{resp.code}"
     end
   end
 end

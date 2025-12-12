@@ -28,9 +28,7 @@ class InvoicePolicy < ApplicationPolicy
 
   class Scope < Scope
     def resolve
-      if user.is_admin?
-        scope.all
-      elsif user.is_employee?
+      if user.is_admin? || user.is_employee?
         scope.all
       else
         scope.none

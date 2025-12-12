@@ -65,22 +65,25 @@ module Freshbooks
     private
 
     def build_invoice_payload(params)
-      payload = {
-        invoice: {
-          customerid: params[:client_id] || params[:customerid],
-          create_date: params[:date] || Date.current.to_s,
-          due_date: params[:due_date],
-          currency_code: params[:currency] || params[:currency_code] || 'USD',
-          notes: params[:notes],
-          terms: params[:terms],
-          lines: build_lines(params[:lines] || [])
-        }.compact
-      }
-
-      # Add status if provided (for voided, paid, etc.)
-      payload[:invoice][:status] = params[:status] if params[:status].present?
-
+      payload = { invoice: build_invoice_attributes(params) }
+      add_status_if_present(payload, params)
       payload
+    end
+
+    def build_invoice_attributes(params)
+      {
+        customerid: params[:client_id] || params[:customerid],
+        create_date: params[:date] || Date.current.to_s,
+        due_date: params[:due_date],
+        currency_code: params[:currency] || params[:currency_code] || 'USD',
+        notes: params[:notes],
+        terms: params[:terms],
+        lines: build_lines(params[:lines] || [])
+      }.compact
+    end
+
+    def add_status_if_present(payload, params)
+      payload[:invoice][:status] = params[:status] if params[:status].present?
     end
 
     def build_lines(lines_data)

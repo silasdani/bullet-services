@@ -5,32 +5,40 @@ class FreshbooksCallbackController < ApplicationController
   skip_before_action :verify_authenticity_token
 
   def callback
-    code = params[:code]
-    error = params[:error]
+    return handle_oauth_error(params[:error]) if params[:error].present?
+    return handle_missing_code if params[:code].blank?
 
-    if error.present?
-      render html: error_page("OAuth Error: #{error}"), status: :bad_request
-      return
-    end
-
-    if code.blank?
-      render html: error_page('No authorization code received. Please try again.'), status: :bad_request
-      return
-    end
-
-    begin
-      result = Freshbooks::OauthService.exchange_code(code)
-      render html: success_page(result)
-    rescue FreshbooksError => e
-      render html: error_page("Failed to exchange authorization code: #{e.message}"), status: :bad_request
-    rescue StandardError => e
-      Rails.logger.error "FreshBooks OAuth error: #{e.class} - #{e.message}"
-      Rails.logger.error e.backtrace.join("\n")
-      render html: error_page("An unexpected error occurred: #{e.message}"), status: :internal_server_error
-    end
+    handle_oauth_success
+  rescue FreshbooksError => e
+    handle_oauth_exchange_error(e)
+  rescue StandardError => e
+    handle_unexpected_oauth_error(e)
   end
 
   private
+
+  def handle_oauth_error(error)
+    render html: error_page("OAuth Error: #{error}"), status: :bad_request
+  end
+
+  def handle_missing_code
+    render html: error_page('No authorization code received. Please try again.'), status: :bad_request
+  end
+
+  def handle_oauth_success
+    result = Freshbooks::OauthService.exchange_code(params[:code])
+    render html: success_page(result)
+  end
+
+  def handle_oauth_exchange_error(error)
+    render html: error_page("Failed to exchange authorization code: #{error.message}"), status: :bad_request
+  end
+
+  def handle_unexpected_oauth_error(error)
+    Rails.logger.error "FreshBooks OAuth error: #{error.class} - #{error.message}"
+    Rails.logger.error error.backtrace.join("\n")
+    render html: error_page("An unexpected error occurred: #{error.message}"), status: :internal_server_error
+  end
 
   def success_page(result)
     expires_hours = (result[:expires_in] / 3600.0).round(2)

@@ -47,15 +47,29 @@ module Website
     def send_notification_email
       recipient_email = ENV.fetch('CONTACT_EMAIL', 'office@bulletservices.co.uk')
 
-      html_content = <<~HTML
+      MailerSendEmailService.new(
+        to: recipient_email,
+        subject: "New Contact Form Submission from #{name}",
+        html: build_html_content,
+        text: build_text_content
+      ).call
+    rescue StandardError => e
+      log_error("Failed to send contact form email: #{e.message}")
+      add_error('Failed to send email. Please try again later.')
+    end
+
+    def build_html_content
+      <<~HTML
         <h2>New Contact Form Submission</h2>
         <p><strong>Name:</strong> #{name}</p>
         <p><strong>Email:</strong> #{email}</p>
         <p><strong>Message:</strong></p>
         <p>#{message.gsub("\n", '<br>')}</p>
       HTML
+    end
 
-      text_content = <<~TEXT
+    def build_text_content
+      <<~TEXT
         New Contact Form Submission
 
         Name: #{name}
@@ -63,16 +77,6 @@ module Website
         Message:
         #{message}
       TEXT
-
-      MailerSendEmailService.new(
-        to: recipient_email,
-        subject: "New Contact Form Submission from #{name}",
-        html: html_content,
-        text: text_content
-      ).call
-    rescue StandardError => e
-      log_error("Failed to send contact form email: #{e.message}")
-      add_error('Failed to send email. Please try again later.')
     end
   end
 end

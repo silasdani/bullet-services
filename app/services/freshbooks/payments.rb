@@ -56,7 +56,7 @@ module Freshbooks
       response.dig('response', 'result', 'payment')
     end
 
-    def delete(payment_id)
+    def delete?(payment_id)
       path = build_path("payments/payments/#{payment_id}")
       make_request(:delete, path)
       true

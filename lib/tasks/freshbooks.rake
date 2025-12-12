@@ -62,7 +62,8 @@ namespace :freshbooks do
       puts '  - Code already used'
       puts '  - Redirect URI mismatch (must match exactly)'
       puts '  - Invalid client credentials'
-      puts '  - OAuth credentials not configured (FRESHBOOKS_CLIENT_ID, FRESHBOOKS_CLIENT_SECRET, FRESHBOOKS_REDIRECT_URI)'
+      puts '  - OAuth credentials not configured ' \
+           '(FRESHBOOKS_CLIENT_ID, FRESHBOOKS_CLIENT_SECRET, FRESHBOOKS_REDIRECT_URI)'
       exit 1
     rescue StandardError => e
       puts "❌ Unexpected error: #{e.message}"

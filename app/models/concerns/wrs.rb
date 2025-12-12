@@ -6,52 +6,60 @@ module Wrs
   # Returns raw field data for Webflow
   def to_webflow
     {
-      # Basic WRS information
+      **build_basic_webflow_fields,
+      **build_window_webflow_fields,
+      **build_pricing_webflow_fields,
+      **build_status_webflow_fields
+    }.compact
+  end
+
+  def build_basic_webflow_fields
+    {
       'reference-number' => reference_number,
       'project-summary' => address,
       'flat-number' => flat_number,
       'main-project-image' => window_image_url(1),
       'name' => name,
-      'slug' => slug,
+      'slug' => slug
+    }
+  end
 
-      # Window 1
+  def build_window_webflow_fields
+    fields = {
       'window-location' => window_location(1),
       'window-1-items-2' => window_items_list(1),
-      'window-1-items-prices-3' => window_items_prices_list(1),
+      'window-1-items-prices-3' => window_items_prices_list(1)
+    }
 
-      # Window 2
-      'window-2' => window_image_url(2),
-      'window-2-location' => window_location(2),
-      'window-2-items-2' => window_items_list(2),
-      'window-2-items-prices-3' => window_items_prices_list(2),
+    (2..5).each do |num|
+      fields.merge!(build_window_fields_for_number(num))
+    end
 
-      # Window 3
-      'window-3-image' => window_image_url(3),
-      'window-3-location' => window_location(3),
-      'window-3-items' => window_items_list(3),
-      'window-3-items-prices' => window_items_prices_list(3),
+    fields
+  end
 
-      # Window 4
-      'window-4-image' => window_image_url(4),
-      'window-4-location' => window_location(4),
-      'window-4-items' => window_items_list(4),
-      'window-4-items-prices' => window_items_prices_list(4),
+  def build_window_fields_for_number(num)
+    {
+      "window-#{num}" => window_image_url(num),
+      "window-#{num}-location" => window_location(num),
+      "window-#{num}-items" => window_items_list(num),
+      "window-#{num}-items-prices" => window_items_prices_list(num)
+    }
+  end
 
-      # Window 5
-      'window-5-image' => window_image_url(5),
-      'window-5-location' => window_location(5),
-      'window-5-items' => window_items_list(5),
-      'window-5-items-prices' => window_items_prices_list(5),
-
-      # Pricing information
+  def build_pricing_webflow_fields
+    {
       'total-incl-vat' => total_vat_included_price,
       'total-exc-vat' => total_vat_excluded_price,
-      'grand-total' => grand_total,
+      'grand-total' => grand_total
+    }
+  end
 
-      # Status - use color values instead of text
+  def build_status_webflow_fields
+    {
       'accepted-declined' => status_color,
       'accepted-decline' => status
-    }.compact
+    }
   end
 
   # Returns formatted data structure compatible with existing WebflowCollectionMapperService

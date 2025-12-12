@@ -32,28 +32,48 @@ module Api
 
       # Create FreshBooks invoice from local Invoice
       def create_invoice
-        invoice = Invoice.find(params[:invoice_id])
-        client_id = params[:client_id] || invoice.freshbooks_client_id
+        invoice = find_invoice
+        client_id = determine_client_id(invoice)
 
-        if client_id.blank?
-          render_error(
-            message: 'Client ID is required',
-            status: :unprocessable_entity
-          )
-          return
-        end
+        return render_client_id_error if client_id.blank?
 
+        result = create_freshbooks_invoice(invoice, client_id)
+        handle_invoice_creation_result(result)
+      rescue ActiveRecord::RecordNotFound
+        render_error(message: 'Invoice not found', status: :not_found)
+      rescue FreshbooksError => e
+        render_error(message: 'FreshBooks API error', details: e.message, status: :bad_gateway)
+      end
+
+      def find_invoice
+        Invoice.find(params[:invoice_id])
+      end
+
+      def determine_client_id(invoice)
+        params[:client_id] || invoice.freshbooks_client_id
+      end
+
+      def render_client_id_error
+        render_error(
+          message: 'Client ID is required',
+          status: :unprocessable_entity
+        )
+      end
+
+      def create_freshbooks_invoice(invoice, client_id)
         service = Freshbooks::InvoiceCreationService.new(
           invoice: invoice,
           client_id: client_id,
           lines: params[:lines] || []
         )
+        service.call
+        service
+      end
 
-        result = service.call
-
+      def handle_invoice_creation_result(service)
         if service.success?
           render_success(
-            data: result,
+            data: service.result,
             message: 'Invoice created in FreshBooks'
           )
         else
@@ -63,48 +83,44 @@ module Api
             status: :unprocessable_entity
           )
         end
-      rescue ActiveRecord::RecordNotFound
-        render_error(
-          message: 'Invoice not found',
-          status: :not_found
-        )
-      rescue FreshbooksError => e
-        render_error(
-          message: 'FreshBooks API error',
-          details: e.message,
-          status: :bad_gateway
-        )
       end
 
       # Get connection status
       def status
         token = FreshbooksToken.current
+        status_data = build_status_data(token)
+        render_success(data: status_data)
+      end
 
-        if token.nil?
-          render_success(
-            data: {
-              connected: false,
-              message: 'FreshBooks not connected'
-            }
-          )
-        elsif token.expired?
-          render_success(
-            data: {
-              connected: true,
-              expired: true,
-              message: 'Token expired, refresh needed'
-            }
-          )
-        else
-          render_success(
-            data: {
-              connected: true,
-              expired: false,
-              business_id: token.business_id,
-              expires_at: token.token_expires_at
-            }
-          )
-        end
+      def build_status_data(token)
+        return disconnected_status if token.nil?
+        return expired_token_status(token) if token.expired?
+
+        connected_status(token)
+      end
+
+      def disconnected_status
+        {
+          connected: false,
+          message: 'FreshBooks not connected'
+        }
+      end
+
+      def expired_token_status(_token)
+        {
+          connected: true,
+          expired: true,
+          message: 'Token expired, refresh needed'
+        }
+      end
+
+      def connected_status(token)
+        {
+          connected: true,
+          expired: false,
+          business_id: token.business_id,
+          expires_at: token.token_expires_at
+        }
       end
 
       private

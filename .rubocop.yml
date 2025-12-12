@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 # .rubocop.yml
 AllCops:
   TargetRubyVersion: 3.2
@@ -7,8 +5,11 @@ AllCops:
   Exclude:
     - 'db/schema.rb'
     - 'db/migrate/*'
+    - 'db/queue_schema.rb'
     - 'config/**/*'
     - 'vendor/**/*'
+    - 'bin/bundle'
+    - '.rubocop.yml'
 
 Style/Documentation:
   Enabled: false
@@ -17,15 +18,33 @@ Metrics/BlockLength:
   Exclude:
     - 'spec/**/*'
     - 'test/**/*'
+    - 'db/seeds.rb'
+    - 'db/queue_schema.rb'
+    - 'lib/tasks/**/*.rake'
+    - 'lib/rails_admin/**/*'
 
 Layout/LineLength:
   Max: 120
 
 Metrics/MethodLength:
   Max: 20
+  Exclude:
+    - 'lib/tasks/**/*.rake'
 
 Metrics/ClassLength:
   Max: 150
+
+Metrics/AbcSize:
+  Exclude:
+    - 'lib/tasks/**/*.rake'
+
+Metrics/CyclomaticComplexity:
+  Exclude:
+    - 'lib/tasks/**/*.rake'
+
+Metrics/PerceivedComplexity:
+  Exclude:
+    - 'lib/tasks/**/*.rake'
 
 Style/StringLiterals:
   EnforcedStyle: single_quotes

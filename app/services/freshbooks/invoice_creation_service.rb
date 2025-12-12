@@ -97,24 +97,49 @@ module Freshbooks
     end
 
     def sync_freshbooks_invoice_record(freshbooks_data, _payment_link = nil)
+      fb_invoice = find_or_initialize_fb_invoice(freshbooks_data)
+      assign_fb_invoice_attributes(fb_invoice, freshbooks_data)
+      fb_invoice.save!
+    end
+
+    def find_or_initialize_fb_invoice(freshbooks_data)
       invoice_id = freshbooks_data['id'] || freshbooks_data['invoiceid']
-      FreshbooksInvoice.find_or_initialize_by(freshbooks_id: invoice_id).tap do |fb_invoice|
-        fb_invoice.assign_attributes(
-          freshbooks_client_id: client_id,
-          invoice_number: freshbooks_data['invoice_number'],
-          status: freshbooks_data['status'] || freshbooks_data['v3_status'],
-          amount: extract_amount(freshbooks_data['amount']),
-          amount_outstanding: extract_amount(freshbooks_data['outstanding'] || freshbooks_data['amount_outstanding']),
-          date: parse_date(freshbooks_data['create_date'] || freshbooks_data['date']),
-          due_date: parse_date(freshbooks_data['due_date']),
-          currency_code: freshbooks_data.dig('amount', 'code') || freshbooks_data['currency_code'],
-          notes: freshbooks_data['notes'],
-          pdf_url: extract_pdf_url(freshbooks_data),
-          raw_data: freshbooks_data,
-          invoice_id: invoice.id
-        )
-        fb_invoice.save!
-      end
+      FreshbooksInvoice.find_or_initialize_by(freshbooks_id: invoice_id)
+    end
+
+    def assign_fb_invoice_attributes(fb_invoice, freshbooks_data)
+      fb_invoice.assign_attributes(
+        **build_fb_invoice_basic_attributes(freshbooks_data),
+        **build_fb_invoice_financial_attributes(freshbooks_data),
+        **build_fb_invoice_metadata(freshbooks_data)
+      )
+    end
+
+    def build_fb_invoice_basic_attributes(freshbooks_data)
+      {
+        freshbooks_client_id: client_id,
+        invoice_number: freshbooks_data['invoice_number'],
+        status: freshbooks_data['status'] || freshbooks_data['v3_status'],
+        notes: freshbooks_data['notes'],
+        invoice_id: invoice.id
+      }
+    end
+
+    def build_fb_invoice_financial_attributes(freshbooks_data)
+      {
+        amount: extract_amount(freshbooks_data['amount']),
+        amount_outstanding: extract_amount(freshbooks_data['outstanding'] || freshbooks_data['amount_outstanding']),
+        currency_code: freshbooks_data.dig('amount', 'code') || freshbooks_data['currency_code']
+      }
+    end
+
+    def build_fb_invoice_metadata(freshbooks_data)
+      {
+        date: parse_date(freshbooks_data['create_date'] || freshbooks_data['date']),
+        due_date: parse_date(freshbooks_data['due_date']),
+        pdf_url: extract_pdf_url(freshbooks_data),
+        raw_data: freshbooks_data
+      }
     end
 
     def extract_amount(amount_data)

@@ -4,16 +4,12 @@ module Freshbooks
   class Webhooks < BaseClient
     def list
       # FreshBooks webhook API: GET /events/account/<account_id>/events/callbacks
-      access_token = get_access_token
-      business_id = get_business_id
+      access_token = access_token_value
+      business_id = business_id_value
 
       response = HTTParty.get(
         "https://api.freshbooks.com/events/account/#{business_id}/events/callbacks",
-        headers: {
-          'Authorization' => "Bearer #{access_token}",
-          'Content-Type' => 'application/json',
-          'Api-Version' => 'alpha'
-        }
+        headers: webhook_headers(access_token)
       )
 
       if response.success?
@@ -27,54 +23,23 @@ module Freshbooks
       end
     end
 
-    def create(event:, callback_url:, verifier: nil)
+    def create(event:, callback_url:)
       # FreshBooks webhook API: POST /events/account/<account_id>/events/callbacks
       # Based on: https://www.freshbooks.com/api/webhooks
-      access_token = get_access_token
-      business_id = get_business_id
+      payload = build_callback_payload(event: event, uri: callback_url)
+      response = make_webhook_request(:post, 'events/callbacks', payload)
 
-      payload = {
-        callback: {
-          event: event,
-          uri: callback_url
-        }
-      }
-
-      response = HTTParty.post(
-        "https://api.freshbooks.com/events/account/#{business_id}/events/callbacks",
-        body: payload.to_json,
-        headers: {
-          'Authorization' => "Bearer #{access_token}",
-          'Content-Type' => 'application/json',
-          'Api-Version' => 'alpha'
-        }
-      )
-
-      if response.success?
-        response.parsed_response.dig('response', 'result', 'callback')
-
-      else
-        error_body = response.body || '(empty response)'
-        raise FreshbooksError.new(
-          "Failed to register webhook: #{error_body}",
-          response.code,
-          error_body
-        )
-      end
+      handle_webhook_response(response, 'register')
     end
 
     def delete(callback_id)
       # FreshBooks webhook API: DELETE /events/account/<account_id>/events/callbacks/<callback_id>
-      access_token = get_access_token
-      business_id = get_business_id
+      access_token = access_token_value
+      business_id = business_id_value
 
       response = HTTParty.delete(
         "https://api.freshbooks.com/events/account/#{business_id}/events/callbacks/#{callback_id}",
-        headers: {
-          'Authorization' => "Bearer #{access_token}",
-          'Content-Type' => 'application/json',
-          'Api-Version' => 'alpha'
-        }
+        headers: webhook_headers(access_token)
       )
 
       response.success? || raise(FreshbooksError.new(
@@ -87,71 +52,61 @@ module Freshbooks
     def verify(callback_id, verification_code)
       # FreshBooks webhook API: PUT /events/account/<account_id>/events/callbacks/<callback_id>
       # The verifier is sent during verification, not registration
-      access_token = get_access_token
-      business_id = get_business_id
+      payload = build_callback_payload(verifier: verification_code)
+      response = make_webhook_request(:put, "events/callbacks/#{callback_id}", payload)
 
-      payload = {
-        callback: {
-          verifier: verification_code
-        }
-      }
-
-      response = HTTParty.put(
-        "https://api.freshbooks.com/events/account/#{business_id}/events/callbacks/#{callback_id}",
-        body: payload.to_json,
-        headers: {
-          'Authorization' => "Bearer #{access_token}",
-          'Content-Type' => 'application/json',
-          'Api-Version' => 'alpha'
-        }
-      )
-
-      if response.success?
-        response.parsed_response.dig('response', 'result', 'callback')
-      else
-        raise FreshbooksError.new(
-          "Failed to verify webhook: #{response.body}",
-          response.code,
-          response.body
-        )
-      end
+      handle_webhook_response(response, 'verify')
     end
 
     def resend_verification(callback_id)
       # Resend verification code
-      access_token = get_access_token
-      business_id = get_business_id
+      payload = build_callback_payload(resend: true)
+      response = make_webhook_request(:put, "events/callbacks/#{callback_id}", payload)
 
-      payload = {
-        callback: {
-          resend: true
-        }
-      }
-
-      response = HTTParty.put(
-        "https://api.freshbooks.com/events/account/#{business_id}/events/callbacks/#{callback_id}",
-        body: payload.to_json,
-        headers: {
-          'Authorization' => "Bearer #{access_token}",
-          'Content-Type' => 'application/json',
-          'Api-Version' => 'alpha'
-        }
-      )
-
-      if response.success?
-        response.parsed_response.dig('response', 'result', 'callback')
-      else
-        raise FreshbooksError.new(
-          "Failed to resend verification: #{response.body}",
-          response.code,
-          response.body
-        )
-      end
+      handle_webhook_response(response, 'resend verification')
     end
 
     private
 
-    def get_access_token
+    def build_callback_payload(**options)
+      { callback: options }
+    end
+
+    def make_webhook_request(method, endpoint, payload)
+      access_token = access_token_value
+      business_id = business_id_value
+      url = "https://api.freshbooks.com/events/account/#{business_id}/#{endpoint}"
+
+      HTTParty.public_send(
+        method,
+        url,
+        body: payload.to_json,
+        headers: webhook_headers(access_token)
+      )
+    end
+
+    def webhook_headers(access_token)
+      {
+        'Authorization' => "Bearer #{access_token}",
+        'Content-Type' => 'application/json',
+        'Api-Version' => 'alpha'
+      }
+    end
+
+    def handle_webhook_response(response, action)
+      if response.success?
+        response.parsed_response.dig('response', 'result', 'callback')
+      else
+        error_body = response.body || '(empty response)'
+        raise FreshbooksError.new(
+          "Failed to #{action} webhook: #{error_body}",
+          response.code,
+          error_body
+        )
+      end
+    end
+
+    def access_token_value
       # Try instance variable first
       return @access_token if @access_token.present?
 
@@ -166,7 +121,7 @@ module Freshbooks
       token
     end
 
-    def get_business_id
+    def business_id_value
       return @business_id if @business_id.present?
 
       token = FreshbooksToken.current

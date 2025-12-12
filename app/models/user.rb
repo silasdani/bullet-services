@@ -22,21 +22,38 @@ class User < ApplicationRecord
   before_save :sync_uid_with_email
 
   # Role helper methods
-  def is_admin?
+  def admin?
     ['admin', 2, 'super_admin', 3].include?(role)
   end
 
-  def is_employee?
+  def employee?
     ['employee', 1].include?(role)
   end
 
-  def is_super_admin?
+  def super_admin?
     ['super_admin', 3].include?(role)
   end
 
-  def webflow_access
-    is_admin? || is_employee?
+  def webflow_access?
+    admin? || employee?
   end
+
+  # Deprecated: Use admin? instead
+  # rubocop:disable Naming/PredicatePrefix
+  def is_admin?
+    admin?
+  end
+
+  # Deprecated: Use employee? instead
+  def is_employee?
+    employee?
+  end
+
+  # Deprecated: Use super_admin? instead
+  def is_super_admin?
+    super_admin?
+  end
+  # rubocop:enable Naming/PredicatePrefix
 
   def token_validation_response
     UserSerializer.new(self).as_json

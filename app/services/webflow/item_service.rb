@@ -54,7 +54,7 @@ module Webflow
     def build_query_params(params)
       return '' if params.empty?
 
-      '?' + params.map { |k, v| "#{k}=#{CGI.escape(v.to_s)}" }.join('&')
+      "?#{params.map { |k, v| "#{k}=#{CGI.escape(v.to_s)}" }.join('&')}"
     end
   end
 end

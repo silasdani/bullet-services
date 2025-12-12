@@ -123,8 +123,8 @@ module Api
         # For restore action, we need to find deleted records too
         if action_name == 'restore'
           @window_schedule_repair = WindowScheduleRepair.with_deleted
-                                                        .includes(:user, :building, :windows, windows: %i[tools
-                                                                                                          image_attachment])
+                                                        .includes(:user, :building, :windows,
+                                                                  windows: %i[tools image_attachment])
                                                         .find(params[:id])
         else
           @window_schedule_repair = WindowScheduleRepair.includes(:user, :building, :windows,
