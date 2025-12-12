@@ -848,7 +848,6 @@ html.rails_admin {
    ============================================ */
 .rails_admin .dropdown {
   position: relative;
-  z-index: 1000;
 }
 
 .rails_admin .dropdown-menu {
@@ -868,11 +867,23 @@ html.rails_admin {
 /* Invoice table dropdowns use fixed positioning to escape table boundaries */
 .rails_admin .table tbody td .dropdown {
   position: relative;
-  z-index: 1001;
+}
+
+/* Increase z-index of dropdown button when dropdown is active to prevent other buttons from covering it */
+.rails_admin .table tbody td .dropdown.show,
+.rails_admin .table tbody td .dropdown[aria-expanded="true"] {
+  z-index: 100000 !important;
+  position: relative;
+}
+
+.rails_admin .table tbody td .dropdown.show .dropdown-toggle,
+.rails_admin .table tbody td .dropdown[aria-expanded="true"] .dropdown-toggle {
+  z-index: 100000 !important;
+  position: relative;
 }
 
 .rails_admin .table tbody td .dropdown-menu {
-  z-index: 99999 !important;
+  z-index: 100000 !important;
   position: fixed !important;
   display: none;
 }
@@ -881,11 +892,29 @@ html.rails_admin {
 .rails_admin .table tbody td .dropdown.show .dropdown-menu,
 .rails_admin .table tbody td .dropdown-menu.show,
 .rails_admin .table tbody td .dropdown-menu[data-bs-popper] {
-  z-index: 99999 !important;
+  z-index: 100000 !important;
   position: fixed !important;
   display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
+}
+
+/* Dropdown menu when moved to body (outside table) */
+body > .dropdown-menu {
+  z-index: 100000 !important;
+  position: fixed !important;
+  background-color: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 6px !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+  padding: 4px 0 !important;
+  min-width: 180px !important;
+}
+
+/* Ensure other action buttons in table cells don't interfere with dropdown */
+.rails_admin .table tbody td .btn:not(.dropdown-toggle) {
+  position: relative;
+  z-index: 1;
 }
 
 
