@@ -5,7 +5,4 @@ class Tool < ApplicationRecord
 
   validates :name, presence: true
   validates :price, presence: true
-  belongs_to :building
-  validates :building, presence: true
-  validates :slug, presence: true
 end

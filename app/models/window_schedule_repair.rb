@@ -139,6 +139,4 @@ class WindowScheduleRepair < ApplicationRecord
   def self.ransackable_associations(_auth_object = nil)
     %w[user windows tools building]
   end
-
-  private_class_method :ransackable_attributes, :ransackable_associations
 end

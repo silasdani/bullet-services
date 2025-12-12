@@ -8,6 +8,7 @@ module Api
       include InputValidation
       include DeviseTokenAuth::Concerns::SetUserByToken
 
+      before_action :set_request_format
       before_action :authenticate_user!
       before_action :set_pagination_params
       before_action :sanitize_params
@@ -17,6 +18,10 @@ module Api
       rescue_from StandardError, with: :handle_internal_error
 
       private
+
+      def set_request_format
+        request.format = :json if request.format.html?
+      end
 
       def set_pagination_params
         @page = params[:page]&.to_i || 1
