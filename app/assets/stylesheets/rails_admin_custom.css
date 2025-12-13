@@ -879,7 +879,7 @@
 .buildings-dashboard {
   padding: 0;
   max-width: 100%;
-  background-color: #f8f9fa;
+  background-color: #f5f7fa;
   min-height: 100vh;
 }
 
@@ -1733,7 +1733,7 @@
 .wrs-dashboard {
   padding: 0;
   max-width: 100%;
-  background-color: #f8f9fa;
+  background-color: #f5f7fa;
   min-height: 100vh;
 }
 
@@ -1758,6 +1758,10 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
   gap: 24px;
+  padding: 24px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  margin-top: 24px;
 }
 
 .wrs-card {
