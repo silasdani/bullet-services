@@ -74,7 +74,7 @@ namespace :invoices do
       if invoice.new_record?
         if invoice.save
           stats[:created] += 1
-          print "✅ Created"
+          print '✅ Created'
         else
           stats[:failed] += 1
           error_msg = "Failed to create: #{invoice.errors.full_messages.join(', ')}"
@@ -82,17 +82,15 @@ namespace :invoices do
           puts "❌ #{error_msg}"
           return
         end
+      elsif invoice.update(invoice_attributes.except(:slug, :webflow_item_id))
+        stats[:updated] += 1
+        print '🔄 Updated'
       else
-        if invoice.update(invoice_attributes.except(:slug, :webflow_item_id))
-          stats[:updated] += 1
-          print "🔄 Updated"
-        else
-          stats[:failed] += 1
-          error_msg = "Failed to update: #{invoice.errors.full_messages.join(', ')}"
-          stats[:errors] << "Row #{row_number}: #{error_msg}"
-          puts "❌ #{error_msg}"
-          return
-        end
+        stats[:failed] += 1
+        error_msg = "Failed to update: #{invoice.errors.full_messages.join(', ')}"
+        stats[:errors] << "Row #{row_number}: #{error_msg}"
+        puts "❌ #{error_msg}"
+        return
       end
 
       # Handle PDF mirroring
@@ -100,13 +98,13 @@ namespace :invoices do
       if pdf_url.present?
         if mirror_pdf(invoice, pdf_url)
           stats[:pdfs_mirrored] += 1
-          puts " + PDF mirrored"
+          puts ' + PDF mirrored'
         else
           stats[:pdfs_failed] += 1
-          puts " + PDF mirroring failed"
+          puts ' + PDF mirroring failed'
         end
       else
-        puts " (no PDF)"
+        puts ' (no PDF)'
       end
     rescue StandardError => e
       stats[:failed] += 1
@@ -175,6 +173,7 @@ namespace :invoices do
 
   def clean_string(value)
     return nil if value.nil?
+
     str = value.to_s.strip
     str.empty? ? nil : str
   end
@@ -187,8 +186,6 @@ namespace :invoices do
       true
     when 'false', '0', 'no', 'n'
       false
-    else
-      nil
     end
   end
 
@@ -205,17 +202,17 @@ namespace :invoices do
   end
 
   def missing_required_fields?(attributes)
-    required_fields = [:name, :slug, :freshbooks_client_id, :status, :final_status]
+    required_fields = %i[name slug freshbooks_client_id status final_status]
     required_fields.any? { |field| attributes[field].blank? }
   end
 
   def get_missing_required_fields(attributes)
-    required_fields = [:name, :slug, :freshbooks_client_id, :status, :final_status]
+    required_fields = %i[name slug freshbooks_client_id status final_status]
     required_fields.select { |field| attributes[field].blank? }
   end
 
   def print_summary(stats)
-    puts "\n" + '=' * 80
+    puts "\n#{'=' * 80}"
     puts '✨ Import Summary'
     puts '=' * 80
     puts "Total rows processed: #{stats[:total_rows]}"

@@ -45,7 +45,7 @@ module Webflow
 
     def download_and_attach_pdf(attachment)
       io = download_pdf(source_url)
-      filename = File.basename(URI.parse(source_url).path)
+      filename = extract_filename_with_fallback
       io.rewind
       content_type = Marcel::MimeType.for(io) || 'application/pdf'
       io.rewind
@@ -63,6 +63,32 @@ module Webflow
       end
 
       attach_blob_with_retry(attachment, blob)
+    end
+
+    def extract_filename_with_fallback
+      uri = URI.parse(source_url)
+      filename = File.basename(uri.path)
+
+      if should_use_fallback_filename?(filename)
+        generate_fallback_filename
+      else
+        ensure_pdf_extension(filename)
+      end
+    end
+
+    def should_use_fallback_filename?(filename)
+      filename.blank? || filename == '/' || filename == '\\'
+    end
+
+    def generate_fallback_filename
+      record_type = record.class.name.downcase
+      record_id = record.id
+      timestamp = Time.current.strftime('%Y%m%d_%H%M%S')
+      "#{record_type}_#{record_id}_#{timestamp}.pdf"
+    end
+
+    def ensure_pdf_extension(filename)
+      filename.downcase.end_with?('.pdf') ? filename : "#{filename}.pdf"
     end
 
     def attach_blob_with_retry(attachment, blob)
