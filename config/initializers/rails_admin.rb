@@ -609,25 +609,68 @@ RailsAdmin.config do |config|
 
                       function positionMenu() {
                         if (!isMovedToBody) return;
+
+                        // Get button position relative to viewport
                         var rect = button.getBoundingClientRect();
-                        var menuHeight = menu.offsetHeight || 200;
+
+                        // Ensure menu is visible to get accurate dimensions
+                        menu.style.display = 'block';
+                        menu.style.visibility = 'visible';
+
+                        // Force reflow to get accurate dimensions
+                        var menuHeight = menu.offsetHeight || menu.scrollHeight || 200;
+                        var menuWidth = menu.offsetWidth || menu.scrollWidth || 180;
+
                         var viewportHeight = window.innerHeight;
+                        var viewportWidth = window.innerWidth;
                         var spaceBelow = viewportHeight - rect.bottom;
                         var spaceAbove = rect.top;
+                        var padding = 8;
 
-                        if (spaceBelow < menuHeight && spaceAbove > menuHeight) {
-                          menu.style.top = (rect.top - menuHeight - 8) + 'px';
-                          menu.style.bottom = 'auto';
-                        } else {
-                          menu.style.top = (rect.bottom + 8) + 'px';
-                          menu.style.bottom = 'auto';
+                        // Calculate horizontal position (account for viewport scroll)
+                        var left = rect.left;
+                        // Ensure menu doesn't go off right edge
+                        if (left + menuWidth > viewportWidth) {
+                          left = viewportWidth - menuWidth - padding;
                         }
-                        menu.style.left = rect.left + 'px';
+                        // Ensure menu doesn't go off left edge
+                        if (left < padding) {
+                          left = padding;
+                        }
+
+                        // Calculate vertical position
+                        var top;
+                        if (spaceBelow >= menuHeight + padding) {
+                          // Enough space below - position below button
+                          top = rect.bottom + padding;
+                        } else if (spaceAbove >= menuHeight + padding) {
+                          // Not enough space below, but enough above - position above button
+                          top = rect.top - menuHeight - padding;
+                        } else {
+                          // Not enough space either way - fit within viewport
+                          if (spaceBelow > spaceAbove) {
+                            // More space below, position at bottom of viewport
+                            top = Math.max(padding, viewportHeight - menuHeight - padding);
+                          } else {
+                            // More space above, position at top of viewport
+                            top = padding;
+                          }
+                        }
+
+                        menu.style.top = top + 'px';
+                        menu.style.left = left + 'px';
                         menu.style.right = 'auto';
+                        menu.style.bottom = 'auto';
+                        menu.style.transform = 'none'; // Remove any Bootstrap transforms
                       }
 
-                      // Move menu to body when dropdown opens
+                      // Don't move during show - let Bootstrap show it first
                       dropdown.addEventListener('show.bs.dropdown', function(e) {
+                        // Just prepare, don't move yet
+                      });
+
+                      // Move menu to body AFTER Bootstrap has shown it
+                      dropdown.addEventListener('shown.bs.dropdown', function(e) {
                         // Move menu to body to escape table stacking context
                         if (!isMovedToBody) {
                           document.body.appendChild(menu);
@@ -642,14 +685,13 @@ RailsAdmin.config do |config|
                         menu.style.opacity = '1';
                         menu.style.marginTop = '0';
                         menu.style.marginBottom = '0';
+                        menu.style.transform = 'none'; // Remove Bootstrap transforms
+                        menu.style.pointerEvents = 'auto';
 
-                        // Position menu
-                        positionMenu();
-                      });
-
-                      // Reposition after menu is shown (in case size changed)
-                      dropdown.addEventListener('shown.bs.dropdown', function(e) {
-                        positionMenu();
+                        // Position menu after a brief delay to ensure dimensions are calculated
+                        setTimeout(function() {
+                          positionMenu();
+                        }, 0);
                       });
 
                       // Move menu back to original position when closed
