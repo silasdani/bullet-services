@@ -85,7 +85,7 @@ module RailsAdmin
         end
 
         register_instance_option :navigation_label do
-          'Buildings'
+          'Grid Views'
         end
 
         register_instance_option :breadcrumb_parent do

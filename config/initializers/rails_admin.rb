@@ -4,10 +4,12 @@
 # and doesn't follow Zeitwerk naming conventions
 Rails.autoloaders.main.ignore(Rails.root.join('lib/rails_admin/invoice_actions.rb'))
 Rails.autoloaders.main.ignore(Rails.root.join('lib/rails_admin/buildings_grid_action.rb'))
+Rails.autoloaders.main.ignore(Rails.root.join('lib/rails_admin/wrs_grid_action.rb'))
 
 # Load custom Rails Admin actions
 require Rails.root.join('lib/rails_admin/invoice_actions')
 require Rails.root.join('lib/rails_admin/buildings_grid_action')
+require Rails.root.join('lib/rails_admin/wrs_grid_action')
 
 RailsAdmin.config do |config|
   # Explicitly set asset_source for RailsAdmin 3.x to silence warnings
@@ -47,6 +49,9 @@ RailsAdmin.config do |config|
 
     # Custom buildings actions
     buildings_grid
+
+    # Custom WRS actions
+    wrs_grid
   end
 
   # Configure User model
