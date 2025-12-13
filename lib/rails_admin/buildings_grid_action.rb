@@ -10,7 +10,11 @@ module RailsAdmin
           :buildings_grid
         end
 
-        register_instance_option :collection do
+        register_instance_option :root do
+          true
+        end
+
+        register_instance_option :visible do
           true
         end
 

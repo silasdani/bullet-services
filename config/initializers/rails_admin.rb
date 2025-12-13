@@ -47,11 +47,16 @@ RailsAdmin.config do |config|
     apply_discount
     mark_paid
 
-    # Custom buildings actions
-    buildings_grid
+    # Custom grid view actions - configured to show in navigation sidebar
+    buildings_grid do
+      show_in_navigation true
+      navigation_label 'Grid Views'
+    end
 
-    # Custom WRS actions
-    wrs_grid
+    wrs_grid do
+      show_in_navigation true
+      navigation_label 'Grid Views'
+    end
   end
 
   # Configure User model
