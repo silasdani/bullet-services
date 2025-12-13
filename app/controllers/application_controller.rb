@@ -3,6 +3,8 @@
 class ApplicationController < ActionController::Base
   include Pundit::Authorization
 
+  protect_from_forgery with: :exception
+
   # Skip CSRF verification for Devise Token Auth routes
   skip_before_action :verify_authenticity_token, if: :auth_request?
 
