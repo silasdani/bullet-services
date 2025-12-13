@@ -26,8 +26,8 @@ module RailsAdmin
           proc do
             # Load WRS with eager loading (building, user, windows, tools)
             @wrs_items = WindowScheduleRepair.includes(:building, :user, :windows, windows: :tools)
-                                              .where(is_archived: false, deleted_at: nil)
-                                              .order(created_at: :desc)
+                                             .where(is_archived: false, deleted_at: nil)
+                                             .order(created_at: :desc)
 
             # Calculate statistics
             total_wrs = @wrs_items.count
@@ -53,7 +53,7 @@ module RailsAdmin
               published_count += 1 if wrs.last_published.present?
 
               # Sum value
-              total_value += (wrs.grand_total || wrs.total_vat_included_price || 0)
+              total_value += wrs.grand_total || wrs.total_vat_included_price || 0
             end
 
             # Store statistics in instance variables

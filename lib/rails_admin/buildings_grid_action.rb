@@ -26,8 +26,8 @@ module RailsAdmin
           proc do
             # Load all buildings with their window_schedule_repairs (eager loading)
             @buildings = Building.includes(:window_schedule_repairs)
-                                  .where(deleted_at: nil)
-                                  .order(created_at: :desc)
+                                 .where(deleted_at: nil)
+                                 .order(created_at: :desc)
 
             # Group WRS by building and flat_number for each building
             @buildings_data = @buildings.map do |building|
@@ -53,17 +53,13 @@ module RailsAdmin
                 b_flat = b[:flat_number]
 
                 # Put "Unspecified Unit" at the end
-                if a_flat == 'Unspecified Unit' && b_flat != 'Unspecified Unit'
-                  next 1
-                end
-                if b_flat == 'Unspecified Unit' && a_flat != 'Unspecified Unit'
-                  next -1
-                end
+                next 1 if a_flat == 'Unspecified Unit' && b_flat != 'Unspecified Unit'
+                next -1 if b_flat == 'Unspecified Unit' && a_flat != 'Unspecified Unit'
 
                 # Try numeric comparison
                 a_num = a_flat.to_i
                 b_num = b_flat.to_i
-                if a_num > 0 && b_num > 0 && a_flat == a_num.to_s && b_flat == b_num.to_s
+                if a_num.positive? && b_num.positive? && a_flat == a_num.to_s && b_flat == b_num.to_s
                   a_num <=> b_num
                 else
                   a_flat <=> b_flat
