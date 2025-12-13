@@ -3,16 +3,18 @@
 # Ignore this file from Zeitwerk autoloading since it's explicitly required
 # and doesn't follow Zeitwerk naming conventions
 Rails.autoloaders.main.ignore(Rails.root.join('lib/rails_admin/invoice_actions.rb'))
+Rails.autoloaders.main.ignore(Rails.root.join('lib/rails_admin/buildings_grid_action.rb'))
 
 # Load custom Rails Admin actions
 require Rails.root.join('lib/rails_admin/invoice_actions')
+require Rails.root.join('lib/rails_admin/buildings_grid_action')
 
 RailsAdmin.config do |config|
   # Explicitly set asset_source for RailsAdmin 3.x to silence warnings
   config.asset_source = :sprockets
 
   # Only include User and WindowScheduleRepair models (Window and Tool are nested)
-  config.included_models = ['User', 'WindowScheduleRepair', 'Window', 'Tool', 'Invoice']
+  config.included_models = ['User', 'WindowScheduleRepair', 'Window', 'Tool', 'Invoice', 'Building']
 
   # Authenticate: ensure user is logged in via Devise session
   config.authenticate_with do
@@ -42,6 +44,9 @@ RailsAdmin.config do |config|
     void_invoice_with_email
     apply_discount
     mark_paid
+
+    # Custom buildings actions
+    buildings_grid
   end
 
   # Configure User model
@@ -978,6 +983,115 @@ RailsAdmin.config do |config|
       field :invoice_pdf_link do
         label 'PDF Link (Legacy)'
       end
+    end
+  end
+
+  # Configure Building model
+  config.model 'Building' do
+    label 'Building'
+    navigation_label 'Management'
+    weight 3
+
+    # Optimize queries by eager loading associations
+    scope { Building.includes(:window_schedule_repairs).where(deleted_at: nil) }
+
+    list do
+      field :id
+      field :name
+      field :full_address do
+        label 'Address'
+        pretty_value do
+          bindings[:object].full_address
+        end
+      end
+      field :wrs_count do
+        label 'WRS Count'
+        pretty_value do
+          if bindings[:object].association(:window_schedule_repairs).loaded?
+            bindings[:object].window_schedule_repairs.size
+          else
+            bindings[:object].window_schedule_repairs.count
+          end
+        end
+      end
+      field :created_at
+    end
+
+    show do
+      field :id
+      field :name
+      field :street
+      field :city
+      field :zipcode
+      field :country
+      field :full_address do
+        label 'Full Address'
+        pretty_value do
+          bindings[:object].full_address
+        end
+      end
+      field :address_string do
+        label 'Address String'
+        pretty_value do
+          bindings[:object].address_string
+        end
+      end
+      field :display_name do
+        label 'Display Name'
+        pretty_value do
+          bindings[:object].display_name
+        end
+      end
+      field :window_schedule_repairs do
+        label 'WRS'
+        pretty_value do
+          if bindings[:object].window_schedule_repairs.any?
+            bindings[:view].content_tag(:div, class: 'wrs-list') do
+              bindings[:object].window_schedule_repairs.map do |wrs|
+                bindings[:view].content_tag(:div, style: 'margin: 10px 0; padding: 10px; background-color: #f9fafb; border-radius: 6px;') do
+                  bindings[:view].link_to(
+                    "#{wrs.name} (#{wrs.reference_number})",
+                    bindings[:view].rails_admin.show_path(model_name: 'window_schedule_repair', id: wrs.id),
+                    style: 'text-decoration: none; color: #000000; font-weight: 500;'
+                  ) +
+                  bindings[:view].content_tag(:div, style: 'margin-top: 5px; font-size: 0.875rem; color: #6b7280;') do
+                    "Flat: #{wrs.flat_number || 'N/A'} | Status: #{wrs.status || 'pending'}"
+                  end
+                end
+              end.join.html_safe
+            end
+          else
+            'No WRS found'
+          end
+        end
+      end
+      field :created_at
+      field :updated_at
+      field :deleted_at
+    end
+
+    edit do
+      field :name
+      field :street
+      field :city
+      field :zipcode
+      field :country
+    end
+
+    create do
+      field :name
+      field :street
+      field :city
+      field :zipcode
+      field :country
+    end
+
+    update do
+      field :name
+      field :street
+      field :city
+      field :zipcode
+      field :country
     end
   end
 

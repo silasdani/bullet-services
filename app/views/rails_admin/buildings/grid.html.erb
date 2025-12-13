@@ -1,0 +1,394 @@
+<% content_for :title, I18n.t('buildings_grid.title') %>
+
+<div class="buildings-dashboard">
+  <!-- Header Section -->
+  <div class="dashboard-header">
+    <div class="header-content">
+      <div>
+        <h1 class="dashboard-title">
+          <i class="fas fa-building"></i>
+          <%= I18n.t('buildings_grid.title') %>
+        </h1>
+        <p class="dashboard-subtitle"><%= I18n.t('buildings_grid.subtitle') %></p>
+      </div>
+      <div class="header-actions">
+        <a href="<%= rails_admin.index_path(model_name: 'building') %>" class="btn btn-outline-secondary">
+          <i class="fas fa-list"></i> <%= I18n.t('buildings_grid.list_view') %>
+        </a>
+        <a href="<%= rails_admin.new_path(model_name: 'building') %>" class="btn btn-primary">
+          <i class="fas fa-plus"></i> <%= I18n.t('buildings_grid.new_building') %>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistics Dashboard -->
+  <% if @buildings_data.any? %>
+    <% 
+      total_buildings = @buildings_data.length
+      total_flats = @buildings_data.sum { |d| d[:flats].length }
+      total_wrs = @buildings_data.sum { |d| d[:building].window_schedule_repairs.count }
+      
+      # Calculate status breakdown
+      status_counts = { approved: 0, rejected: 0, completed: 0, draft: 0, pending: 0 }
+      @buildings_data.each do |data|
+        data[:building].window_schedule_repairs.each do |wrs|
+          if wrs.status == 'approved'
+            status_counts[:approved] += 1
+          elsif wrs.status == 'rejected'
+            status_counts[:rejected] += 1
+          elsif wrs.status == 'completed'
+            status_counts[:completed] += 1
+          elsif wrs.is_draft
+            status_counts[:draft] += 1
+          else
+            status_counts[:pending] += 1
+          end
+        end
+      end
+    %>
+    
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon stat-icon-buildings">
+          <i class="fas fa-building"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value"><%= total_buildings %></div>
+          <div class="stat-label"><%= I18n.t('buildings_grid.buildings') %></div>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon stat-icon-flats">
+          <i class="fas fa-home"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value"><%= total_flats %></div>
+          <div class="stat-label"><%= I18n.t('buildings_grid.flats') %></div>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon stat-icon-wrs">
+          <i class="fas fa-clipboard-list"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value"><%= total_wrs %></div>
+          <div class="stat-label"><%= I18n.t('buildings_grid.total_wrs') %></div>
+        </div>
+      </div>
+      
+      <div class="stat-card stat-card-status">
+        <div class="stat-content">
+          <div class="status-breakdown">
+            <div class="status-item">
+              <span class="status-dot status-approved"></span>
+              <span class="status-text"><%= I18n.t('buildings_grid.approved') %>: <strong><%= status_counts[:approved] %></strong></span>
+            </div>
+            <div class="status-item">
+              <span class="status-dot status-completed"></span>
+              <span class="status-text"><%= I18n.t('buildings_grid.completed') %>: <strong><%= status_counts[:completed] %></strong></span>
+            </div>
+            <div class="status-item">
+              <span class="status-dot status-pending"></span>
+              <span class="status-text"><%= I18n.t('buildings_grid.pending') %>: <strong><%= status_counts[:pending] %></strong></span>
+            </div>
+            <div class="status-item">
+              <span class="status-dot status-draft"></span>
+              <span class="status-text"><%= I18n.t('buildings_grid.draft') %>: <strong><%= status_counts[:draft] %></strong></span>
+            </div>
+            <div class="status-item">
+              <span class="status-dot status-rejected"></span>
+              <span class="status-text"><%= I18n.t('buildings_grid.rejected') %>: <strong><%= status_counts[:rejected] %></strong></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <!-- Search and Filters -->
+  <div class="filters-section">
+    <div class="search-box">
+      <i class="fas fa-search search-icon"></i>
+      <input type="text" id="building-search" placeholder="<%= I18n.t('buildings_grid.search_placeholder') %>" class="search-input">
+      <button class="search-clear" id="search-clear" style="display: none;">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="filter-buttons">
+      <button class="filter-btn active" data-filter="all">
+        <i class="fas fa-th"></i> <%= I18n.t('buildings_grid.all_buildings') %>
+      </button>
+      <button class="filter-btn" data-filter="with-wrs">
+        <i class="fas fa-clipboard-check"></i> <%= I18n.t('buildings_grid.with_wrs') %>
+      </button>
+      <button class="filter-btn" data-filter="no-wrs">
+        <i class="fas fa-clipboard"></i> <%= I18n.t('buildings_grid.no_wrs_filter') %>
+      </button>
+    </div>
+  </div>
+
+  <!-- Buildings Grid -->
+  <% if @buildings_data.empty? %>
+    <div class="empty-state">
+      <div class="empty-icon">
+        <i class="fas fa-building"></i>
+      </div>
+      <h3><%= I18n.t('buildings_grid.no_buildings_found') %></h3>
+      <p><%= I18n.t('buildings_grid.get_started') %></p>
+      <a href="<%= rails_admin.new_path(model_name: 'building') %>" class="btn btn-primary">
+        <i class="fas fa-plus"></i> <%= I18n.t('buildings_grid.create_building') %>
+      </a>
+    </div>
+  <% else %>
+    <div class="buildings-grid" id="buildings-grid">
+      <% @buildings_data.each do |building_data| %>
+        <% building = building_data[:building] %>
+        <% flats = building_data[:flats] %>
+        <% 
+          # Limit flats display to prevent UI discrepancy
+          max_flats_display = 12
+          flats_to_show = flats.take(max_flats_display)
+          remaining_flats = flats.length - max_flats_display
+        %>
+        
+        <article class="building-card" 
+                 data-building-name="<%= building.name.downcase %>"
+                 data-building-address="<%= building.full_address.downcase %>"
+                 data-wrs-count="<%= building.window_schedule_repairs.count %>">
+          
+          <!-- Building Header -->
+          <div class="building-card-header">
+            <div class="building-header-main">
+              <div class="building-icon-wrapper">
+                <i class="fas fa-building building-icon"></i>
+              </div>
+              <div class="building-info">
+                <h2 class="building-name">
+                  <%= building.name %>
+                </h2>
+                <div class="building-address">
+                  <i class="fas fa-map-marker-alt"></i>
+                  <%= building.full_address %>
+                </div>
+              </div>
+            </div>
+            <div class="building-quick-actions">
+              <a href="<%= rails_admin.show_path(model_name: 'building', id: building.id) %>" 
+                 class="action-btn" 
+                 title="<%= I18n.t('buildings_grid.view_details') %>">
+                <i class="fas fa-eye"></i>
+              </a>
+              <a href="<%= rails_admin.edit_path(model_name: 'building', id: building.id) %>" 
+                 class="action-btn" 
+                 title="<%= I18n.t('buildings_grid.edit_building') %>">
+                <i class="fas fa-edit"></i>
+              </a>
+            </div>
+          </div>
+
+          <!-- Building Stats -->
+          <div class="building-stats">
+            <div class="stat-badge">
+              <i class="fas fa-clipboard-list"></i>
+              <span><%= building.window_schedule_repairs.count %></span>
+              <small><%= I18n.t('buildings_grid.wrs') %></small>
+            </div>
+            <div class="stat-badge">
+              <i class="fas fa-home"></i>
+              <span><%= flats.count %></span>
+              <small><%= flats.count == 1 ? I18n.t('buildings_grid.flat') : I18n.t('buildings_grid.flats') %></small>
+            </div>
+            <div class="stat-badge">
+              <i class="fas fa-calendar"></i>
+              <span><%= building.created_at.strftime('%b %Y') %></span>
+              <small><%= I18n.t('buildings_grid.created') %></small>
+            </div>
+          </div>
+
+          <!-- Flats Section -->
+          <% if flats.empty? %>
+            <div class="flats-empty">
+              <i class="fas fa-home"></i>
+              <p><%= I18n.t('buildings_grid.no_flats_assigned') %></p>
+              <a href="<%= rails_admin.new_path(model_name: 'window_schedule_repair') %>" class="btn-link">
+                <%= I18n.t('buildings_grid.create_wrs_for_building') %>
+              </a>
+            </div>
+          <% else %>
+            <div class="flats-section">
+              <div class="flats-header">
+                <h3 class="flats-title">
+                  <i class="fas fa-th"></i>
+                  <%= I18n.t('buildings_grid.flats_count', count: flats.count) %>
+                </h3>
+              </div>
+              <div class="flats-container">
+                <div class="flats-grid" data-flats-total="<%= flats.length %>">
+                  <% flats_to_show.each do |flat_data| %>
+                    <% flat_number = flat_data[:flat_number] %>
+                    <% wrs_items = flat_data[:wrs_items] %>
+                    
+                    <%# Determine status %>
+                    <% status_info = { color: '#6b7280', label: I18n.t('buildings_grid.no_wrs'), class: 'status-none' } %>
+                    <% if wrs_items.any? %>
+                      <% first_wrs = wrs_items.first %>
+                      <% if first_wrs.status == 'approved' %>
+                        <% status_info = { color: '#10b981', label: I18n.t('buildings_grid.approved'), class: 'status-approved' } %>
+                      <% elsif first_wrs.status == 'rejected' %>
+                        <% status_info = { color: '#ef4444', label: I18n.t('buildings_grid.rejected'), class: 'status-rejected' } %>
+                      <% elsif first_wrs.status == 'completed' %>
+                        <% status_info = { color: '#3b82f6', label: I18n.t('buildings_grid.completed'), class: 'status-completed' } %>
+                      <% elsif first_wrs.is_draft %>
+                        <% status_info = { color: '#f59e0b', label: I18n.t('buildings_grid.draft'), class: 'status-draft' } %>
+                      <% else %>
+                        <% status_info = { color: '#6b7280', label: I18n.t('buildings_grid.pending'), class: 'status-pending' } %>
+                      <% end %>
+                    <% end %>
+
+                    <%# Determine link destination %>
+                    <% if wrs_items.length == 1 && wrs_items.first.id %>
+                      <% flat_link = rails_admin.show_path(model_name: 'window_schedule_repair', id: wrs_items.first.id) %>
+                    <% else %>
+                      <% flat_link = rails_admin.index_path(model_name: 'window_schedule_repair', q: { building_id_eq: building.id, flat_number_eq: flat_number }) %>
+                    <% end %>
+
+                    <a href="<%= flat_link %>" class="flat-card">
+                      <div class="flat-card-header">
+                        <div class="flat-icon">
+                          <i class="fas fa-home"></i>
+                        </div>
+                        <span class="status-badge <%= status_info[:class] %>">
+                          <%= status_info[:label] %>
+                        </span>
+                      </div>
+                      <div class="flat-card-body">
+                        <div class="flat-number">
+                          <%= flat_number == 'Unspecified Unit' ? I18n.t('buildings_grid.unspecified') : flat_number %>
+                        </div>
+                        <% if wrs_items.any? %>
+                          <div class="flat-wrs-count">
+                            <%= wrs_items.length %> <%= I18n.t('buildings_grid.wrs') %>
+                          </div>
+                        <% else %>
+                          <div class="flat-wrs-count no-wrs"><%= I18n.t('buildings_grid.no_wrs') %></div>
+                        <% end %>
+                      </div>
+                      <div class="flat-card-footer">
+                        <span class="flat-link-text">
+                          <%= I18n.t('buildings_grid.view_details') %> <i class="fas fa-arrow-right"></i>
+                        </span>
+                      </div>
+                    </a>
+                  <% end %>
+                </div>
+                
+                <% if remaining_flats > 0 %>
+                  <div class="flats-more">
+                    <a href="<%= rails_admin.index_path(model_name: 'window_schedule_repair', q: { building_id_eq: building.id }) %>" 
+                       class="flats-more-link">
+                      <i class="fas fa-chevron-down"></i>
+                      <%= I18n.t('buildings_grid.view_more_flats', count: remaining_flats) %>
+                    </a>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+
+          <!-- Building Footer Actions -->
+          <div class="building-card-footer">
+            <a href="<%= rails_admin.show_path(model_name: 'building', id: building.id) %>" 
+               class="footer-link">
+              <i class="fas fa-info-circle"></i>
+              <%= I18n.t('buildings_grid.details') %>
+            </a>
+            <a href="<%= rails_admin.index_path(model_name: 'window_schedule_repair', q: { building_id_eq: building.id }) %>" 
+               class="footer-link">
+              <i class="fas fa-list"></i>
+              <%= I18n.t('buildings_grid.all_wrs') %>
+            </a>
+            <a href="<%= rails_admin.new_path(model_name: 'window_schedule_repair') %>" 
+               class="footer-link footer-link-primary">
+              <i class="fas fa-plus"></i>
+              <%= I18n.t('buildings_grid.new_wrs') %>
+            </a>
+          </div>
+        </article>
+      <% end %>
+    </div>
+  <% end %>
+</div>
+
+<script>
+  (function() {
+    // Search functionality
+    const searchInput = document.getElementById('building-search');
+    const searchClear = document.getElementById('search-clear');
+    const buildingsGrid = document.getElementById('buildings-grid');
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    
+    if (searchInput && buildingsGrid) {
+      searchInput.addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase().trim();
+        const buildings = buildingsGrid.querySelectorAll('.building-card');
+        
+        if (searchTerm) {
+          searchClear.style.display = 'block';
+        } else {
+          searchClear.style.display = 'none';
+        }
+        
+        buildings.forEach(building => {
+          const name = building.dataset.buildingName || '';
+          const address = building.dataset.buildingAddress || '';
+          
+          if (name.includes(searchTerm) || address.includes(searchTerm)) {
+            building.style.display = '';
+          } else {
+            building.style.display = 'none';
+          }
+        });
+      });
+      
+      searchClear.addEventListener('click', function() {
+        searchInput.value = '';
+        searchClear.style.display = 'none';
+        const buildings = buildingsGrid.querySelectorAll('.building-card');
+        buildings.forEach(building => {
+          building.style.display = '';
+        });
+      });
+    }
+    
+    // Filter functionality
+    if (filterButtons && buildingsGrid) {
+      filterButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+          // Update active state
+          filterButtons.forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          
+          const filter = this.dataset.filter;
+          const buildings = buildingsGrid.querySelectorAll('.building-card');
+          
+          buildings.forEach(building => {
+            const wrsCount = parseInt(building.dataset.wrsCount) || 0;
+            
+            if (filter === 'all') {
+              building.style.display = '';
+            } else if (filter === 'with-wrs' && wrsCount > 0) {
+              building.style.display = '';
+            } else if (filter === 'no-wrs' && wrsCount === 0) {
+              building.style.display = '';
+            } else {
+              building.style.display = 'none';
+            }
+          });
+        });
+      });
+    }
+  })();
+</script>

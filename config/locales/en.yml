@@ -29,3 +29,45 @@
 
 en:
   hello: "Hello world"
+  
+  admin:
+    actions:
+      buildings_grid:
+        title: "Buildings Grid View"
+        breadcrumb: "Buildings Grid"
+        menu: "Buildings Grid"
+  
+  buildings_grid:
+    title: "Buildings Overview"
+    subtitle: "Manage and monitor all buildings, flats, and WRS statuses"
+    list_view: "List View"
+    new_building: "New Building"
+    buildings: "Buildings"
+    flats: "Flats"
+    total_wrs: "Total WRS"
+    approved: "Approved"
+    rejected: "Rejected"
+    completed: "Completed"
+    draft: "Draft"
+    pending: "Pending"
+    no_wrs: "No WRS"
+    search_placeholder: "Search buildings by name or address..."
+    all_buildings: "All Buildings"
+    with_wrs: "With WRS"
+    no_wrs_filter: "No WRS"
+    no_buildings_found: "No buildings found"
+    get_started: "Get started by creating your first building."
+    create_building: "Create Building"
+    view_details: "View Details"
+    edit_building: "Edit Building"
+    wrs: "WRS"
+    flat: "Flat"
+    created: "Created"
+    no_flats_assigned: "No flats assigned"
+    create_wrs_for_building: "Create WRS for this building"
+    flats_count: "Flats (%{count})"
+    unspecified: "Unspecified"
+    all_wrs: "All WRS"
+    new_wrs: "New WRS"
+    details: "Details"
+    view_more_flats: "View %{count} more"
