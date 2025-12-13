@@ -128,8 +128,6 @@ class WindowScheduleRepair < ApplicationRecord
     end
   end
 
-  private
-
   # Ransack configuration for filtering
   def self.ransackable_attributes(_auth_object = nil)
     %w[name slug flat_number reference_number address details status created_at updated_at total_vat_included_price

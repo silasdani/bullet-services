@@ -1,0 +1,362 @@
+<% content_for :title, I18n.t('wrs_grid.title') %>
+
+<div class="wrs-dashboard">
+  <!-- Header Section -->
+  <div class="dashboard-header">
+    <div class="header-content">
+      <div>
+        <h1 class="dashboard-title">
+          <i class="fas fa-clipboard-list"></i>
+          <%= I18n.t('wrs_grid.title') %>
+        </h1>
+        <p class="dashboard-subtitle"><%= I18n.t('wrs_grid.subtitle') %></p>
+      </div>
+      <div class="header-actions">
+        <a href="<%= rails_admin.index_path(model_name: 'window_schedule_repair') %>" class="btn btn-outline-secondary">
+          <i class="fas fa-list"></i> <%= I18n.t('wrs_grid.list_view') %>
+        </a>
+        <a href="<%= rails_admin.new_path(model_name: 'window_schedule_repair') %>" class="btn btn-primary">
+          <i class="fas fa-plus"></i> <%= I18n.t('wrs_grid.new_wrs') %>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistics Dashboard -->
+  <% if @wrs_items.any? %>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon stat-icon-wrs">
+          <i class="fas fa-clipboard-list"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value"><%= @total_wrs %></div>
+          <div class="stat-label"><%= I18n.t('wrs_grid.total_wrs') %></div>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon stat-icon-published">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value"><%= @published_count %></div>
+          <div class="stat-label"><%= I18n.t('wrs_grid.published') %></div>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon stat-icon-draft">
+          <i class="fas fa-edit"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value"><%= @draft_count %></div>
+          <div class="stat-label"><%= I18n.t('wrs_grid.draft') %></div>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon stat-icon-value">
+          <i class="fas fa-pound-sign"></i>
+        </div>
+        <div class="stat-content">
+          <div class="stat-value">£<%= sprintf("%.2f", @total_value).gsub(/(\d)(?=(\d{3})+(?!\d))/, '\1,') %></div>
+          <div class="stat-label"><%= I18n.t('wrs_grid.total_value') %></div>
+        </div>
+      </div>
+      
+      <div class="stat-card stat-card-status">
+        <div class="stat-content">
+          <div class="status-breakdown">
+            <div class="status-item">
+              <span class="status-dot status-approved"></span>
+              <span class="status-text"><%= I18n.t('wrs_grid.approved') %>: <strong><%= @status_counts[:approved] %></strong></span>
+            </div>
+            <div class="status-item">
+              <span class="status-dot status-completed"></span>
+              <span class="status-text"><%= I18n.t('wrs_grid.completed') %>: <strong><%= @status_counts[:completed] %></strong></span>
+            </div>
+            <div class="status-item">
+              <span class="status-dot status-pending"></span>
+              <span class="status-text"><%= I18n.t('wrs_grid.pending') %>: <strong><%= @status_counts[:pending] %></strong></span>
+            </div>
+            <div class="status-item">
+              <span class="status-dot status-draft"></span>
+              <span class="status-text"><%= I18n.t('wrs_grid.draft') %>: <strong><%= @status_counts[:draft] %></strong></span>
+            </div>
+            <div class="status-item">
+              <span class="status-dot status-rejected"></span>
+              <span class="status-text"><%= I18n.t('wrs_grid.rejected') %>: <strong><%= @status_counts[:rejected] %></strong></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <!-- Search and Filters -->
+  <div class="filters-section">
+    <div class="search-box">
+      <i class="fas fa-search search-icon"></i>
+      <input type="text" id="wrs-search" placeholder="<%= I18n.t('wrs_grid.search_placeholder') %>" class="search-input">
+      <button class="search-clear" id="search-clear" style="display: none;">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="filter-buttons">
+      <button class="filter-btn active" data-filter="all">
+        <i class="fas fa-th"></i> <%= I18n.t('wrs_grid.all_wrs') %>
+      </button>
+      <button class="filter-btn" data-filter="published">
+        <i class="fas fa-check-circle"></i> <%= I18n.t('wrs_grid.published_filter') %>
+      </button>
+      <button class="filter-btn" data-filter="draft">
+        <i class="fas fa-edit"></i> <%= I18n.t('wrs_grid.draft_filter') %>
+      </button>
+      <button class="filter-btn" data-filter="archived">
+        <i class="fas fa-archive"></i> <%= I18n.t('wrs_grid.archived_filter') %>
+      </button>
+    </div>
+  </div>
+
+  <!-- WRS Grid -->
+  <% if @wrs_items.empty? %>
+    <div class="empty-state">
+      <div class="empty-icon">
+        <i class="fas fa-clipboard-list"></i>
+      </div>
+      <h3><%= I18n.t('wrs_grid.no_wrs_found') %></h3>
+      <p><%= I18n.t('wrs_grid.get_started') %></p>
+      <a href="<%= rails_admin.new_path(model_name: 'window_schedule_repair') %>" class="btn btn-primary">
+        <i class="fas fa-plus"></i> <%= I18n.t('wrs_grid.create_wrs') %>
+      </a>
+    </div>
+  <% else %>
+    <div class="wrs-grid" id="wrs-grid">
+      <% @wrs_items.each do |wrs| %>
+        <% 
+          # Determine status badges (priority: archived > draft > status > unpublished)
+          status_badges = []
+          if wrs.is_archived
+            status_badges << { label: I18n.t('wrs_grid.archived'), class: 'archived' }
+          end
+          if wrs.is_draft
+            status_badges << { label: I18n.t('wrs_grid.draft'), class: 'draft' }
+          elsif wrs.last_published.present?
+            status_label = I18n.t("wrs_grid.#{wrs.status || 'pending'}")
+            status_badges << { label: status_label, class: wrs.status || 'pending' }
+          else
+            status_badges << { label: I18n.t('wrs_grid.unpublished'), class: 'unpublished' }
+          end
+
+          # Get price
+          price = wrs.grand_total || wrs.total_vat_included_price
+          price_display = if price && price > 0
+            formatted_price = sprintf("%.2f", price.round(2)).gsub(/(\d)(?=(\d{3})+(?!\d))/, '\1,')
+            "£#{formatted_price}"
+          else
+            I18n.t('wrs_grid.no_price')
+          end
+
+          # Get address
+          address = wrs.building ? wrs.building.full_address : (wrs.address || 'N/A')
+        %>
+        
+        <article class="wrs-card" 
+                 data-wrs-name="<%= wrs.name.downcase %>"
+                 data-wrs-address="<%= address.downcase %>"
+                 data-is-draft="<%= wrs.is_draft %>"
+                 data-is-archived="<%= wrs.is_archived %>"
+                 data-is-published="<%= wrs.last_published.present? %>"
+                 data-status="<%= wrs.status || 'pending' %>">
+          
+          <!-- WRS Card Header -->
+          <div class="wrs-card-header">
+            <div class="wrs-header-main">
+              <h2 class="wrs-name">
+                <%= wrs.name %>
+              </h2>
+              <div class="wrs-status-badges">
+                <% status_badges.each do |badge| %>
+                  <span class="wrs-status-badge <%= badge[:class] %>">
+                    <%= badge[:label].upcase %>
+                  </span>
+                <% end %>
+              </div>
+            </div>
+            <div class="wrs-quick-actions">
+              <a href="<%= rails_admin.show_path(model_name: 'window_schedule_repair', id: wrs.id) %>" 
+                 class="action-btn" 
+                 title="<%= I18n.t('wrs_grid.view_details') %>">
+                <i class="fas fa-eye"></i>
+              </a>
+              <a href="<%= rails_admin.edit_path(model_name: 'window_schedule_repair', id: wrs.id) %>" 
+                 class="action-btn" 
+                 title="<%= I18n.t('wrs_grid.edit_wrs') %>">
+                <i class="fas fa-edit"></i>
+              </a>
+            </div>
+          </div>
+
+          <!-- WRS Card Body -->
+          <div class="wrs-card-body">
+            <div class="wrs-meta-grid">
+              <div class="wrs-meta-item">
+                <i class="fas fa-map-marker-alt"></i>
+                <div class="wrs-meta-content">
+                  <span class="wrs-meta-label"><%= I18n.t('wrs_grid.address') %></span>
+                  <span class="wrs-meta-value"><%= address %></span>
+                </div>
+              </div>
+              
+              <% if wrs.flat_number.present? %>
+                <div class="wrs-meta-item">
+                  <i class="fas fa-home"></i>
+                  <div class="wrs-meta-content">
+                    <span class="wrs-meta-label"><%= I18n.t('wrs_grid.flat_number') %></span>
+                    <span class="wrs-meta-value"><%= wrs.flat_number %></span>
+                  </div>
+                </div>
+              <% end %>
+              
+              <% if wrs.reference_number.present? %>
+                <div class="wrs-meta-item">
+                  <i class="fas fa-tag"></i>
+                  <div class="wrs-meta-content">
+                    <span class="wrs-meta-label"><%= I18n.t('wrs_grid.reference_number') %></span>
+                    <span class="wrs-meta-value"><%= wrs.reference_number %></span>
+                  </div>
+                </div>
+              <% end %>
+              
+              <div class="wrs-meta-item">
+                <i class="fas fa-window-maximize"></i>
+                <div class="wrs-meta-content">
+                  <span class="wrs-meta-label"><%= wrs.windows.count == 1 ? I18n.t('wrs_grid.window') : I18n.t('wrs_grid.windows') %></span>
+                  <span class="wrs-meta-value"><%= wrs.windows.count %></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="wrs-price-section">
+              <div class="wrs-price-label"><%= I18n.t('wrs_grid.price') %></div>
+              <div class="wrs-price <%= 'wrs-price-empty' if !price || price == 0 %>">
+                <%= price_display %>
+              </div>
+            </div>
+          </div>
+
+          <!-- WRS Card Footer -->
+          <div class="wrs-card-footer">
+            <div class="wrs-dates">
+              <div class="wrs-date-item">
+                <i class="fas fa-calendar"></i>
+                <span><%= I18n.t('wrs_grid.created') %>: <%= wrs.created_at.strftime('%d %b %Y') %></span>
+              </div>
+              <% if wrs.last_published.present? %>
+                <div class="wrs-date-item">
+                  <i class="fas fa-check-circle"></i>
+                  <span><%= I18n.t('wrs_grid.published_date') %>: <%= wrs.last_published.strftime('%d %b %Y') %></span>
+                </div>
+              <% end %>
+            </div>
+            <div class="wrs-footer-actions">
+              <a href="<%= rails_admin.show_path(model_name: 'window_schedule_repair', id: wrs.id) %>" 
+                 class="footer-link">
+                <i class="fas fa-info-circle"></i>
+                <%= I18n.t('wrs_grid.details') %>
+              </a>
+              <a href="<%= rails_admin.edit_path(model_name: 'window_schedule_repair', id: wrs.id) %>" 
+                 class="footer-link">
+                <i class="fas fa-edit"></i>
+                <%= I18n.t('wrs_grid.edit') %>
+              </a>
+              <% if wrs.building %>
+                <a href="<%= rails_admin.show_path(model_name: 'building', id: wrs.building.id) %>" 
+                   class="footer-link">
+                  <i class="fas fa-building"></i>
+                  <%= I18n.t('wrs_grid.view_building') %>
+                </a>
+              <% end %>
+            </div>
+          </div>
+        </article>
+      <% end %>
+    </div>
+  <% end %>
+</div>
+
+<script>
+  (function() {
+    // Search functionality
+    const searchInput = document.getElementById('wrs-search');
+    const searchClear = document.getElementById('search-clear');
+    const wrsGrid = document.getElementById('wrs-grid');
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    
+    if (searchInput && wrsGrid) {
+      searchInput.addEventListener('input', function(e) {
+        const searchTerm = e.target.value.toLowerCase().trim();
+        const wrsCards = wrsGrid.querySelectorAll('.wrs-card');
+        
+        if (searchTerm) {
+          searchClear.style.display = 'block';
+        } else {
+          searchClear.style.display = 'none';
+        }
+        
+        wrsCards.forEach(card => {
+          const name = card.dataset.wrsName || '';
+          const address = card.dataset.wrsAddress || '';
+          
+          if (name.includes(searchTerm) || address.includes(searchTerm)) {
+            card.style.display = '';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      });
+      
+      searchClear.addEventListener('click', function() {
+        searchInput.value = '';
+        searchClear.style.display = 'none';
+        const wrsCards = wrsGrid.querySelectorAll('.wrs-card');
+        wrsCards.forEach(card => {
+          card.style.display = '';
+        });
+      });
+    }
+    
+    // Filter functionality
+    if (filterButtons && wrsGrid) {
+      filterButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+          // Update active state
+          filterButtons.forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          
+          const filter = this.dataset.filter;
+          const wrsCards = wrsGrid.querySelectorAll('.wrs-card');
+          
+          wrsCards.forEach(card => {
+            const isDraft = card.dataset.isDraft === 'true';
+            const isArchived = card.dataset.isArchived === 'true';
+            const isPublished = card.dataset.isPublished === 'true';
+            
+            if (filter === 'all') {
+              card.style.display = '';
+            } else if (filter === 'published' && isPublished) {
+              card.style.display = '';
+            } else if (filter === 'draft' && isDraft) {
+              card.style.display = '';
+            } else if (filter === 'archived' && isArchived) {
+              card.style.display = '';
+            } else {
+              card.style.display = 'none';
+            }
+          });
+        });
+      });
+    }
+  })();
+</script>

@@ -33,6 +33,25 @@ class Invoice < ApplicationRecord
 
   has_many :freshbooks_invoices, foreign_key: :invoice_id, dependent: :destroy
 
+  has_one_attached :invoice_pdf
+
+  # Ransack configuration for filtering
+  def self.ransackable_attributes(_auth_object = nil)
+    %w[
+      name slug status final_status status_color is_draft is_archived
+      job flat_address generated_by freshbooks_client_id
+      included_vat_amount excluded_vat_amount
+      webflow_item_id webflow_collection_id
+      webflow_created_on webflow_updated_on webflow_published_on
+      wrs_link invoice_pdf_link
+      created_at updated_at
+    ]
+  end
+
+  def self.ransackable_associations(_auth_object = nil)
+    %w[freshbooks_invoices]
+  end
+
   # Create invoice in FreshBooks and optionally send email with payment link
   def create_in_freshbooks!(client_id:, lines: [], send_email: false, email_to: nil)
     service = Freshbooks::InvoiceCreationService.new(
