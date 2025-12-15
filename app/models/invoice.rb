@@ -16,7 +16,8 @@ class Invoice < ApplicationRecord
   scope :published, -> { where(is_draft: false) }
 
   def total_amount
-    (included_vat_amount || 0) + (excluded_vat_amount || 0)
+    # Return only VAT-included amount (the actual chargeable amount)
+    included_vat_amount || excluded_vat_amount || 0
   end
 
   def archived?
@@ -32,6 +33,7 @@ class Invoice < ApplicationRecord
   end
 
   has_many :freshbooks_invoices, foreign_key: :invoice_id, dependent: :destroy
+  belongs_to :window_schedule_repair, optional: true
 
   has_one_attached :invoice_pdf
 
@@ -62,9 +64,9 @@ class Invoice < ApplicationRecord
       email_to: email_to
     )
 
-    result = service.call
+    service.call
     raise StandardError, service.errors.join(', ') unless service.success?
 
-    result
+    service.result
   end
 end

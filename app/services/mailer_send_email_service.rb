@@ -40,7 +40,8 @@ class MailerSendEmailService < ApplicationService
     return self unless valid_request?
 
     with_error_handling do
-      return add_error('MailerSend API token is not configured') if MAILERSEND_API_TOKEN.blank?
+      mailersend_token = ENV.fetch('MAILERSEND_API_TOKEN', nil)
+      return add_error('MailerSend API token is not configured') if mailersend_token.blank?
 
       email = build_email
       response = email.send

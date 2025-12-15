@@ -851,10 +851,11 @@ RailsAdmin.config do |config|
               style: 'text-decoration: none; display: inline-block;'
             )
 
-            # View in new tab button
+            # View in new tab button (use Rails URL helper to serve PDF properly)
+            pdf_view_url = Rails.application.routes.url_helpers.rails_blob_path(blob, disposition: 'inline', only_path: true)
             html << bindings[:view].link_to(
               bindings[:view].content_tag(:i, '', class: 'fas fa-external-link-alt me-1') + 'View PDF',
-              pdf_url,
+              pdf_view_url,
               target: '_blank',
               class: 'btn btn-outline-primary mb-2',
               style: 'text-decoration: none; display: inline-block; margin-left: 10px;'

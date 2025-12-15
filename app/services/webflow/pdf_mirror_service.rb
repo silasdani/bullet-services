@@ -47,7 +47,19 @@ module Webflow
       io = download_pdf(source_url)
       filename = extract_filename_with_fallback
       io.rewind
-      content_type = Marcel::MimeType.for(io) || 'application/pdf'
+
+      # Validate it's actually a PDF (not HTML)
+      first_bytes = io.read(4)
+      io.rewind
+
+      unless first_bytes == '%PDF'
+        log_error("Downloaded content is not a valid PDF (starts with: #{first_bytes.inspect}). URL: #{source_url}")
+        io.close
+        io.unlink if io.respond_to?(:unlink)
+        return
+      end
+
+      content_type = 'application/pdf' # Force PDF content type
       io.rewind
 
       metadata = { source_url: source_url }
@@ -63,6 +75,9 @@ module Webflow
       end
 
       attach_blob_with_retry(attachment, blob)
+    ensure
+      io&.close
+      io&.unlink if io.respond_to?(:unlink)
     end
 
     def extract_filename_with_fallback
