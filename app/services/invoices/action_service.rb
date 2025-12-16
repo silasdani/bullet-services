@@ -114,4 +114,3 @@ module Invoices
     end
   end
 end
-
