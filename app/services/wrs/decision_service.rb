@@ -175,7 +175,7 @@ module Wrs
           quantity: 1,
           cost: window_schedule_repair.total_vat_included_price || 0,
           type: 0,
-          tax_included: true # Explicitly mark that VAT is already included in the cost
+          tax_included: true
         }
       ]
 
@@ -270,7 +270,7 @@ module Wrs
 
     def attempt_pdf_attachment(invoice, tempfile, retry_count, max_retries)
       invoice.invoice_pdf.attach(build_attachment_params(invoice, tempfile))
-      verify_and_log_attachment(invoice)
+      attachment_verified?(invoice)
     rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotSaved => e
       handle_attachment_error(e, tempfile, retry_count, max_retries)
       false
@@ -285,7 +285,7 @@ module Wrs
       }
     end
 
-    def verify_and_log_attachment(invoice)
+    def attachment_verified?(invoice)
       invoice.reload
       return false unless invoice.invoice_pdf.attached?
 

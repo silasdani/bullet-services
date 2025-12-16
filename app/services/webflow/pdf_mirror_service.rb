@@ -47,7 +47,7 @@ module Webflow
       io = download_pdf(source_url)
       filename = extract_filename_with_fallback
 
-      return cleanup_io(io) unless validate_pdf_content(io)
+      return cleanup_io(io) unless valid_pdf_content?(io)
 
       blob = create_pdf_blob(io, filename)
       attach_blob_with_retry(attachment, blob)
@@ -55,7 +55,7 @@ module Webflow
       cleanup_io(io)
     end
 
-    def validate_pdf_content(io)
+    def valid_pdf_content?(io)
       io.rewind
       first_bytes = io.read(4)
       io.rewind

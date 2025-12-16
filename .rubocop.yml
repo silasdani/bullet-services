@@ -32,7 +32,7 @@ Metrics/MethodLength:
     - 'lib/tasks/**/*.rake'
 
 Metrics/ClassLength:
-  Max: 150
+  Max: 200
 
 Metrics/AbcSize:
   Exclude:

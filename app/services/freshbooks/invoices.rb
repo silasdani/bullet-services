@@ -254,17 +254,10 @@ module Freshbooks
       end
     end
 
-    def log_pdf_binary_error(error)
-      Rails.logger.error("Failed to get PDF binary: #{error.message}")
-      Rails.logger.error("Backtrace: #{error.backtrace.first(5).join('\n')}")
-    end
-
     def get_payment_link(invoice_id)
       invoice_data = get(invoice_id)
       return nil unless invoice_data
 
-      # FreshBooks provides payment URLs in the response
-      # Check for payment_link, payment_url, or construct from invoice data
       invoice_data['payment_link'] ||
         invoice_data['payment_url'] ||
         build_payment_url_from_invoice(invoice_data)
@@ -341,7 +334,7 @@ module Freshbooks
 
     def apply_tax_settings(line_item, line)
       if tax_included?(line)
-        set_zero_tax_amounts(line_item)
+        zero_tax_amounts(line_item)
       elsif line[:tax_amount1].present?
         set_custom_tax_amounts(line_item, line)
       end
@@ -351,7 +344,7 @@ module Freshbooks
       [true, 'yes'].include?(line[:tax_included])
     end
 
-    def set_zero_tax_amounts(line_item)
+    def zero_tax_amounts(line_item)
       line_item[:tax_amount1] = '0'
       line_item[:tax_amount2] = '0'
     end
@@ -362,8 +355,6 @@ module Freshbooks
     end
 
     def build_payment_url_from_invoice(invoice_data)
-      # FreshBooks payment URL format
-      # Format: https://my.freshbooks.com/view/{business_id}/{invoice_id}
       business_id = FreshbooksToken.current&.business_id || ENV.fetch('FRESHBOOKS_BUSINESS_ID', nil)
       invoice_id = invoice_data['id'] || invoice_data['invoiceid']
       return nil unless business_id && invoice_id
