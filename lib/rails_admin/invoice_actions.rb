@@ -165,7 +165,7 @@ module RailsAdmin
               if email_service.success?
                 # Update local invoice status
                 invoice.update!(status: 'sent', final_status: 'sent')
-                freshbooks_invoice.update!(status: 'sent') if freshbooks_invoice
+                freshbooks_invoice&.update!(status: 'sent')
                 flash[:success] = "Invoice email sent successfully to #{client_email}"
               else
                 error_message = email_service.errors.any? ? email_service.errors.join(', ') : 'Unknown error occurred'

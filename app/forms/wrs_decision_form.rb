@@ -22,4 +22,3 @@ class WrsDecisionForm
     errors.add(:email, 'is invalid') unless email.match?(regex)
   end
 end
-

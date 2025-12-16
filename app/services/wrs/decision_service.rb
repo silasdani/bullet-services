@@ -234,7 +234,7 @@ module Wrs
 
               log_warn("Attachment error: #{e.message}, retrying (#{retry_count}/#{max_retries})...")
               sleep(0.5)
-              tempfile.rewind if tempfile
+              tempfile&.rewind
             end
           end
 
@@ -348,7 +348,7 @@ module Wrs
       ].compact.join(', ')
     end
 
-    def invoice_identifier(invoice, fb_client_data)
+    def invoice_identifier(invoice, _fb_client_data)
       fb_invoice = invoice.freshbooks_invoices.last
       fb_invoice&.invoice_number || invoice.slug
     end
