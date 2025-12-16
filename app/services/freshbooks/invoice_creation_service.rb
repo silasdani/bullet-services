@@ -69,7 +69,7 @@ module Freshbooks
       {
         base64: Base64.strict_encode64(pdf_binary),
         download_url: pdf_data[:download_url]
-      }.tap do |result|
+      }.tap do |_result|
         log_info("Successfully retrieved PDF binary (#{pdf_binary.length} bytes) and encoded to base64")
       end
     end
