@@ -49,3 +49,4 @@ RSpec.describe Wrs::DecisionService do
     end
   end
 end
+
