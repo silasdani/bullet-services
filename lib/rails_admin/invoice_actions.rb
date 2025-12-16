@@ -43,14 +43,71 @@ module RailsAdmin
               next
             end
 
+            # Helper methods for email formatting
+            build_invoice_email_html = lambda do |invoice_number:, invoice_amount:, due_date:, client_name:,
+                                                 flat_address:, wrs_link:, payment_link:|
+              <<~HTML
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                  <p style="font-size: 16px; line-height: 1.6;">
+                    Bullet Services LTD sent you an invoice (#{invoice_number}) for £#{invoice_amount.round(2)}#{if due_date
+                                                                                                                   " that's due on #{due_date}"
+                                                                                                                 end}.
+                  </p>
+
+                  <p style="font-size: 16px; line-height: 1.6;">
+                    Dear #{client_name},
+                  </p>
+
+                  <p style="font-size: 16px; line-height: 1.6;">
+                    This is your invoice for the Windows Schedule Repairs at #{flat_address}.
+                    #{%(<br><br>Visit <a href="#{wrs_link}">#{wrs_link}</a> to review your quote.) if wrs_link}
+                  </p>
+
+                  <p style="font-size: 16px; line-height: 1.6;">
+                    Thank you and best regards,<br>
+                    Bullet Services.
+                  </p>
+
+                  #{if payment_link.present?
+                      %(<div style="margin: 30px 0; text-align: center;">
+                            <a href="#{payment_link}" style="display: inline-block; padding: 12px 30px; background-color: #007bff; color: #ffffff; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">
+                              View and Pay Invoice
+                            </a>
+                          </div>)
+                    end}
+                </div>
+              HTML
+            end
+
+            build_invoice_email_text = lambda do |invoice_number:, invoice_amount:, due_date:, client_name:,
+                                                 flat_address:, wrs_link:, payment_link:|
+              <<~TEXT
+                Bullet Services LTD sent you an invoice (#{invoice_number}) for £#{invoice_amount.round(2)}#{if due_date
+                                                                                                               " that's due on #{due_date}"
+                                                                                                             end}.
+
+                Dear #{client_name},
+
+                This is your invoice for the Windows Schedule Repairs at #{flat_address}.
+                #{"\n\nVisit #{wrs_link} to review your quote." if wrs_link}
+
+                Thank you and best regards,
+                Bullet Services.
+
+                #{"\n\nView and Pay Invoice: #{payment_link}" if payment_link}
+              TEXT
+            end
+
             begin
               invoices_client = Freshbooks::Invoices.new
 
-              # Get client email from FreshbooksClient if available
+              # Get client email and name from FreshbooksClient
               client_email = nil
+              client_name = nil
               if invoice.freshbooks_client_id.present?
                 client = FreshbooksClient.find_by(freshbooks_id: invoice.freshbooks_client_id)
                 client_email = client&.email
+                client_name = [client&.first_name, client&.last_name].compact.join(' ') if client
               end
 
               if client_email.blank?
@@ -59,15 +116,67 @@ module RailsAdmin
                 next
               end
 
-              invoices_client.send_by_email(
-                freshbooks_invoice.freshbooks_id,
-                email: params[:email] || client_email,
-                subject: params[:subject] || "Invoice #{invoice.name || invoice.slug}",
-                message: params[:message] || 'Please find your invoice attached.'
+              # Get payment link from FreshBooks
+              payment_link = invoices_client.get_payment_link(freshbooks_invoice.freshbooks_id)
+
+              # Get invoice details
+              invoice_number = freshbooks_invoice.invoice_number || 'N/A'
+              invoice_amount = invoice.total_amount || 0
+              due_date = freshbooks_invoice.due_date || ((invoice.created_at&.to_date || Date.today) + 30.days)
+              formatted_due_date = due_date.strftime('%B %d, %Y') if due_date
+
+              # Get WRS link if available
+              wrs_link = invoice.wrs_link
+              flat_address = invoice.flat_address || 'your property'
+
+              # Build email content
+              client_display_name = client_name || 'Valued Client'
+              subject = "Invoice (#{invoice_number}) for £#{invoice_amount.round(2)}"
+
+              html_body = build_invoice_email_html.call(
+                invoice_number: invoice_number,
+                invoice_amount: invoice_amount,
+                due_date: formatted_due_date,
+                client_name: client_display_name,
+                flat_address: flat_address,
+                wrs_link: wrs_link,
+                payment_link: payment_link
               )
 
-              flash[:success] = 'Invoice sent successfully'
+              text_body = build_invoice_email_text.call(
+                invoice_number: invoice_number,
+                invoice_amount: invoice_amount,
+                due_date: formatted_due_date,
+                client_name: client_display_name,
+                flat_address: flat_address,
+                wrs_link: wrs_link,
+                payment_link: payment_link
+              )
+
+              # Send email via MailerSend (FreshBooks API doesn't support direct email sending)
+              email_service = MailerSendEmailService.new(
+                to: params[:email] || client_email,
+                subject: subject,
+                html: html_body,
+                text: text_body,
+                from_name: 'Bullet Services LTD'
+              )
+
+              email_service.call
+
+              if email_service.success?
+                # Update local invoice status
+                invoice.update!(status: 'sent', final_status: 'sent')
+                freshbooks_invoice&.update!(status: 'sent')
+                flash[:success] = "Invoice email sent successfully to #{client_email}"
+              else
+                error_message = email_service.errors.any? ? email_service.errors.join(', ') : 'Unknown error occurred'
+                Rails.logger.error("Failed to send invoice email: #{error_message}")
+                flash[:error] = "Failed to send invoice email: #{error_message}"
+              end
             rescue StandardError => e
+              Rails.logger.error("Failed to send invoice: #{e.message}")
+              Rails.logger.error("Backtrace: #{e.backtrace.first(10).join('\n')}")
               flash[:error] = "Failed to send invoice: #{e.message}"
             end
 

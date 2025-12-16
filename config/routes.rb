@@ -5,6 +5,7 @@ Rails.application.routes.draw do
   get "/about", to: "website#about", as: :about
   post "/contact", to: "website#contact_submit", as: :contact_submit
   get "/wrs/:slug", to: "website#wrs_show", as: :wrs_show
+  post "/wrs/:slug/decision", to: "website#wrs_decision", as: :wrs_decision
 
   # Admin panel (authentication handled in RailsAdmin initializer)
   mount RailsAdmin::Engine => "/admin", as: "rails_admin"
@@ -75,6 +76,9 @@ Rails.application.routes.draw do
       resources :invoices do
         collection do
           post :csv_import
+        end
+        member do
+          post :action
         end
       end
 

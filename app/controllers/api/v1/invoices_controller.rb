@@ -89,6 +89,27 @@ module Api
         }
       end
 
+      # POST /api/v1/invoices/:id/action
+      def action
+        set_invoice
+        authorize @invoice, :update?
+
+        service = Invoices::ActionService.new(
+          invoice: @invoice,
+          action: params[:action_name],
+          discount_amount: params[:discount_amount],
+          notify_client: params[:notify_client]
+        )
+
+        result = service.call
+
+        if result.success?
+          render json: { success: true, invoice: @invoice.reload, freshbooks: result.result }, status: :ok
+        else
+          render json: { success: false, errors: result.errors }, status: :unprocessable_entity
+        end
+      end
+
       private
 
       def set_invoice

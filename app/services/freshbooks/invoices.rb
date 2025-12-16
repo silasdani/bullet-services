@@ -2,6 +2,9 @@
 
 module Freshbooks
   class Invoices < BaseClient
+    include Invoices::PdfMethods
+    include Invoices::EmailMethods
+    include Invoices::LineBuilder
     def list(page: 1, per_page: 100, client_id: nil)
       path = build_path('invoices/invoices')
       query = {
@@ -42,24 +45,13 @@ module Freshbooks
       response.dig('response', 'result', 'invoice')
     end
 
-    def send_by_email(invoice_id, email_params = {})
-      path = build_path("invoices/invoices/#{invoice_id}/email")
-      payload = {
-        email: {
-          email: email_params[:email],
-          subject: email_params[:subject],
-          message: email_params[:message]
-        }.compact
-      }
+    def get_payment_link(invoice_id)
+      invoice_data = get(invoice_id)
+      return nil unless invoice_data
 
-      response = make_request(:post, path, body: payload.to_json)
-      response.dig('response', 'result')
-    end
-
-    def get_pdf(invoice_id)
-      path = build_path("invoices/invoices/#{invoice_id}/pdf")
-      response = make_request(:get, path)
-      response.dig('response', 'result', 'pdf')
+      invoice_data['payment_link'] ||
+        invoice_data['payment_url'] ||
+        build_payment_url_from_invoice(invoice_data)
     end
 
     private
@@ -72,50 +64,35 @@ module Freshbooks
 
     def build_invoice_attributes(params)
       {
-        customerid: params[:client_id] || params[:customerid],
-        create_date: params[:date] || Date.current.to_s,
+        customerid: extract_customer_id(params),
+        create_date: extract_create_date(params),
         due_date: params[:due_date],
-        currency_code: params[:currency] || params[:currency_code] || 'USD',
+        currency_code: extract_currency_code(params),
         notes: params[:notes],
         terms: params[:terms],
+        tax_included: params[:tax_included] || 'yes',
+        tax_calculation: params[:tax_calculation] || 'item',
         lines: build_lines(params[:lines] || [])
       }.compact
+    end
+
+    def extract_customer_id(params)
+      params[:client_id] || params[:customerid]
+    end
+
+    def extract_create_date(params)
+      params[:date] || Date.current.to_s
+    end
+
+    def extract_currency_code(params)
+      params[:currency] || params[:currency_code] || 'USD'
     end
 
     def add_status_if_present(payload, params)
       payload[:invoice][:status] = params[:status] if params[:status].present?
     end
 
-    def build_lines(lines_data)
-      lines_data.map do |line|
-        {
-          name: line[:name],
-          description: line[:description],
-          qty: line[:quantity] || line[:qty] || 1,
-          unit_cost: {
-            amount: line[:cost] || line[:unit_cost],
-            code: line[:currency] || 'USD'
-          },
-          type: line[:type] || 0 # 0 = service, 1 = product
-        }.compact
-      end
-    end
-
-    # Get payment link for invoice (public payment URL)
-    def get_payment_link(invoice_id)
-      invoice_data = get(invoice_id)
-      return nil unless invoice_data
-
-      # FreshBooks provides payment URLs in the response
-      # Check for payment_link, payment_url, or construct from invoice data
-      invoice_data['payment_link'] ||
-        invoice_data['payment_url'] ||
-        build_payment_url_from_invoice(invoice_data)
-    end
-
     def build_payment_url_from_invoice(invoice_data)
-      # FreshBooks payment URL format
-      # Format: https://my.freshbooks.com/view/{business_id}/{invoice_id}
       business_id = FreshbooksToken.current&.business_id || ENV.fetch('FRESHBOOKS_BUSINESS_ID', nil)
       invoice_id = invoice_data['id'] || invoice_data['invoiceid']
       return nil unless business_id && invoice_id

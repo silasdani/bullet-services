@@ -11,6 +11,7 @@ class WindowScheduleRepair < ApplicationRecord
   belongs_to :building
   has_many :windows, dependent: :destroy
   has_many :tools, through: :windows
+  has_many :invoices, dependent: :nullify
   has_many_attached :images
 
   accepts_nested_attributes_for :windows, allow_destroy: true, reject_if: :all_blank
