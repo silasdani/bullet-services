@@ -41,29 +41,44 @@ module Wrs
         invoice = create_local_invoice!(fb_client)
         result = create_freshbooks_invoice!(invoice, fb_client)
 
-        if result.is_a?(Hash)
-          if result[:pdf_base64].present?
-            log_info("Attempting to attach PDF from base64 data (length: #{result[:pdf_base64].length})")
-            attach_invoice_pdf_from_base64!(invoice, result[:pdf_base64])
-          elsif result[:pdf_url].present?
-            # Only try URL download if it's not a UI route (UI routes return HTML)
-            if result[:pdf_url].include?('/#/') || result[:pdf_url].include?('/invoice/')
-              log_warn("Skipping PDF download from UI route (will return HTML): #{result[:pdf_url]}")
-              log_info('Users can download PDF directly from FreshBooks using the invoice_pdf_link')
-            else
-              log_info("Attempting to attach PDF from URL: #{result[:pdf_url]}")
-              attach_invoice_pdf!(invoice, result[:pdf_url])
-            end
-          else
-            log_warn("No PDF data available in result: #{result.inspect}")
-          end
-        else
-          log_warn("Result is not a hash: #{result.inspect}")
-        end
+        attach_pdf_to_invoice(invoice, result) if result.is_a?(Hash)
 
         mark_wrs_as_approved!
         send_admin_accept_email!(invoice, fb_client)
       end
+    end
+
+    def attach_pdf_to_invoice(invoice, result)
+      if result[:pdf_base64].present?
+        attach_pdf_from_base64(invoice, result[:pdf_base64])
+      elsif result[:pdf_url].present?
+        attach_pdf_from_url(invoice, result[:pdf_url])
+      else
+        log_warn("No PDF data available in result: #{result.inspect}")
+      end
+    end
+
+    def attach_pdf_from_base64(invoice, base64_data)
+      log_info("Attempting to attach PDF from base64 data (length: #{base64_data.length})")
+      attach_invoice_pdf_from_base64!(invoice, base64_data)
+    end
+
+    def attach_pdf_from_url(invoice, pdf_url)
+      if ui_route?(pdf_url)
+        log_ui_route_skip(pdf_url)
+      else
+        log_info("Attempting to attach PDF from URL: #{pdf_url}")
+        attach_invoice_pdf!(invoice, pdf_url)
+      end
+    end
+
+    def ui_route?(pdf_url)
+      pdf_url.include?('/#/') || pdf_url.include?('/invoice/')
+    end
+
+    def log_ui_route_skip(pdf_url)
+      log_warn("Skipping PDF download from UI route (will return HTML): #{pdf_url}")
+      log_info('Users can download PDF directly from FreshBooks using the invoice_pdf_link')
     end
 
     def handle_decline
@@ -76,15 +91,31 @@ module Wrs
     def ensure_freshbooks_client!
       clients_client = Freshbooks::Clients.new
 
-      # Try to find an existing FreshBooksClient record by email
-      fb_client_record = FreshbooksClient.find_by(email: email)
-      if fb_client_record
-        fb_client_data = clients_client.get(fb_client_record.freshbooks_id)
-        return fb_client_data if fb_client_data
-      end
+      existing_client = find_existing_client(clients_client)
+      return existing_client if existing_client
 
-      # Otherwise, create a new FreshBooks client
-      created = clients_client.create(
+      create_new_freshbooks_client(clients_client)
+    end
+
+    def find_existing_client(clients_client)
+      fb_client_record = FreshbooksClient.find_by(email: email)
+      return nil unless fb_client_record
+
+      clients_client.get(fb_client_record.freshbooks_id)
+    end
+
+    def create_new_freshbooks_client(clients_client)
+      created = clients_client.create(build_client_creation_params)
+      fb_id = extract_client_id(created)
+      client_record = create_local_client_record(created, fb_id)
+
+      log_info("Created FreshbooksClient record: ID=#{client_record.id}, freshbooks_id=#{fb_id}, email=#{email}")
+
+      created
+    end
+
+    def build_client_creation_params
+      {
         email: email,
         first_name: first_name,
         last_name: last_name,
@@ -95,11 +126,15 @@ module Wrs
         province: nil,
         postal_code: building&.zipcode,
         country: building&.country || 'UK'
-      )
+      }
+    end
 
-      fb_id = created['id'] || created['clientid']
+    def extract_client_id(created)
+      created['id'] || created['clientid']
+    end
 
-      client_record = FreshbooksClient.create!(
+    def create_local_client_record(created, fb_id)
+      FreshbooksClient.create!(
         freshbooks_id: fb_id,
         email: email,
         first_name: first_name,
@@ -110,10 +145,6 @@ module Wrs
         country: building&.country || 'UK',
         raw_data: created
       )
-
-      log_info("Created FreshbooksClient record: ID=#{client_record.id}, freshbooks_id=#{fb_id}, email=#{email}")
-
-      created
     end
 
     def create_local_invoice!(fb_client_data)
@@ -169,98 +200,119 @@ module Wrs
       return if base64_data.blank?
 
       tempfile = nil
-      max_retries = 3
-      retry_count = 0
-
       begin
-        log_info("Decoding base64 PDF data (length: #{base64_data.length})")
+        pdf_bytes = decode_and_validate_pdf(base64_data)
+        return unless pdf_bytes
 
-        # Decode base64 PDF data
-        pdf_bytes = Base64.decode64(base64_data)
-        log_info("Decoded PDF bytes length: #{pdf_bytes.length}")
-
-        # Validate it's actually PDF (starts with %PDF)
-        unless pdf_bytes.start_with?('%PDF')
-          first_bytes = begin
-            pdf_bytes[0..20]
-          rescue StandardError
-            'unable to read'
-          end
-          log_error('Base64 data does not appear to be a valid PDF')
-          log_error("First bytes: #{first_bytes.inspect}")
-          return
-        end
-
-        # Retry loop for attachment
-        begin
-          # Create a tempfile with the PDF bytes
-          tempfile = Tempfile.new(['invoice_pdf', '.pdf'], binmode: true)
-          tempfile.write(pdf_bytes)
-          tempfile.rewind
-          log_info('Created tempfile with PDF data')
-
-          # Reload invoice to ensure we have latest state
-          invoice.reload if invoice.persisted?
-
-          # Attach to invoice with retry logic
-          attachment_success = false
-          while retry_count < max_retries && !attachment_success
-            begin
-              invoice.invoice_pdf.attach(
-                io: tempfile.dup, # Use dup to avoid closed stream errors
-                filename: "invoice_#{invoice.slug}_#{Time.current.to_i}.pdf",
-                content_type: 'application/pdf',
-                metadata: { source: 'freshbooks_api_base64' }
-              )
-
-              # Verify attachment immediately
-              invoice.reload
-              if invoice.invoice_pdf.attached?
-                blob = invoice.invoice_pdf.blob
-                log_info("PDF attachment verified: #{blob.filename}, size: #{blob.byte_size} bytes")
-                attachment_success = true
-              else
-                retry_count += 1
-                if retry_count < max_retries
-                  log_warn("Attachment verification failed, retrying (#{retry_count}/#{max_retries})...")
-                  sleep(0.5) # Brief delay before retry
-                else
-                  log_error('PDF attachment failed - file not attached after all retries')
-                end
-              end
-            rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotSaved => e
-              retry_count += 1
-              raise unless retry_count < max_retries
-
-              log_warn("Attachment error: #{e.message}, retrying (#{retry_count}/#{max_retries})...")
-              sleep(0.5)
-              tempfile&.rewind
-            end
-          end
-
-          log_info("Successfully attached PDF from base64 data to invoice #{invoice.id}") if attachment_success
-        rescue StandardError => e
-          log_error("Failed to attach PDF after #{retry_count} retries: #{e.message}")
-          log_error("Error class: #{e.class}")
-          raise
-        end
+        tempfile = create_pdf_tempfile(pdf_bytes)
+        attach_pdf_with_retries(invoice, tempfile)
       rescue StandardError => e
         log_error("Failed to attach PDF from base64: #{e.message}")
         log_error("Error class: #{e.class}")
         log_error("Backtrace: #{e.backtrace.first(10).join('\n')}")
       ensure
-        if tempfile
-          begin
-            tempfile.close
-          rescue StandardError
-            nil
-          end
-          begin
-            tempfile.unlink
-          rescue StandardError
-            nil
-          end
-        end
+        cleanup_tempfile(tempfile)
+      end
+    end
+
+    def decode_and_validate_pdf(base64_data)
+      log_info("Decoding base64 PDF data (length: #{base64_data.length})")
+      pdf_bytes = Base64.decode64(base64_data)
+      log_info("Decoded PDF bytes length: #{pdf_bytes.length}")
+
+      return pdf_bytes if pdf_bytes.start_with?('%PDF')
+
+      log_invalid_pdf_error(pdf_bytes)
+      nil
+    rescue StandardError => e
+      log_error("Failed to decode base64 PDF data: #{e.message}")
+      nil
+    end
+
+    def log_invalid_pdf_error(pdf_bytes)
+      first_bytes = safe_read_first_bytes(pdf_bytes)
+      log_error('Base64 data does not appear to be a valid PDF')
+      log_error("First bytes: #{first_bytes.inspect}")
+    end
+
+    def safe_read_first_bytes(pdf_bytes)
+      pdf_bytes[0..20]
+    rescue StandardError
+      'unable to read'
+    end
+
+    def create_pdf_tempfile(pdf_bytes)
+      tempfile = Tempfile.new(['invoice_pdf', '.pdf'], binmode: true)
+      tempfile.write(pdf_bytes)
+      tempfile.rewind
+      log_info('Created tempfile with PDF data')
+      tempfile
+    end
+
+    def attach_pdf_with_retries(invoice, tempfile)
+      invoice.reload if invoice.persisted?
+
+      max_retries = 3
+      retry_count = 0
+      attachment_success = false
+
+      while retry_count < max_retries && !attachment_success
+        attachment_success = attempt_pdf_attachment(invoice, tempfile, retry_count, max_retries)
+        retry_count += 1 unless attachment_success
+      end
+
+      log_info("Successfully attached PDF from base64 data to invoice #{invoice.id}") if attachment_success
+    rescue StandardError => e
+      log_error("Failed to attach PDF after #{retry_count} retries: #{e.message}")
+      log_error("Error class: #{e.class}")
+      raise
+    end
+
+    def attempt_pdf_attachment(invoice, tempfile, retry_count, max_retries)
+      invoice.invoice_pdf.attach(build_attachment_params(invoice, tempfile))
+      verify_and_log_attachment(invoice)
+    rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotSaved => e
+      handle_attachment_error(e, tempfile, retry_count, max_retries)
+      false
+    end
+
+    def build_attachment_params(invoice, tempfile)
+      {
+        io: tempfile.dup,
+        filename: "invoice_#{invoice.slug}_#{Time.current.to_i}.pdf",
+        content_type: 'application/pdf',
+        metadata: { source: 'freshbooks_api_base64' }
+      }
+    end
+
+    def verify_and_log_attachment(invoice)
+      invoice.reload
+      return false unless invoice.invoice_pdf.attached?
+
+      blob = invoice.invoice_pdf.blob
+      log_info("PDF attachment verified: #{blob.filename}, size: #{blob.byte_size} bytes")
+      true
+    end
+
+    def handle_attachment_error(error, tempfile, retry_count, max_retries)
+      raise if retry_count >= max_retries - 1
+
+      log_warn("Attachment error: #{error.message}, retrying (#{retry_count + 1}/#{max_retries})...")
+      sleep(0.5)
+      tempfile&.rewind
+    end
+
+    def cleanup_tempfile(tempfile)
+      return unless tempfile
+
+      tempfile.close
+    rescue StandardError
+      nil
+    ensure
+      begin
+        tempfile&.unlink
+      rescue StandardError
+        nil
       end
     end
 
@@ -277,10 +329,20 @@ module Wrs
     end
 
     def send_admin_accept_email!(invoice, fb_client_data)
-      subject = "ACTION REQUIRED | Invoice #{invoice_identifier(invoice,
-                                                                fb_client_data)} for #{window_schedule_repair.address} Flat #{window_schedule_repair.flat_number}"
+      subject = build_accept_email_subject(invoice, fb_client_data)
+      html_body = build_accept_email_body
 
-      html_body = <<~HTML
+      send_email(subject, html_body)
+    end
+
+    def build_accept_email_subject(invoice, fb_client_data)
+      invoice_id = invoice_identifier(invoice, fb_client_data)
+      address = "#{window_schedule_repair.address} Flat #{window_schedule_repair.flat_number}"
+      "ACTION REQUIRED | Invoice #{invoice_id} for #{address}"
+    end
+
+    def build_accept_email_body
+      <<~HTML
         <h2>New WRS Acceptance and Invoice Created</h2>
         <p><strong>Client:</strong> #{client_full_name}</p>
         <p><strong>Email:</strong> #{email}</p>
@@ -289,19 +351,22 @@ module Wrs
         <p><strong>WRS Link:</strong> <a href="#{wrs_public_url}">#{wrs_public_url}</a></p>
         <p><strong>Invoice total (incl. VAT):</strong> #{window_schedule_repair.total_vat_included_price}</p>
       HTML
-
-      MailerSendEmailService.new(
-        to: admin_email,
-        subject: subject,
-        html: html_body,
-        text: html_body.gsub(%r{</?[^>]*>}, '')
-      ).call
     end
 
     def send_admin_decline_email!
-      subject = "ACTION REQUIRED | WRS declined for #{window_schedule_repair.address} Flat #{window_schedule_repair.flat_number}"
+      subject = build_decline_email_subject
+      html_body = build_decline_email_body
 
-      html_body = <<~HTML
+      send_email(subject, html_body)
+    end
+
+    def build_decline_email_subject
+      address = "#{window_schedule_repair.address} Flat #{window_schedule_repair.flat_number}"
+      "ACTION REQUIRED | WRS declined for #{address}"
+    end
+
+    def build_decline_email_body
+      <<~HTML
         <h2>WRS Declined by Client</h2>
         <p><strong>Client:</strong> #{client_full_name}</p>
         <p><strong>Email:</strong> #{email}</p>
@@ -309,7 +374,9 @@ module Wrs
         <p><strong>WRS Reference:</strong> #{window_schedule_repair.reference_number}</p>
         <p><strong>WRS Link:</strong> <a href="#{wrs_public_url}">#{wrs_public_url}</a></p>
       HTML
+    end
 
+    def send_email(subject, html_body)
       MailerSendEmailService.new(
         to: admin_email,
         subject: subject,

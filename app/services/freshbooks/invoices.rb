@@ -43,45 +43,60 @@ module Freshbooks
     end
 
     def send_by_email(invoice_id, email_params = {})
-      # Try multiple possible endpoints - FreshBooks API endpoint structure may vary
-      endpoints_to_try = [
+      endpoints = build_email_endpoints(invoice_id)
+      payload = build_email_payload(email_params)
+
+      result = try_email_endpoints(endpoints, payload)
+      return result if result.present?
+
+      return_manual_email_response
+    end
+
+    def build_email_endpoints(invoice_id)
+      [
         "invoices/invoices/#{invoice_id}/email",
         "invoices/invoices/#{invoice_id}/send",
         "invoices/invoices/#{invoice_id}/send_email"
       ]
+    end
 
-      payload = {
+    def build_email_payload(email_params)
+      {
         email: {
           email: email_params[:email],
           subject: email_params[:subject],
           message: email_params[:message]
         }.compact
       }
+    end
 
-      last_error = nil
-      endpoints_to_try.each do |endpoint_path|
-        path = build_path(endpoint_path)
-        Rails.logger.info("Attempting to send invoice email via: #{path}")
-        response = make_request(:post, path, body: payload.to_json)
-        result = response.dig('response', 'result')
-        Rails.logger.info("Invoice email sent successfully via #{endpoint_path}")
+    def try_email_endpoints(endpoints, payload)
+      endpoints.each do |endpoint_path|
+        result = try_single_email_endpoint(endpoint_path, payload)
         return result if result.present?
-      rescue FreshbooksError => e
-        last_error = e
-        Rails.logger.warn("Endpoint #{endpoint_path} failed: #{e.message}")
-        # Continue to next endpoint
-      rescue StandardError => e
-        last_error = e
-        Rails.logger.warn("Endpoint #{endpoint_path} error: #{e.message}")
-        # Continue to next endpoint
       end
+      nil
+    end
 
-      # FreshBooks API doesn't have a direct email endpoint
-      # Return a helpful response indicating manual send is required
+    def try_single_email_endpoint(endpoint_path, payload)
+      path = build_path(endpoint_path)
+      Rails.logger.info("Attempting to send invoice email via: #{path}")
+      response = make_request(:post, path, body: payload.to_json)
+      result = response.dig('response', 'result')
+      Rails.logger.info("Invoice email sent successfully via #{endpoint_path}")
+      result if result.present?
+    rescue FreshbooksError => e
+      Rails.logger.warn("Endpoint #{endpoint_path} failed: #{e.message}")
+      nil
+    rescue StandardError => e
+      Rails.logger.warn("Endpoint #{endpoint_path} error: #{e.message}")
+      nil
+    end
+
+    def return_manual_email_response
       Rails.logger.warn('FreshBooks API does not support direct email sending via API')
       Rails.logger.info('Invoice email must be sent manually from FreshBooks UI')
 
-      # Return success with a note that manual action is required
       {
         success: true,
         method: 'manual_required',
@@ -108,84 +123,140 @@ module Freshbooks
     end
 
     def get_pdf_as_base64(invoice_id)
-      # Try to get PDF as base64 directly from API
       path = build_path("invoices/invoices/#{invoice_id}/pdf")
 
-      # First try raw binary PDF and convert to base64
-      begin
-        pdf_bytes = get_pdf_binary(invoice_id)
-        return Base64.strict_encode64(pdf_bytes) if pdf_bytes.present? && pdf_bytes.start_with?('%PDF')
-      rescue StandardError => e
-        Rails.logger.warn("Binary PDF fetch failed: #{e.message}")
-      end
+      base64_from_binary = try_binary_to_base64(invoice_id)
+      return base64_from_binary if base64_from_binary.present?
 
-      # Fallback to JSON API response
+      extract_base64_from_json_response(path)
+    end
+
+    def try_binary_to_base64(invoice_id)
+      pdf_bytes = get_pdf_binary(invoice_id)
+      return nil unless pdf_bytes.present? && pdf_bytes.start_with?('%PDF')
+
+      Base64.strict_encode64(pdf_bytes)
+    rescue StandardError => e
+      Rails.logger.warn("Binary PDF fetch failed: #{e.message}")
+      nil
+    end
+
+    def extract_base64_from_json_response(path)
       response = make_request(:get, path)
-
-      # Check if response contains base64 PDF data
-      pdf_data = response.dig('response', 'result', 'pdf')
-      return pdf_data if pdf_data.is_a?(String) && pdf_data.length > 100
-
-      # Check nested structure
-      pdf_data = response.dig('response', 'result', 'pdf', 'content') ||
-                 response.dig('response', 'result', 'pdf', 'data') ||
-                 response.dig('response', 'result', 'content') ||
-                 response.dig('response', 'result', 'pdf', 'base64')
+      pdf_data = find_base64_in_response(response)
 
       pdf_data if pdf_data.is_a?(String) && pdf_data.length > 100
     end
 
+    def find_base64_in_response(response)
+      direct_pdf = response.dig('response', 'result', 'pdf')
+      return direct_pdf if direct_pdf.is_a?(String) && direct_pdf.length > 100
+
+      try_nested_base64_paths(response)
+    end
+
+    def try_nested_base64_paths(response)
+      paths = [
+        %w[response result pdf content],
+        %w[response result pdf data],
+        %w[response result content],
+        %w[response result pdf base64]
+      ]
+
+      paths.each do |path_keys|
+        data = response.dig(*path_keys)
+        return data if data.is_a?(String) && data.length > 100
+      end
+
+      nil
+    end
+
     def get_pdf_binary(invoice_id)
-      # Get PDF as raw binary bytes using HTTParty directly
       path = build_path("invoices/invoices/#{invoice_id}/pdf")
       full_url = "#{self.class.base_uri}#{path}"
 
-      token = FreshbooksToken.current
-      unless token
-        Rails.logger.error('No FreshBooks token available for PDF download')
-        return nil
-      end
+      return nil unless token_available?
 
-      options = {
+      response = fetch_pdf_http_response(full_url)
+      validate_and_return_pdf(response)
+    rescue StandardError => e
+      log_pdf_binary_error(e)
+      nil
+    end
+
+    def token_available?
+      token = FreshbooksToken.current
+      return true if token
+
+      Rails.logger.error('No FreshBooks token available for PDF download')
+      false
+    end
+
+    def fetch_pdf_http_response(full_url)
+      options = build_pdf_request_options
+      Rails.logger.info("Attempting to fetch PDF binary from: #{full_url}")
+      response = HTTParty.get(full_url, options)
+
+      log_pdf_response_info(response)
+      response
+    end
+
+    def build_pdf_request_options
+      token = FreshbooksToken.current
+      {
         headers: {
           'Authorization' => "Bearer #{token.access_token}",
           'Api-Version' => 'alpha',
           'Accept' => 'application/pdf'
         }
       }
+    end
 
-      Rails.logger.info("Attempting to fetch PDF binary from: #{full_url}")
-      response = HTTParty.get(full_url, options)
+    def log_pdf_response_info(response)
+      Rails.logger.info(
+        "PDF binary response code: #{response.code}, " \
+        "content-type: #{response.headers['content-type']}, " \
+        "body length: #{response.body&.length}"
+      )
+    end
 
-      Rails.logger.info("PDF binary response code: #{response.code}, content-type: #{response.headers['content-type']}, body length: #{response.body&.length}")
+    def validate_and_return_pdf(response)
+      return nil unless response.success? && response.body.present?
 
-      if response.success? && response.body.present?
-        # Check if it's actually PDF
-        body_start = begin
-          response.body[0..10]
-        rescue StandardError
-          ''
-        end
-        Rails.logger.info("PDF body starts with: #{body_start.inspect}")
+      body_start = safe_body_start(response.body)
+      Rails.logger.info("PDF body starts with: #{body_start.inspect}")
 
-        if response.body.start_with?('%PDF')
-          Rails.logger.info("Successfully retrieved PDF binary (#{response.body.length} bytes)")
-          return response.body
-        elsif response.headers['content-type']&.include?('application/pdf')
-          Rails.logger.info('Content-type indicates PDF, returning body')
-          return response.body
-        else
-          Rails.logger.warn("Response doesn't appear to be PDF. Starts with: #{body_start.inspect}")
-        end
+      return response.body if valid_pdf_content?(response)
+
+      log_invalid_pdf_warning(response, body_start)
+      nil
+    end
+
+    def safe_body_start(body)
+      body[0..10]
+    rescue StandardError
+      ''
+    end
+
+    def valid_pdf_content?(response)
+      response.body.start_with?('%PDF') || pdf_content_type?(response)
+    end
+
+    def pdf_content_type?(response)
+      response.headers['content-type']&.include?('application/pdf')
+    end
+
+    def log_invalid_pdf_warning(response, body_start)
+      if response.success?
+        Rails.logger.warn("Response doesn't appear to be PDF. Starts with: #{body_start.inspect}")
       else
         Rails.logger.warn("PDF request failed: code=#{response.code}, body=#{response.body[0..200]}")
       end
+    end
 
-      nil
-    rescue StandardError => e
-      Rails.logger.error("Failed to get PDF binary: #{e.message}")
-      Rails.logger.error("Backtrace: #{e.backtrace.first(5).join('\n')}")
-      nil
+    def log_pdf_binary_error(error)
+      Rails.logger.error("Failed to get PDF binary: #{error.message}")
+      Rails.logger.error("Backtrace: #{error.backtrace.first(5).join('\n')}")
     end
 
     def get_payment_link(invoice_id)
@@ -209,16 +280,28 @@ module Freshbooks
 
     def build_invoice_attributes(params)
       {
-        customerid: params[:client_id] || params[:customerid],
-        create_date: params[:date] || Date.current.to_s,
+        customerid: extract_customer_id(params),
+        create_date: extract_create_date(params),
         due_date: params[:due_date],
-        currency_code: params[:currency] || params[:currency_code] || 'USD',
+        currency_code: extract_currency_code(params),
         notes: params[:notes],
         terms: params[:terms],
-        tax_included: params[:tax_included] || 'yes', # Default to VAT-inclusive pricing
+        tax_included: params[:tax_included] || 'yes',
         tax_calculation: params[:tax_calculation] || 'item',
         lines: build_lines(params[:lines] || [])
       }.compact
+    end
+
+    def extract_customer_id(params)
+      params[:client_id] || params[:customerid]
+    end
+
+    def extract_create_date(params)
+      params[:date] || Date.current.to_s
+    end
+
+    def extract_currency_code(params)
+      params[:currency] || params[:currency_code] || 'USD'
     end
 
     def add_status_if_present(payload, params)
@@ -226,30 +309,56 @@ module Freshbooks
     end
 
     def build_lines(lines_data)
-      lines_data.map do |line|
-        line_item = {
-          name: line[:name],
-          description: line[:description],
-          qty: line[:quantity] || line[:qty] || 1,
-          unit_cost: {
-            amount: line[:cost] || line[:unit_cost],
-            code: line[:currency] || 'USD'
-          },
-          type: line[:type] || 0 # 0 = service, 1 = product
-        }
+      lines_data.map { |line| build_single_line(line) }
+    end
 
-        # If tax_included is set, ensure line items don't add additional tax
-        # Set tax_amount1 to 0 to explicitly tell FreshBooks no additional VAT
-        if [true, 'yes'].include?(line[:tax_included])
-          line_item[:tax_amount1] = '0'
-          line_item[:tax_amount2] = '0'
-        elsif line[:tax_amount1].present?
-          line_item[:tax_amount1] = line[:tax_amount1]
-          line_item[:tax_amount2] = line[:tax_amount2] if line[:tax_amount2].present?
-        end
+    def build_single_line(line)
+      line_item = build_base_line_item(line)
+      apply_tax_settings(line_item, line)
+      line_item.compact
+    end
 
-        line_item.compact
+    def build_base_line_item(line)
+      {
+        name: line[:name],
+        description: line[:description],
+        qty: extract_quantity(line),
+        unit_cost: build_unit_cost(line),
+        type: line[:type] || 0
+      }
+    end
+
+    def extract_quantity(line)
+      line[:quantity] || line[:qty] || 1
+    end
+
+    def build_unit_cost(line)
+      {
+        amount: line[:cost] || line[:unit_cost],
+        code: line[:currency] || 'USD'
+      }
+    end
+
+    def apply_tax_settings(line_item, line)
+      if tax_included?(line)
+        set_zero_tax_amounts(line_item)
+      elsif line[:tax_amount1].present?
+        set_custom_tax_amounts(line_item, line)
       end
+    end
+
+    def tax_included?(line)
+      [true, 'yes'].include?(line[:tax_included])
+    end
+
+    def set_zero_tax_amounts(line_item)
+      line_item[:tax_amount1] = '0'
+      line_item[:tax_amount2] = '0'
+    end
+
+    def set_custom_tax_amounts(line_item, line)
+      line_item[:tax_amount1] = line[:tax_amount1]
+      line_item[:tax_amount2] = line[:tax_amount2] if line[:tax_amount2].present?
     end
 
     def build_payment_url_from_invoice(invoice_data)

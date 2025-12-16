@@ -10,7 +10,9 @@ RSpec.describe Wrs::DecisionService do
     context 'when decision is accept' do
       it 'creates a FreshBooks client and invoice and marks wrs as approved' do
         allow(Freshbooks::Clients).to receive(:new).and_return(double(create: { 'id' => '123' }))
-        allow_any_instance_of(Invoice).to receive(:create_in_freshbooks!).and_return({ pdf_url: 'https://example.com/invoice.pdf' })
+        allow_any_instance_of(Invoice)
+          .to receive(:create_in_freshbooks!)
+          .and_return({ pdf_url: 'https://example.com/invoice.pdf' })
         allow(Webflow::PdfMirrorService).to receive(:new).and_return(double(call: true))
         allow(MailerSendEmailService).to receive(:new).and_return(double(call: true))
 

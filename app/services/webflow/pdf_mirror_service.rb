@@ -46,38 +46,45 @@ module Webflow
     def download_and_attach_pdf(attachment)
       io = download_pdf(source_url)
       filename = extract_filename_with_fallback
-      io.rewind
 
-      # Validate it's actually a PDF (not HTML)
+      return cleanup_io(io) unless validate_pdf_content(io)
+
+      blob = create_pdf_blob(io, filename)
+      attach_blob_with_retry(attachment, blob)
+    ensure
+      cleanup_io(io)
+    end
+
+    def validate_pdf_content(io)
+      io.rewind
       first_bytes = io.read(4)
       io.rewind
 
-      unless first_bytes == '%PDF'
-        log_error("Downloaded content is not a valid PDF (starts with: #{first_bytes.inspect}). URL: #{source_url}")
-        io.close
-        io.unlink if io.respond_to?(:unlink)
-        return
-      end
+      return true if first_bytes == '%PDF'
 
-      content_type = 'application/pdf' # Force PDF content type
+      log_error("Downloaded content is not a valid PDF (starts with: #{first_bytes.inspect}). URL: #{source_url}")
+      false
+    end
+
+    def create_pdf_blob(io, filename)
       io.rewind
-
       metadata = { source_url: source_url }
-      blob = nil
 
       ActiveRecord::Base.uncached do
-        blob = ActiveStorage::Blob.create_and_upload!(
+        ActiveStorage::Blob.create_and_upload!(
           io: io,
           filename: filename,
-          content_type: content_type,
+          content_type: 'application/pdf',
           metadata: metadata
         )
       end
+    end
 
-      attach_blob_with_retry(attachment, blob)
-    ensure
-      io&.close
-      io&.unlink if io.respond_to?(:unlink)
+    def cleanup_io(io)
+      return unless io
+
+      io.close
+      io.unlink if io.respond_to?(:unlink)
     end
 
     def extract_filename_with_fallback

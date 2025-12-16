@@ -44,7 +44,8 @@ module RailsAdmin
             end
 
             # Helper methods for email formatting
-            build_invoice_email_html = lambda do |invoice_number:, invoice_amount:, due_date:, client_name:, flat_address:, wrs_link:, payment_link:|
+            build_invoice_email_html = lambda do |invoice_number:, invoice_amount:, due_date:, client_name:,
+                                                 flat_address:, wrs_link:, payment_link:|
               <<~HTML
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
                   <p style="font-size: 16px; line-height: 1.6;">
@@ -78,7 +79,8 @@ module RailsAdmin
               HTML
             end
 
-            build_invoice_email_text = lambda do |invoice_number:, invoice_amount:, due_date:, client_name:, flat_address:, wrs_link:, payment_link:|
+            build_invoice_email_text = lambda do |invoice_number:, invoice_amount:, due_date:, client_name:,
+                                                 flat_address:, wrs_link:, payment_link:|
               <<~TEXT
                 Bullet Services LTD sent you an invoice (#{invoice_number}) for £#{invoice_amount.round(2)}#{if due_date
                                                                                                                " that's due on #{due_date}"

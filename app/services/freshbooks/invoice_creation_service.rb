@@ -29,93 +29,130 @@ module Freshbooks
       freshbooks_invoice_id = freshbooks_invoice_data['id'] || freshbooks_invoice_data['invoiceid']
       invoice_url = extract_invoice_url(freshbooks_invoice_data)
 
-      # Try to get PDF data from FreshBooks API
-      # The API might return base64 PDF data or a download URL
-      pdf_base64_data = nil
-      pdf_download_url = nil
+      pdf_data = fetch_invoice_pdf_data(invoices_client, freshbooks_invoice_id, freshbooks_invoice_data)
 
-      begin
-        # Strategy 1: Try to get PDF as binary and convert to base64 (with retries)
-        pdf_binary = nil
-        3.times do |attempt|
-          pdf_binary = invoices_client.get_pdf_binary(freshbooks_invoice_id)
-          break if pdf_binary.present? && pdf_binary.start_with?('%PDF')
-        rescue StandardError => e
-          log_warn("PDF binary fetch attempt #{attempt + 1} failed: #{e.message}")
-          sleep(0.5) if attempt < 2 # Wait before retry
-        end
+      update_invoice_and_sync_record(freshbooks_invoice_data, invoice_url, freshbooks_invoice_id)
 
-        if pdf_binary.present? && pdf_binary.start_with?('%PDF')
-          pdf_base64_data = Base64.strict_encode64(pdf_binary)
-          log_info("Successfully retrieved PDF binary (#{pdf_binary.length} bytes) and encoded to base64")
-        end
+      @result = {
+        freshbooks_invoice: freshbooks_invoice_data,
+        invoice: invoice,
+        pdf_url: pdf_data[:download_url],
+        pdf_base64: pdf_data[:base64],
+        invoice_url: invoice_url
+      }
+    end
 
-        # Strategy 2: If binary failed, try JSON API endpoint for base64
-        unless pdf_base64_data.present?
-          pdf_base64_data = invoices_client.get_pdf_as_base64(freshbooks_invoice_id)
-          log_info("PDF base64 from JSON API length: #{pdf_base64_data&.length}")
-        end
+    def fetch_invoice_pdf_data(invoices_client, invoice_id, invoice_data)
+      pdf_data = { base64: nil, download_url: nil }
 
-        # Strategy 3: If no base64, try to get download URL from JSON response
-        unless pdf_base64_data.present?
-          pdf_data = invoices_client.get_pdf(freshbooks_invoice_id)
-          log_info("PDF data from FreshBooks API: #{pdf_data.class} - #{pdf_data.inspect[0..200]}")
+      pdf_data = try_primary_pdf_strategies(invoices_client, invoice_id, pdf_data)
+      try_pdf_fallback(invoices_client, invoice_id, invoice_data, pdf_data)
+    rescue StandardError => e
+      log_error("Failed to get PDF from FreshBooks API: #{e.message}")
+      log_error("Error class: #{e.class}")
+      log_error("Error backtrace: #{e.backtrace.first(5).join('\n')}")
+      pdf_data
+    end
 
-          if pdf_data.is_a?(String) && pdf_data.length > 100
-            # Might be base64 string
-            begin
-              decoded = Base64.decode64(pdf_data)
-              if decoded.start_with?('%PDF')
-                pdf_base64_data = pdf_data
-                log_info('Found base64 PDF in string response')
-              end
-            rescue StandardError
-              # Not base64, continue
-            end
-          end
+    def try_primary_pdf_strategies(invoices_client, invoice_id, pdf_data)
+      pdf_data = try_binary_pdf_strategy(invoices_client, invoice_id, pdf_data)
+      pdf_data = try_base64_api_strategy(invoices_client, invoice_id, pdf_data)
+      try_json_response_strategy(invoices_client, invoice_id, pdf_data)
+    end
 
-          pdf_download_url = extract_pdf_download_url(pdf_data) if pdf_data.is_a?(Hash)
-          log_info("Extracted PDF download URL: #{pdf_download_url.inspect}")
-        end
+    def try_binary_pdf_strategy(invoices_client, invoice_id, pdf_data)
+      return pdf_data if pdf_data[:base64].present?
+
+      pdf_binary = fetch_pdf_binary_with_retries(invoices_client, invoice_id)
+      return pdf_data unless pdf_binary.present? && pdf_binary.start_with?('%PDF')
+
+      {
+        base64: Base64.strict_encode64(pdf_binary),
+        download_url: pdf_data[:download_url]
+      }.tap do |result|
+        log_info("Successfully retrieved PDF binary (#{pdf_binary.length} bytes) and encoded to base64")
+      end
+    end
+
+    def fetch_pdf_binary_with_retries(invoices_client, invoice_id)
+      3.times do |attempt|
+        pdf_binary = invoices_client.get_pdf_binary(invoice_id)
+        return pdf_binary if pdf_binary.present? && pdf_binary.start_with?('%PDF')
       rescue StandardError => e
-        log_error("Failed to get PDF from FreshBooks API: #{e.message}")
-        log_error("Error class: #{e.class}")
-        log_error("Error backtrace: #{e.backtrace.first(5).join('\n')}")
+        log_warn("PDF binary fetch attempt #{attempt + 1} failed: #{e.message}")
+        sleep(0.5) if attempt < 2
       end
+      nil
+    end
 
-      # Final fallback: Try to fetch PDF using direct API endpoint with binary request
-      unless pdf_base64_data.present?
-        begin
-          pdf_binary_fallback = invoices_client.get_pdf_binary(freshbooks_invoice_id)
-          if pdf_binary_fallback.present? && pdf_binary_fallback.start_with?('%PDF')
-            pdf_base64_data = Base64.strict_encode64(pdf_binary_fallback)
-            log_info('Successfully retrieved PDF via binary fallback method')
-          end
-        rescue StandardError => e
-          log_warn("Binary PDF fallback failed: #{e.message}")
-        end
+    def try_base64_api_strategy(invoices_client, invoice_id, pdf_data)
+      return pdf_data if pdf_data[:base64].present?
 
-        # Last resort: construct URL (but we'll skip downloading from UI routes)
-        pdf_download_url ||= extract_pdf_url(freshbooks_invoice_data) unless pdf_base64_data.present?
+      base64_data = invoices_client.get_pdf_as_base64(invoice_id)
+      return pdf_data unless base64_data.present?
+
+      log_info("PDF base64 from JSON API length: #{base64_data.length}")
+      { base64: base64_data, download_url: pdf_data[:download_url] }
+    end
+
+    def try_json_response_strategy(invoices_client, invoice_id, pdf_data)
+      return pdf_data if pdf_data[:base64].present?
+
+      pdf_data_response = invoices_client.get_pdf(invoice_id)
+      log_info("PDF data from FreshBooks API: #{pdf_data_response.class} - #{pdf_data_response.inspect[0..200]}")
+
+      base64_from_string = try_extract_base64_from_string(pdf_data_response)
+      download_url = extract_pdf_download_url(pdf_data_response) if pdf_data_response.is_a?(Hash)
+
+      {
+        base64: base64_from_string || pdf_data[:base64],
+        download_url: download_url || pdf_data[:download_url]
+      }.tap do |result|
+        log_info("Extracted PDF download URL: #{result[:download_url].inspect}")
       end
+    end
 
-      # Store the FreshBooks client ID and UI invoice URL
+    def try_extract_base64_from_string(pdf_data)
+      return nil unless pdf_data.is_a?(String) && pdf_data.length > 100
+
+      decoded = Base64.decode64(pdf_data)
+      pdf_data if decoded.start_with?('%PDF')
+    rescue StandardError
+      nil
+    end
+
+    def try_pdf_fallback(invoices_client, invoice_id, invoice_data, pdf_data)
+      return pdf_data if pdf_data[:base64].present?
+
+      fallback_base64 = try_binary_fallback(invoices_client, invoice_id)
+      fallback_url = extract_pdf_url(invoice_data) unless fallback_base64.present?
+
+      {
+        base64: fallback_base64 || pdf_data[:base64],
+        download_url: fallback_url || pdf_data[:download_url]
+      }
+    end
+
+    def try_binary_fallback(invoices_client, invoice_id)
+      pdf_binary = invoices_client.get_pdf_binary(invoice_id)
+      return nil unless pdf_binary.present? && pdf_binary.start_with?('%PDF')
+
+      Base64.strict_encode64(pdf_binary).tap do
+        log_info('Successfully retrieved PDF via binary fallback method')
+      end
+    rescue StandardError => e
+      log_warn("Binary PDF fallback failed: #{e.message}")
+      nil
+    end
+
+    def update_invoice_and_sync_record(freshbooks_invoice_data, invoice_url, invoice_id)
       invoice.update!(
         freshbooks_client_id: client_id,
         invoice_pdf_link: invoice_url
       )
 
-      # Create or update local FreshbooksInvoice record
       sync_freshbooks_invoice_record(freshbooks_invoice_data, invoice_url)
-
-      log_info("Created FreshBooks invoice #{freshbooks_invoice_id} for invoice #{invoice.id}")
-      @result = {
-        freshbooks_invoice: freshbooks_invoice_data,
-        invoice: invoice,
-        pdf_url: pdf_download_url,
-        pdf_base64: pdf_base64_data,
-        invoice_url: invoice_url
-      }
+      log_info("Created FreshBooks invoice #{invoice_id} for invoice #{invoice.id}")
     end
 
     def build_invoice_params
@@ -133,22 +170,26 @@ module Freshbooks
     def build_invoice_lines
       return lines if lines.any?
 
-      # Default line item from invoice amounts
-      # If included_vat_amount is present, use it and mark as tax-inclusive
-      # Otherwise use excluded_vat_amount (tax will be added by FreshBooks)
-      cost = invoice.included_vat_amount || invoice.excluded_vat_amount || 0
-      tax_included = invoice.included_vat_amount.present?
+      [build_default_invoice_line]
+    end
 
-      [
-        {
-          name: invoice.name || 'Invoice',
-          description: invoice.job || invoice.wrs_link || '',
-          quantity: 1,
-          cost: cost,
-          type: 0, # Service
-          tax_included: tax_included
-        }
-      ]
+    def build_default_invoice_line
+      {
+        name: invoice.name || 'Invoice',
+        description: build_line_description,
+        quantity: 1,
+        cost: determine_line_cost,
+        type: 0, # Service
+        tax_included: invoice.included_vat_amount.present?
+      }
+    end
+
+    def build_line_description
+      invoice.job || invoice.wrs_link || ''
+    end
+
+    def determine_line_cost
+      invoice.included_vat_amount || invoice.excluded_vat_amount || 0
     end
 
     def build_notes
@@ -164,19 +205,24 @@ module Freshbooks
     end
 
     def extract_pdf_download_url(pdf_data)
-      # Extract PDF download URL from FreshBooks API response
-      # Response format might be: { "filename": "...", "file_url": "https://..." }
-      # Or the PDF data might be nested differently
-      return nil if pdf_data.nil?
       return nil unless pdf_data.is_a?(Hash)
 
-      # Try various possible keys
-      pdf_data['file_url'] ||
-        pdf_data[:file_url] ||
-        pdf_data['url'] ||
-        pdf_data[:url] ||
-        pdf_data.dig('pdf', 'file_url') ||
-        pdf_data.dig('pdf', 'url')
+      try_pdf_url_keys(pdf_data)
+    end
+
+    def try_pdf_url_keys(pdf_data)
+      direct_keys = ['file_url', :file_url, 'url', :url]
+      direct_keys.each do |key|
+        return pdf_data[key] if pdf_data[key].present?
+      end
+
+      nested_keys = [%w[pdf file_url], %w[pdf url]]
+      nested_keys.each do |keys|
+        url = pdf_data.dig(*keys)
+        return url if url.present?
+      end
+
+      nil
     end
 
     def extract_pdf_url(freshbooks_data)

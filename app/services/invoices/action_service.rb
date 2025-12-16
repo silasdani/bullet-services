@@ -71,27 +71,37 @@ module Invoices
         return add_error('FreshBooks invoice not found') unless fb_invoice
 
         amount = BigDecimal(discount_amount.to_s)
-
-        invoices_client.update(
-          fb_invoice.freshbooks_id,
-          lines: [
-            {
-              name: 'Discount',
-              description: 'Applied discount via automation',
-              quantity: 1,
-              cost: -amount,
-              type: 0
-            }
-          ]
-        )
-
-        fb_invoice.update!(
-          amount: fb_invoice.amount - amount,
-          amount_outstanding: fb_invoice.amount_outstanding - amount
-        )
+        apply_discount_to_freshbooks(fb_invoice, amount)
+        update_fb_invoice_amounts(fb_invoice, amount)
 
         @result = { action: 'discount', discount_amount: amount.to_s }
       end
+    end
+
+    def apply_discount_to_freshbooks(fb_invoice, amount)
+      invoices_client.update(
+        fb_invoice.freshbooks_id,
+        lines: build_discount_line(amount)
+      )
+    end
+
+    def build_discount_line(amount)
+      [
+        {
+          name: 'Discount',
+          description: 'Applied discount via automation',
+          quantity: 1,
+          cost: -amount,
+          type: 0
+        }
+      ]
+    end
+
+    def update_fb_invoice_amounts(fb_invoice, amount)
+      fb_invoice.update!(
+        amount: fb_invoice.amount - amount,
+        amount_outstanding: fb_invoice.amount_outstanding - amount
+      )
     end
 
     def freshbooks_invoice_record
