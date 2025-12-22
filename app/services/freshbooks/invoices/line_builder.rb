@@ -61,4 +61,3 @@ module Freshbooks
     end
   end
 end
-
