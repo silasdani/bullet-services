@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative '../../../lib/config_helper'
+require_relative '../../lib/config_helper'
 
 module Wrs
   # Service for sending admin notification emails for WRS decisions
