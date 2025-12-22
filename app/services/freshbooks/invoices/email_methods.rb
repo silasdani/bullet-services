@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Freshbooks
-  module Invoices
+  class Invoices
     # Module containing email-related methods for the Invoices class
     module EmailMethods
       def send_by_email(invoice_id, email_params = {})

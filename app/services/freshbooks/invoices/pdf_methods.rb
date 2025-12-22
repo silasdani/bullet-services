@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Freshbooks
-  module Invoices
+  class Invoices
     # Module containing PDF-related methods for the Invoices class
     module PdfMethods
       include PdfValidationHelpers

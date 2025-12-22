@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Freshbooks
-  module Invoices
+  class Invoices
     # Helper methods for PDF validation and logging
     module PdfValidationHelpers
       def safe_body_start(body)

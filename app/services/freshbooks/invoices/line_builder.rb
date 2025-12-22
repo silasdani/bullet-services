@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module Freshbooks
-  module Invoices
+  class Invoices
     # Module for building invoice line items
     module LineBuilder
       def build_lines(lines_data)
