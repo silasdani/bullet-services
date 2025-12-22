@@ -2,7 +2,12 @@
 
 class WebsiteController < ApplicationController
   # Public website pages - skip authorization
-  skip_before_action :verify_authenticity_token, only: [:contact_submit]
+  # CSRF protection: Use protect_from_forgery with :null_session for API-like endpoints
+  # or ensure proper CSRF token handling in forms
+  protect_from_forgery with: :exception, except: [:contact_submit]
+
+  # For contact_submit, we'll verify the request comes from our form
+  before_action :verify_contact_form_request, only: [:contact_submit]
 
   def home
     # Homepage
@@ -86,5 +91,18 @@ class WebsiteController < ApplicationController
 
     flash.now[:alert] = 'Something went wrong while processing your decision. Please try again.'
     render :wrs_show, status: :unprocessable_entity
+  end
+
+  def verify_contact_form_request
+    # Verify CSRF token is present for POST requests
+    # This ensures the request comes from our form, not a cross-site request
+    return if request.get? || request.head?
+
+    return if verified_request?
+
+    Rails.logger.warn "CSRF verification failed for contact form from #{request.remote_ip}"
+    redirect_to root_path(anchor: 'contact'),
+                alert: 'Security verification failed. Please try again.',
+                status: :forbidden
   end
 end

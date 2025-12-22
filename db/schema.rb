@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_15_210021) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_22_081723) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -149,6 +149,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_15_210021) do
     t.string "flat_address"
     t.string "generated_by"
     t.bigint "window_schedule_repair_id"
+    t.index ["slug"], name: "index_invoices_on_slug"
+    t.index ["window_schedule_repair_id"], name: "index_invoices_on_window_schedule_repair_id"
   end
 
   create_table "tools", force: :cascade do |t|
@@ -220,6 +222,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_15_210021) do
     t.string "terms_version"
     t.index ["building_id"], name: "index_window_schedule_repairs_on_building_id"
     t.index ["deleted_at"], name: "index_window_schedule_repairs_on_deleted_at"
+    t.index ["slug"], name: "index_window_schedule_repairs_on_slug", unique: true
+    t.index ["status"], name: "index_window_schedule_repairs_on_status"
     t.index ["user_id"], name: "index_window_schedule_repairs_on_user_id"
   end
 

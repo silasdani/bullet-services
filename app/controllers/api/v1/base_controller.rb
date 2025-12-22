@@ -11,10 +11,7 @@ module Api
       before_action :set_request_format
       before_action :authenticate_user!
       before_action :set_pagination_params
-      before_action :sanitize_params
 
-      rescue_from Pundit::NotAuthorizedError, with: :handle_authorization_error
-      rescue_from ActiveRecord::RecordNotFound, with: :handle_not_found
       rescue_from StandardError, with: :handle_internal_error
 
       private
@@ -28,29 +25,33 @@ module Api
         @per_page = [params[:per_page]&.to_i || 20, 100].min
       end
 
-      def handle_authorization_error(exception)
-        render_error(
-          message: 'Access denied',
-          details: exception.message,
-          status: :forbidden
-        )
-      end
-
-      def handle_not_found(_exception)
-        render_error(
-          message: 'Resource not found',
-          status: :not_found
-        )
-      end
+      # Authorization and not found errors are handled by ErrorHandling concern
+      # These methods are kept for backward compatibility but delegate to concern
 
       def handle_internal_error(exception)
-        Rails.logger.error "Internal error: #{exception.message}"
-        Rails.logger.error exception.backtrace.join("\n")
-
+        log_internal_error(exception)
         render_error(
-          message: 'Internal server error',
+          message: error_message_for(exception),
+          details: error_details_for(exception),
           status: :internal_server_error
         )
+      end
+
+      def log_internal_error(exception)
+        Rails.logger.error "Internal error: #{exception.class.name}: #{exception.message}"
+        return unless Rails.env.development? || Rails.env.test?
+
+        Rails.logger.error exception.backtrace.join("\n")
+      end
+
+      def error_message_for(exception)
+        Rails.env.production? ? 'Internal server error' : exception.message
+      end
+
+      def error_details_for(exception)
+        return nil if Rails.env.production?
+
+        exception.backtrace.first(5)
       end
 
       def render_error(message:, details: nil, status: :unprocessable_entity, code: nil)

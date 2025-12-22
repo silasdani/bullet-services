@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative '../../../lib/config_helper'
+
 module Wrs
   # Service for sending admin notification emails for WRS decisions
   class EmailNotifier
@@ -72,7 +74,15 @@ module Wrs
     end
 
     def admin_email
-      ENV.fetch('ADMIN_EMAIL', ENV.fetch('CONTACT_EMAIL', 'office@bulletservices.co.uk'))
+      ConfigHelper.get_config(
+        key: :admin_email,
+        env_key: 'ADMIN_EMAIL',
+        default: ConfigHelper.get_config(
+          key: :contact_email,
+          env_key: 'CONTACT_EMAIL',
+          default: 'office@bulletservices.co.uk'
+        )
+      )
     end
 
     def client_full_name
@@ -80,9 +90,14 @@ module Wrs
     end
 
     def wrs_public_url
+      host = ConfigHelper.get_config(
+        key: :public_app_host,
+        env_key: 'PUBLIC_APP_HOST',
+        default: 'bulletservices.co.uk'
+      )
       Rails.application.routes.url_helpers.wrs_show_url(
         slug: window_schedule_repair.slug,
-        host: ENV.fetch('PUBLIC_APP_HOST', 'bulletservices.co.uk')
+        host: host
       )
     end
 

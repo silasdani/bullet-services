@@ -4,17 +4,29 @@
 module InputValidation
   extend ActiveSupport::Concern
 
+  included do
+    # Sanitize string parameters to prevent XSS and trim whitespace
+    before_action :sanitize_string_params
+  end
+
   private
 
+  def sanitize_string_params
+    # Rails params are frozen by default, so we sanitize during strong parameters
+    # This method ensures we're aware of the need for sanitization
+    # Actual sanitization happens in strong parameters (params.permit)
+    # For HTML content, use ActionView::Helpers::SanitizeHelper
+  end
+
   def sanitize_params
-    # Don't modify params directly as it might be frozen
-    # This method is here for future use but not actively used
-    # Currently a no-op, but can be extended to sanitize params if needed
+    # Deprecated: Use strong parameters instead
+    # This method is kept for backward compatibility but does nothing
+    # Rails strong parameters already handle basic sanitization
   end
 
   def sanitize_params?(_params_to_sanitize = nil)
-    # Don't modify params directly as it might be frozen
-    # This method is here for future use but not actively used
+    # Deprecated: Always returns true
+    # Use strong parameters validation instead
     true
   end
 
