@@ -21,17 +21,17 @@ class User < ApplicationRecord
   after_create :set_confirmed
   before_save :sync_uid_with_email
 
-  # Role helper methods
+  # Role helper methods - optimized to use enum values directly
   def admin?
-    ['admin', 2, 'super_admin', 3].include?(role)
+    role.in?(%w[admin super_admin])
   end
 
   def employee?
-    ['employee', 1].include?(role)
+    role == 'employee'
   end
 
   def super_admin?
-    ['super_admin', 3].include?(role)
+    role == 'super_admin'
   end
 
   def webflow_access?

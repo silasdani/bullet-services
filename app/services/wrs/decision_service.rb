@@ -37,14 +37,16 @@ module Wrs
 
     def handle_accept
       with_error_handling do
-        fb_client = ensure_freshbooks_client!
-        invoice = create_local_invoice!(fb_client)
-        result = create_freshbooks_invoice!(invoice, fb_client)
+        ActiveRecord::Base.transaction do
+          fb_client = ensure_freshbooks_client!
+          invoice = create_local_invoice!(fb_client)
+          result = create_freshbooks_invoice!(invoice, fb_client)
 
-        attach_pdf_to_invoice(invoice, result) if result.is_a?(Hash)
+          attach_pdf_to_invoice(invoice, result) if result.is_a?(Hash)
 
-        mark_wrs_as_approved!
-        send_admin_accept_email!(invoice, fb_client)
+          mark_wrs_as_approved!
+          send_admin_accept_email!(invoice, fb_client)
+        end
       end
     end
 
@@ -58,8 +60,10 @@ module Wrs
 
     def handle_decline
       with_error_handling do
-        mark_wrs_as_rejected!
-        send_admin_decline_email!
+        ActiveRecord::Base.transaction do
+          mark_wrs_as_rejected!
+          send_admin_decline_email!
+        end
       end
     end
 
@@ -131,9 +135,15 @@ module Wrs
     end
 
     def wrs_public_url
+      require_relative '../../../lib/config_helper'
+      host = ConfigHelper.get_config(
+        key: :public_app_host,
+        env_key: 'PUBLIC_APP_HOST',
+        default: 'bulletservices.co.uk'
+      )
       Rails.application.routes.url_helpers.wrs_show_url(
         slug: window_schedule_repair.slug,
-        host: ENV.fetch('PUBLIC_APP_HOST', 'bulletservices.co.uk')
+        host: host
       )
     end
 

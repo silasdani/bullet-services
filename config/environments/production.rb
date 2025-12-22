@@ -60,8 +60,19 @@ Rails.application.configure do
   # Don't log any deprecations.
   config.active_support.report_deprecations = false
 
-  # Replace the default in-process memory cache store with a durable alternative.
-  config.cache_store = :memory_store
+  # Use Redis for cache store in production (persistent across restarts)
+  # Fall back to memory_store if Redis is not available (for development/testing)
+  if ENV['REDIS_URL'].present?
+    config.cache_store = :redis_cache_store, {
+      url: ENV['REDIS_URL'],
+      namespace: 'bullet-services-cache',
+      expires_in: 90.minutes
+    }
+  else
+    # Memory store is not persistent - only use if Redis unavailable
+    Rails.logger.warn 'WARNING: Using memory cache store. Set REDIS_URL for persistent caching.'
+    config.cache_store = :memory_store
+  end
 
   # Active Job adapter (default to inline for low traffic; can toggle via ENV)
   active_job_adapter = ENV.fetch("ACTIVE_JOB_ADAPTER", "inline").to_sym

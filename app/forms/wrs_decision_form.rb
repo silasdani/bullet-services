@@ -13,13 +13,5 @@ class WrsDecisionForm
   validates :first_name, :last_name, :email, presence: true
   validates :decision, presence: true, inclusion: { in: %w[accept decline] }
   validates :accept_terms, acceptance: { accept: true }
-  validate :email_format
-
-  def email_format
-    return if email.blank?
-
-    regex = /\A[\w+\-.]+@[a-z\d-]+(\.[a-z\d-]+)*\.[a-z]+\z/i
-    errors.add(:email, 'is invalid') unless email.match?(regex)
-  end
+  validates :email, format: { with: URI::MailTo::EMAIL_REGEXP, message: 'is invalid' }
 end
-
