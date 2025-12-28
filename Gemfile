@@ -57,6 +57,7 @@ gem 'rails_admin', '~> 3.1'
 group :development, :test do
   gem 'brakeman', '~> 7.1', require: false
   gem 'debug', platforms: %i[mri windows], require: 'debug/prelude'
+  gem 'htmlbeautifier'
   gem 'pry-rails'
   gem 'rubocop-rails-omakase', require: false
 
@@ -84,5 +85,5 @@ gem 'mailersend-ruby'
 gem 'ruby-progressbar'
 
 # Error tracking with Better Stack (Sentry-compatible)
-gem 'sentry-ruby'
 gem 'sentry-rails'
+gem 'sentry-ruby'

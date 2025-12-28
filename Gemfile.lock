@@ -168,6 +168,7 @@ GEM
       raabro (~> 1.4)
     globalid (1.2.1)
       activesupport (>= 6.1)
+    htmlbeautifier (1.4.3)
     http (5.3.1)
       addressable (~> 2.8)
       http-cookie (~> 1.0)
@@ -518,6 +519,7 @@ DEPENDENCIES
   dotenv-rails
   factory_bot_rails
   faker
+  htmlbeautifier
   httparty
   image_processing (~> 1.2)
   json (= 2.13.2)

@@ -47,7 +47,7 @@
         end
       end
     %>
-    
+
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-icon stat-icon-buildings">
@@ -58,7 +58,7 @@
           <div class="stat-label"><%= I18n.t('buildings_grid.buildings') %></div>
         </div>
       </div>
-      
+
       <div class="stat-card">
         <div class="stat-icon stat-icon-flats">
           <i class="fas fa-home"></i>
@@ -68,7 +68,7 @@
           <div class="stat-label"><%= I18n.t('buildings_grid.flats') %></div>
         </div>
       </div>
-      
+
       <div class="stat-card">
         <div class="stat-icon stat-icon-wrs">
           <i class="fas fa-clipboard-list"></i>
@@ -78,7 +78,7 @@
           <div class="stat-label"><%= I18n.t('buildings_grid.total_wrs') %></div>
         </div>
       </div>
-      
+
       <div class="stat-card stat-card-status">
         <div class="stat-content">
           <div class="status-breakdown">
@@ -153,12 +153,12 @@
           flats_to_show = flats.take(max_flats_display)
           remaining_flats = flats.length - max_flats_display
         %>
-        
+
         <article class="building-card" 
                  data-building-name="<%= building.name.downcase %>"
                  data-building-address="<%= building.full_address.downcase %>"
                  data-wrs-count="<%= building.window_schedule_repairs.count %>">
-          
+
           <!-- Building Header -->
           <div class="building-card-header">
             <div class="building-header-main">
@@ -230,7 +230,7 @@
                   <% flats_to_show.each do |flat_data| %>
                     <% flat_number = flat_data[:flat_number] %>
                     <% wrs_items = flat_data[:wrs_items] %>
-                    
+
                     <%# Determine status %>
                     <% status_info = { color: '#6b7280', label: I18n.t('buildings_grid.no_wrs'), class: 'status-none' } %>
                     <% if wrs_items.any? %>
@@ -284,7 +284,7 @@
                     </a>
                   <% end %>
                 </div>
-                
+
                 <% if remaining_flats > 0 %>
                   <div class="flats-more">
                     <a href="<%= rails_admin.index_path(model_name: 'window_schedule_repair', q: { building_id_eq: building.id }) %>" 
@@ -329,22 +329,22 @@
     const searchClear = document.getElementById('search-clear');
     const buildingsGrid = document.getElementById('buildings-grid');
     const filterButtons = document.querySelectorAll('.filter-btn');
-    
+
     if (searchInput && buildingsGrid) {
       searchInput.addEventListener('input', function(e) {
         const searchTerm = e.target.value.toLowerCase().trim();
         const buildings = buildingsGrid.querySelectorAll('.building-card');
-        
+
         if (searchTerm) {
           searchClear.style.display = 'block';
         } else {
           searchClear.style.display = 'none';
         }
-        
+
         buildings.forEach(building => {
           const name = building.dataset.buildingName || '';
           const address = building.dataset.buildingAddress || '';
-          
+
           if (name.includes(searchTerm) || address.includes(searchTerm)) {
             building.style.display = '';
           } else {
@@ -352,7 +352,7 @@
           }
         });
       });
-      
+
       searchClear.addEventListener('click', function() {
         searchInput.value = '';
         searchClear.style.display = 'none';
@@ -362,7 +362,7 @@
         });
       });
     }
-    
+
     // Filter functionality
     if (filterButtons && buildingsGrid) {
       filterButtons.forEach(btn => {
@@ -370,13 +370,13 @@
           // Update active state
           filterButtons.forEach(b => b.classList.remove('active'));
           this.classList.add('active');
-          
+
           const filter = this.dataset.filter;
           const buildings = buildingsGrid.querySelectorAll('.building-card');
-          
+
           buildings.forEach(building => {
             const wrsCount = parseInt(building.dataset.wrsCount) || 0;
-            
+
             if (filter === 'all') {
               building.style.display = '';
             } else if (filter === 'with-wrs' && wrsCount > 0) {
