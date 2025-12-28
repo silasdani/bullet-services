@@ -82,3 +82,7 @@ gem 'uglifier'
 gem 'csv'
 gem 'mailersend-ruby'
 gem 'ruby-progressbar'
+
+# Error tracking with Better Stack (Sentry-compatible)
+gem 'sentry-ruby'
+gem 'sentry-rails'
