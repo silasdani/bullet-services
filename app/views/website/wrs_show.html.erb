@@ -1,110 +1,149 @@
 <% content_for :title, "WRS #{@wrs.reference_number} - Bullet Services" %>
+
+<% content_for :head do %>
+  <!-- Additional fonts for this page -->
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  
+  <!-- WRS Show Page Styles -->
+  <%= stylesheet_link_tag "website/wrs_show", "data-turbo-track": "reload" %>
+<% end %>
+
 <%= render NavigationComponent.new(current_path: request.path) %>
-<div class="min-h-screen bg-white pt-24">
-  <div class="container mx-auto px-6 py-12 max-w-6xl">
-    <!-- Header Section - Centered -->
-    <div class="text-center mb-12">
-      <h1 class="text-4xl md:text-5xl font-light mb-6 text-gray-900">Windows Schedule Repairs</h1>
-      <!-- Reference no. and Address - Inline, centered -->
-      <div class="flex flex-wrap items-center justify-center gap-4 mb-6 text-sm md:text-base">
-        <div class="flex items-center gap-2">
-          <span class="font-semibold text-gray-700">reference no.</span>
-          <span class="text-gray-900"><%= @wrs.reference_number %></span>
-        </div>
-        <div class="hidden md:block w-px h-4 bg-gray-300"></div>
-        <div class="flex items-center gap-2">
-          <span class="font-semibold text-gray-700">address</span>
-          <span class="text-gray-900"><%= @wrs.address %></span>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+  <!-- Header Section -->
+  <div class="mb-10 text-center">
+    <h1 class="text-3xl font-bold tracking-tight text-[var(--color-primary-text)]">Window Schedule Repairs</h1>
+    <p class="mt-2 text-[var(--color-secondary-text)]">Review the proposed works and confirm your decision below.</p>
+  </div>
+
+  <!-- Project Info Card -->
+  <div class="bg-[var(--color-surface)] border border-[var(--color-border-divider)] mb-8 shadow-sm">
+    <div class="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[var(--color-border-divider)]">
+      <div class="p-6 flex flex-col justify-center">
+        <span class="text-[var(--color-secondary-text)] text-xs uppercase tracking-wider font-semibold mb-1">Project Reference</span>
+        <span class="font-mono text-lg text-[var(--color-primary-text)] font-medium"><%= @wrs.reference_number %></span>
+      </div>
+      <div class="p-6 flex flex-col justify-center">
+        <span class="text-[var(--color-secondary-text)] text-xs uppercase tracking-wider font-semibold mb-1">Site Address</span>
+        <div class="flex flex-col">
+          <span class="font-medium text-base text-[var(--color-primary-text)]"><%= @wrs.address %></span>
+          <span class="text-sm text-[var(--color-secondary-text)]">Flat no. <%= @wrs.flat_number %></span>
         </div>
       </div>
-      <!-- Flat no. - Inline label and value, centered -->
-      <div class="flex items-center justify-center gap-3">
-        <h2 class="text-sm font-semibold text-gray-700">Flat no.</h2>
-        <h3 class="text-2xl font-semibold text-gray-900"><%= @wrs.flat_number %></h3>
+      <div class="p-6 bg-gray-50/50 flex flex-col justify-center items-start md:items-end text-left md:text-right">
+        <span class="text-[var(--color-secondary-text)] text-xs uppercase tracking-wider font-semibold mb-1">Total Estimated Cost</span>
+        <div class="flex items-baseline gap-2">
+          <span class="text-sm text-[var(--color-secondary-text)] font-medium">Incl. VAT</span>
+          <span class="text-2xl font-bold text-[var(--color-primary-text)]">
+            <%= number_to_currency(@wrs.total_vat_included_price || 0, unit: '£', precision: 2) %>
+          </span>
+        </div>
+        <span class="text-xs text-[var(--color-secondary-text)] mt-1">
+          <%= number_to_currency(@wrs.total_vat_excluded_price || 0, unit: '£', precision: 2) %> Excl. VAT
+        </span>
       </div>
     </div>
-    <!-- Windows Table -->
-    <div class="mb-12 overflow-x-auto">
-      <table class="w-full border-collapse">
-        <thead>
-          <tr class="border-b-2 border-gray-300">
-            <th class="text-left py-4 px-4 font-semibold text-gray-900">Location</th>
-            <th class="text-left py-4 px-4 font-semibold text-gray-900">Items</th>
-            <th class="text-right py-4 px-4 font-semibold text-gray-900">Price (Excl. VAT)</th>
-          </tr>
-        </thead>
-        <tbody>
+  </div>
+
+  <!-- Schedule of Works Section -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start relative">
+    <div class="lg:col-span-12 space-y-8" id="schedule-section">
+      <div class="bg-[var(--color-surface)] border border-[var(--color-border-divider)] overflow-visible shadow-sm z-0 relative">
+        <div class="px-6 py-4 border-b border-[var(--color-border-divider)] bg-gray-50 flex justify-between items-center">
+          <h2 class="font-bold text-sm uppercase tracking-wider text-[var(--color-primary-text)]">Schedule of Works</h2>
+          <span class="text-xs font-mono text-[var(--color-secondary-text)]"><%= @wrs.windows.count %> ITEMS</span>
+        </div>
+
+        <!-- Desktop Header -->
+        <div class="hidden md:grid grid-cols-12 gap-4 px-6 py-3 border-b border-[var(--color-border-divider)] bg-[var(--color-background)] text-xs font-semibold text-[var(--color-secondary-text)] uppercase tracking-wide">
+          <div class="col-span-4">Location & Visual</div>
+          <div class="col-span-6">Scope of Work</div>
+          <div class="col-span-2 text-right">Cost (ex. VAT)</div>
+        </div>
+
+        <!-- Windows List -->
+        <div class="divide-y divide-[var(--color-border-divider)]">
           <% @wrs.windows.order(:created_at).each_with_index do |window, index| %>
-            <tr class="border-b border-gray-200 hover:bg-gray-50 transition-colors">
-              <!-- Window Name Column -->
-              <td class="py-6 px-4 align-top">
-                <div class="flex flex-col gap-3">
+            <%
+              window_price = window.total_price
+              # Prices stored as integers - convert from pence to pounds if needed
+              window_price = window_price / 100.0 if window_price && window_price > 1000
+            %>
+            <div class="group hover:bg-[var(--color-table-row-hover)] transition-colors duration-150 relative z-0 hover:z-30">
+              <div class="grid grid-cols-1 md:grid-cols-12 gap-6 p-6 items-start">
+                <!-- Location & Image -->
+                <div class="md:col-span-4">
+                  <div class="font-bold text-sm mb-3 text-[var(--color-primary-text)]"><%= window.location %></div>
                   <% if window.effective_image_url.present? %>
-                    <img
-                      src="<%= window.effective_image_url %>"
-                      alt="<%= window.location %>"
-                      class="w-[400px] h-full object-cover rounded"
-                      onerror="this.style.display='none'"
-                    >
-                    <% end %>
-                    <span class="font-semibold text-gray-900"><%= window.location %></span>
-                  </div>
-                </td>
-                <!-- Items Column -->
-                <td class="py-6 px-4 align-top text-right">
-                  <% if window.tools.any? %>
-                    <ul class="space-y-2">
-                      <% window.tools.each do |tool| %>
-                        <li class="text-gray-800">
-                          <%= tool.name %>
-                        </li>
-                      <% end %>
-                    </ul>
-                  <% else %>
-                    <span class="text-gray-500 italic">No Works Required</span>
+                    <div class="relative border border-[var(--color-border-divider)] group/image cursor-zoom-in z-0 hover:z-50 hover:shadow-2xl transition-all duration-300">
+                      <img
+                        src="<%= window.effective_image_url %>"
+                        alt="<%= window.location %>"
+                        class="w-full h-auto object-cover group-hover/image:scale-[1.8] group-hover/image:border-4 group-hover/image:border-white transition-all duration-300 ease-out block origin-center z-0 group-hover/image:z-50 group-hover/image:shadow-2xl"
+                        onerror="this.style.display='none'"
+                      />
+                    </div>
                   <% end %>
-                </td>
-                <!-- Price Column -->
-                <td class="py-6 px-4 align-top text-right">
-                  <%
-                  window_price = window.total_price
-                  # Prices stored as integers - convert from pence to pounds if needed
-                  window_price = window_price / 100.0 if window_price && window_price > 1000
-                %>
-                  <span class="text-gray-900 font-medium">
-                    <%= number_to_currency(window_price || 0, unit: '£', precision: 2) %>
-                  </span>
-                </td>
-              </tr>
-            <% end %>
-          </tbody>
-        </table>
-      </div>
-      <!-- Totals Section - Column direction, floating right -->
-      <div class="mb-12 flex justify-end">
-        <div class="p-8 bg-gray-50 rounded-lg">
-          <div class="flex flex-col gap-6 items-end">
-            <div>
-              <h3 class="text-lg font-semibold text-gray-700 mb-2 text-right">Total exc. VAT</h3>
-              <p class="text-3xl font-semibold text-gray-900">
-                <%= number_to_currency(@wrs.total_vat_excluded_price || 0, unit: '£', precision: 2) %>
-              </p>
+                </div>
+
+                <!-- Scope of Work -->
+                <div class="md:col-span-6 pt-1">
+                  <span class="md:hidden text-xs font-bold text-[var(--color-secondary-text)] uppercase mb-1 block">Scope</span>
+                  <% if window.tools.any? %>
+                    <div class="space-y-2 text-sm text-[var(--color-primary-text)]">
+                      <% window.tools.each do |tool| %>
+                        <div class="flex items-center gap-2">
+                          <span class="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
+                          <span><%= tool.name %></span>
+                        </div>
+                      <% end %>
+                    </div>
+                  <% else %>
+                    <div class="text-sm text-[var(--color-secondary-text)] italic bg-gray-100/50 inline-block px-2 py-1 rounded">
+                      No Works Required
+                    </div>
+                  <% end %>
+                </div>
+
+                <!-- Price -->
+                <div class="md:col-span-2 text-right pt-1">
+                  <span class="md:hidden text-xs font-bold text-[var(--color-secondary-text)] uppercase mb-1 block">Price</span>
+                  <% if window.tools.any? %>
+                    <div class="space-y-1 text-sm font-medium font-mono text-[var(--color-primary-text)]">
+                      <% window.tools.each do |tool| %>
+                        <%
+                          tool_price = tool.price
+                          tool_price = tool_price / 100.0 if tool_price && tool_price > 1000
+                        %>
+                        <div>£ <%= number_with_precision(tool_price || 0, precision: 0) %></div>
+                      <% end %>
+                    </div>
+                  <% else %>
+                    <div class="text-sm font-medium font-mono text-[var(--color-secondary-text)]">
+                      £ 0
+                    </div>
+                  <% end %>
+                </div>
+              </div>
             </div>
-            <div>
-              <h3 class="text-lg font-semibold text-gray-700 mb-2 text-right">Total incl. VAT</h3>
-              <p class="text-4xl font-semibold text-gray-900">
-                <%= number_to_currency(@wrs.total_vat_included_price || 0, unit: '£', precision: 2) %>
-              </p>
-            </div>
-          </div>
+          <% end %>
         </div>
       </div>
-      <!-- Approval Section -->
-      <div class="mb-12 p-8 bg-gray-50 rounded-lg">
-        <h2 class="text-2xl font-semibold text-gray-900 mb-6">Approval of works</h2>
-        <div>
-          <h3 class="text-lg font-semibold text-gray-700 mb-4">Please note:</h3>
-          <ul class="space-y-3 text-gray-700">
+    </div>
+
+    <!-- Approval Section -->
+    <div class="lg:col-span-12 mb-8" id="approval-section">
+      <div class="bg-[var(--color-surface)] border border-[var(--color-border-divider)] shadow-sm">
+        <div class="px-6 py-5 border-b border-[var(--color-border-divider)]">
+          <h2 class="text-lg font-bold text-[var(--color-primary-text)]">Approval of works</h2>
+          <p class="text-xs text-[var(--color-secondary-text)] mt-1">Important information about the proposed works</p>
+        </div>
+        <div class="px-6 py-6">
+          <h3 class="text-sm font-semibold text-[var(--color-primary-text)] mb-4">Please note:</h3>
+          <ul class="space-y-3 text-sm text-[var(--color-secondary-text)]">
             <li>The proposed works have been acknowledged by the assigned contract administrator.</li>
             <li>The condition survey has been carried out prior to any decorations.</li>
             <li>The proposed works have been surveyed and priced in accordance with the signed contract.</li>
@@ -112,23 +151,23 @@
           </ul>
         </div>
       </div>
-      <!-- Description of Works Section - Accordion -->
-      <div class="mb-12">
-        <h2 class="text-2xl font-semibold text-gray-900 mb-6">Description of works</h2>
-        <div class="space-y-2" data-accordion>
+    </div>
+
+    <!-- Description of Works Section - Native Accordion -->
+    <div class="lg:col-span-12">
+      <div class="bg-[var(--color-surface)] border border-[var(--color-border-divider)] h-full shadow-sm">
+        <div class="px-6 py-5 border-b border-[var(--color-border-divider)]">
+          <h2 class="text-lg font-bold text-[var(--color-primary-text)]">Description of Works</h2>
+          <p class="text-xs text-[var(--color-secondary-text)] mt-1">Detailed breakdown of repair techniques</p>
+        </div>
+        <div class="divide-y divide-[var(--color-border-divider)]">
           <!-- Accordion Item 1: Window Components Diagram -->
-          <div class="border border-gray-200 rounded-lg overflow-hidden">
-            <button
-            class="w-full text-left px-6 py-4 bg-white hover:bg-gray-50 transition-colors flex items-center justify-between focus:outline-none"
-            data-accordion-toggle
-            aria-expanded="false"
-          >
-              <span class="font-semibold text-gray-900">Window Components Diagram</span>
-              <svg class="w-5 h-5 text-gray-500 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-              </svg>
-            </button>
-            <div class="hidden px-6 py-4 bg-gray-50 text-gray-700" data-accordion-content>
+          <details class="group">
+            <summary class="flex justify-between items-center cursor-pointer p-6 list-none text-[var(--color-primary-text)] hover:bg-gray-50 transition-colors">
+              <span class="text-sm font-medium">Window Components Diagram</span>
+              <span class="material-symbols-outlined text-[var(--color-secondary-text)] group-open:rotate-180 transition-transform duration-200">expand_more</span>
+            </summary>
+            <div class="text-sm text-[var(--color-secondary-text)] px-6 pb-6 pt-0 bg-gray-50/30">
               <p class="mb-3">
                 These are the components of your typical <em>Sliding Sash Window</em>.
               </p>
@@ -140,20 +179,15 @@
               </p>
               <%= image_tag "example.jpg", alt: "Window Components Diagram", class: "w-full max-w-2xl rounded-lg mb-3" %>
             </div>
-          </div>
+          </details>
+
           <!-- Accordion Item 2: Conservation Joint Repair -->
-          <div class="border border-gray-200 rounded-lg overflow-hidden">
-            <button
-              class="w-full text-left px-6 py-4 bg-white hover:bg-gray-50 transition-colors flex items-center justify-between focus:outline-none"
-              data-accordion-toggle
-              aria-expanded="false"
-            >
-              <span class="font-semibold text-gray-900">What is a Conservation Joint Repair</span>
-              <svg class="w-5 h-5 text-gray-500 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-              </svg>
-            </button>
-            <div class="hidden px-6 py-4 bg-gray-50 text-gray-700" data-accordion-content>
+          <details class="group">
+            <summary class="flex justify-between items-center cursor-pointer p-6 list-none text-[var(--color-primary-text)] hover:bg-gray-50 transition-colors">
+              <span class="text-sm font-medium">What is a Conservation Joint Repair</span>
+              <span class="material-symbols-outlined text-[var(--color-secondary-text)] group-open:rotate-180 transition-transform duration-200">expand_more</span>
+            </summary>
+            <div class="text-sm text-[var(--color-secondary-text)] px-6 pb-6 pt-0 bg-gray-50/30">
               <p class="mb-3">
                 "Hairline Cracks" are the most predominant damages found in wooden windows. Wood expands and contracts due to the changes in temperature throughout the year. These small expansions/contractions produce cracks of the weatherproof barrier created by paint, leaving the bare wood exposed. Water can easily infiltrate the timber, which deteriorates it even further, rotting it away.
               </p>
@@ -168,20 +202,15 @@
                 <li>The surface is ready for painting.</li>
               </ol>
             </div>
-          </div>
+          </details>
+
           <!-- Accordion Item 3: Epoxy Resin Repair -->
-          <div class="border border-gray-200 rounded-lg overflow-hidden">
-            <button 
-            class="w-full text-left px-6 py-4 bg-white hover:bg-gray-50 transition-colors flex items-center justify-between focus:outline-none"
-            data-accordion-toggle
-            aria-expanded="false"
-          >
-              <span class="font-semibold text-gray-900">What is an Epoxy Resin Repair</span>
-              <svg class="w-5 h-5 text-gray-500 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-              </svg>
-            </button>
-            <div class="hidden px-6 py-4 bg-gray-50 text-gray-700" data-accordion-content>
+          <details class="group">
+            <summary class="flex justify-between items-center cursor-pointer p-6 list-none text-[var(--color-primary-text)] hover:bg-gray-50 transition-colors">
+              <span class="text-sm font-medium">What is an Epoxy Resin Repair</span>
+              <span class="material-symbols-outlined text-[var(--color-secondary-text)] group-open:rotate-180 transition-transform duration-200">expand_more</span>
+            </summary>
+            <div class="text-sm text-[var(--color-secondary-text)] px-6 pb-6 pt-0 bg-gray-50/30">
               <p class="mb-3">
                 The Epoxy Resin Repair Kit has the purpose of filling medium to large areas of missing/decayed timber. Regular wood filler tends to crack in such instances.
               </p>
@@ -190,92 +219,67 @@
                 The amount of required Epoxy tubes, depends on both the size of the affected area and the complexity of the pre-existing shape of the timber (multiple coats are needed for the restoration of intricate details - ex. the horns at the bottom end of sashes).
               </p>
             </div>
-          </div>
+          </details>
+
           <!-- Accordion Item 4: Timber Splicing Repair -->
-          <div class="border border-gray-200 rounded-lg overflow-hidden">
-            <button 
-            class="w-full text-left px-6 py-4 bg-white hover:bg-gray-50 transition-colors flex items-center justify-between focus:outline-none"
-            data-accordion-toggle
-            aria-expanded="false"
-          >
-              <span class="font-semibold text-gray-900">What is a Timber Splicing Repair</span>
-              <svg class="w-5 h-5 text-gray-500 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-              </svg>
-            </button>
-            <div class="hidden px-6 py-4 bg-gray-50 text-gray-700" data-accordion-content>
+          <details class="group">
+            <summary class="flex justify-between items-center cursor-pointer p-6 list-none text-[var(--color-primary-text)] hover:bg-gray-50 transition-colors">
+              <span class="text-sm font-medium">What is a Timber Splicing Repair</span>
+              <span class="material-symbols-outlined text-[var(--color-secondary-text)] group-open:rotate-180 transition-transform duration-200">expand_more</span>
+            </summary>
+            <div class="text-sm text-[var(--color-secondary-text)] px-6 pb-6 pt-0 bg-gray-50/30">
               <p>
                 In case the existing timber is damaged/rotten to the point where no restauration is possible, the section of wood is removed and replaced with a new Hardwood splice. This can be done on any component of the window.
               </p>
             </div>
-          </div>
+          </details>
+
           <!-- Accordion Item 5: Timber Cill Replacement -->
-          <div class="border border-gray-200 rounded-lg overflow-hidden">
-            <button 
-            class="w-full text-left px-6 py-4 bg-white hover:bg-gray-50 transition-colors flex items-center justify-between focus:outline-none"
-            data-accordion-toggle
-            aria-expanded="false"
-          >
-              <span class="font-semibold text-gray-900">What is a Timber Cill Replacement</span>
-              <svg class="w-5 h-5 text-gray-500 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-              </svg>
-            </button>
-            <div class="hidden px-6 py-4 bg-gray-50 text-gray-700" data-accordion-content>
+          <details class="group">
+            <summary class="flex justify-between items-center cursor-pointer p-6 list-none text-[var(--color-primary-text)] hover:bg-gray-50 transition-colors">
+              <span class="text-sm font-medium">What is a Timber Cill Replacement</span>
+              <span class="material-symbols-outlined text-[var(--color-secondary-text)] group-open:rotate-180 transition-transform duration-200">expand_more</span>
+            </summary>
+            <div class="text-sm text-[var(--color-secondary-text)] px-6 pb-6 pt-0 bg-gray-50/30">
               <p>
                 Similar to the Timber Splice Repair, if the pre-existing Timber Cill is damaged/rotten beyond repairs, the whole cill is removed and replaced with a new Hardwood Cill.
               </p>
             </div>
-          </div>
+          </details>
+
           <!-- Accordion Item 6: Front Face Repair -->
-          <div class="border border-gray-200 rounded-lg overflow-hidden">
-            <button 
-            class="w-full text-left px-6 py-4 bg-white hover:bg-gray-50 transition-colors flex items-center justify-between focus:outline-none"
-            data-accordion-toggle
-            aria-expanded="false"
-          >
-              <span class="font-semibold text-gray-900">What is a Front Face Repair to the Timber Cill</span>
-              <svg class="w-5 h-5 text-gray-500 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-              </svg>
-            </button>
-            <div class="hidden px-6 py-4 bg-gray-50 text-gray-700" data-accordion-content>
+          <details class="group">
+            <summary class="flex justify-between items-center cursor-pointer p-6 list-none text-[var(--color-primary-text)] hover:bg-gray-50 transition-colors">
+              <span class="text-sm font-medium">What is a Front Face Repair to the Timber Cill</span>
+              <span class="material-symbols-outlined text-[var(--color-secondary-text)] group-open:rotate-180 transition-transform duration-200">expand_more</span>
+            </summary>
+            <div class="text-sm text-[var(--color-secondary-text)] px-6 pb-6 pt-0 bg-gray-50/30">
               <p>
                 In cases where the face section of the timber cill is damaged/rotten, but the rest of the cill is unaffected; the defective area is cut and replaced with new Hardwood Timber. Once again, this can only be done when the rest of the cill is still "healthy" and can suffice as a strong enough anchor for the screws that fix the new Hardwood face.
               </p>
             </div>
-          </div>
+          </details>
+
           <!-- Accordion Item 7: Rail Replacement -->
-          <div class="border border-gray-200 rounded-lg overflow-hidden">
-            <button 
-            class="w-full text-left px-6 py-4 bg-white hover:bg-gray-50 transition-colors flex items-center justify-between focus:outline-none"
-            data-accordion-toggle
-            aria-expanded="false"
-          >
-              <span class="font-semibold text-gray-900">What is a Top/Meeting/Bottom Rail Replacement</span>
-              <svg class="w-5 h-5 text-gray-500 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-              </svg>
-            </button>
-            <div class="hidden px-6 py-4 bg-gray-50 text-gray-700" data-accordion-content>
+          <details class="group">
+            <summary class="flex justify-between items-center cursor-pointer p-6 list-none text-[var(--color-primary-text)] hover:bg-gray-50 transition-colors">
+              <span class="text-sm font-medium">What is a Top/Meeting/Bottom Rail Replacement</span>
+              <span class="material-symbols-outlined text-[var(--color-secondary-text)] group-open:rotate-180 transition-transform duration-200">expand_more</span>
+            </summary>
+            <div class="text-sm text-[var(--color-secondary-text)] px-6 pb-6 pt-0 bg-gray-50/30">
               <p>
                 A fully damaged/rotten rail will be replaced with a new Hardwood rail. The beading details or the putty (components that hold and seal the glazing panes) will be matched and replaced both on the exterior and the interior. Any ironmongery like sash lifts or fasteners will be preserved and reinstalled onto the new rail. The new rail will be painted both from the inside and the outside.
               </p>
             </div>
-          </div>
+          </details>
+
           <!-- Accordion Item 8: Sash Cord Replacement -->
-          <div class="border border-gray-200 rounded-lg overflow-hidden">
-            <button 
-            class="w-full text-left px-6 py-4 bg-white hover:bg-gray-50 transition-colors flex items-center justify-between focus:outline-none"
-            data-accordion-toggle
-            aria-expanded="false"
-          >
-              <span class="font-semibold text-gray-900">What is a Sash Cord Replacement</span>
-              <svg class="w-5 h-5 text-gray-500 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-              </svg>
-            </button>
-            <div class="hidden px-6 py-4 bg-gray-50 text-gray-700" data-accordion-content>
+          <details class="group">
+            <summary class="flex justify-between items-center cursor-pointer p-6 list-none text-[var(--color-primary-text)] hover:bg-gray-50 transition-colors">
+              <span class="text-sm font-medium">What is a Sash Cord Replacement</span>
+              <span class="material-symbols-outlined text-[var(--color-secondary-text)] group-open:rotate-180 transition-transform duration-200">expand_more</span>
+            </summary>
+            <div class="text-sm text-[var(--color-secondary-text)] px-6 pb-6 pt-0 bg-gray-50/30">
               <p class="mb-3">
                 A Sliding Sash Window is designed to be lifted with ease through the help of the sash weight system found inside the casing of the window. Weights from inside the casing are tied with a Sash Cord, and using a pulley system, the window is both lifted and "held" in an open position. These cords are typically made from waxed cotton or nylon, and with time they can deteriorate to the point where they snap, rendering the window incapable of sliding and being " held" in an open position.
               </p>
@@ -283,20 +287,15 @@
                 In this case, the only option is to replace the cord with a new cord. This can be done in some cases without the need of opening up the jamb.
               </p>
             </div>
-          </div>
+          </details>
+
           <!-- Accordion Item 9: Ease and Adjust -->
-          <div class="border border-gray-200 rounded-lg overflow-hidden">
-            <button 
-            class="w-full text-left px-6 py-4 bg-white hover:bg-gray-50 transition-colors flex items-center justify-between focus:outline-none"
-            data-accordion-toggle
-            aria-expanded="false"
-          >
-              <span class="font-semibold text-gray-900">What it means to Ease and Adjust the Sash Window</span>
-              <svg class="w-5 h-5 text-gray-500 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-              </svg>
-            </button>
-            <div class="hidden px-6 py-4 bg-gray-50 text-gray-700" data-accordion-content>
+          <details class="group">
+            <summary class="flex justify-between items-center cursor-pointer p-6 list-none text-[var(--color-primary-text)] hover:bg-gray-50 transition-colors">
+              <span class="text-sm font-medium">What it means to Ease and Adjust the Sash Window</span>
+              <span class="material-symbols-outlined text-[var(--color-secondary-text)] group-open:rotate-180 transition-transform duration-200">expand_more</span>
+            </summary>
+            <div class="text-sm text-[var(--color-secondary-text)] px-6 pb-6 pt-0 bg-gray-50/30">
               <p class="mb-3">
                 The sash weight system (see 'What is a Sash Cord Replacement'), contains metals (typically lead) that weighs the same as the window it's trying to pull. If the weight of the window changes, like it would when you replace the single glazed glass panes with double glazed glass panes; an imbalance in the system will occur, and thus the window will not be able to shut fully.
               </p>
@@ -304,20 +303,15 @@
                 To fix this, we remove the jamb in order to reach the sash weights, and adjust the weights to their adequate amount.
               </p>
             </div>
-          </div>
+          </details>
+
           <!-- Accordion Item 10: Putty Replacement -->
-          <div class="border border-gray-200 rounded-lg overflow-hidden">
-            <button 
-            class="w-full text-left px-6 py-4 bg-white hover:bg-gray-50 transition-colors flex items-center justify-between focus:outline-none"
-            data-accordion-toggle
-            aria-expanded="false"
-          >
-              <span class="font-semibold text-gray-900">What is a Putty Replacement</span>
-              <svg class="w-5 h-5 text-gray-500 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-              </svg>
-            </button>
-            <div class="hidden px-6 py-4 bg-gray-50 text-gray-700" data-accordion-content>
+          <details class="group">
+            <summary class="flex justify-between items-center cursor-pointer p-6 list-none text-[var(--color-primary-text)] hover:bg-gray-50 transition-colors">
+              <span class="text-sm font-medium">What is a Putty Replacement</span>
+              <span class="material-symbols-outlined text-[var(--color-secondary-text)] group-open:rotate-180 transition-transform duration-200">expand_more</span>
+            </summary>
+            <div class="text-sm text-[var(--color-secondary-text)] px-6 pb-6 pt-0 bg-gray-50/30">
               <p class="mb-3">
                 Glazing Putty is the sealant holding the glass panes. It's typically made out of linseed oil, which handles moisture and water really well, however, excessive window movement or timber expansion can create cracks. Furthermore, this exposes the parting bead or the rail that the glass pane is sitting on, which overtime will rot.
               </p>
@@ -325,27 +319,38 @@
                 It's recommended to replace your glazing putty every 10-20 years.
               </p>
             </div>
-          </div>
+          </details>
         </div>
       </div>
-      <!-- Client Decision Form -->
-      <div class="mb-16 p-8 bg-white border border-gray-200 rounded-lg shadow-sm">
-        <h2 class="text-2xl font-semibold text-gray-900 mb-6">Client details & decision</h2>
+    </div>
+  </div>
 
-        <% if flash[:alert].present? %>
-          <div class="mb-4 rounded-md bg-red-50 p-4 text-sm text-red-800">
-            <%= flash[:alert] %>
-          </div>
-        <% end %>
+</main>
 
-        <% if flash[:notice].present? %>
-          <div class="mb-4 rounded-md bg-green-50 p-4 text-sm text-green-800">
-            <%= flash[:notice] %>
-          </div>
-        <% end %>
+<!-- Floating Decision Form (appears between schedule and approval sections) -->
+<div id="floating-decision-form">
+  <div class="bg-[var(--color-surface)] border-t border-[var(--color-border-divider)] shadow-[0_-8px_30px_rgba(0,0,0,0.12)]">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <% if flash[:alert].present? %>
+        <div class="mb-4 rounded-md bg-red-50 p-4 text-sm text-red-800 border border-red-200">
+          <%= flash[:alert] %>
+        </div>
+      <% end %>
 
+      <% if flash[:notice].present? %>
+        <div class="mb-4 rounded-md bg-green-50 p-4 text-sm text-green-800 border border-green-200">
+          <%= flash[:notice] %>
+        </div>
+      <% end %>
+
+      <%= form_with model: @decision_form,
+                    url: wrs_decision_path(slug: @wrs.slug),
+                    method: :post,
+                    local: true,
+                    html: { id: "wrs-decision-form", class: "space-y-5" } do |f| %>
+        
         <% if defined?(@decision_form) && @decision_form.errors.any? %>
-          <div class="mb-6 rounded-md bg-red-50 p-4">
+          <div class="mb-4 rounded-md bg-red-50 p-4 border border-red-200">
             <h3 class="text-sm font-semibold text-red-800 mb-2">Please fix the following:</h3>
             <ul class="list-disc list-inside text-sm text-red-800 space-y-1">
               <% @decision_form.errors.full_messages.each do |msg| %>
@@ -355,64 +360,136 @@
           </div>
         <% end %>
 
-        <%= form_with model: @decision_form,
-                      url: wrs_decision_path(slug: @wrs.slug),
-                      method: :post,
-                      local: true,
-                      html: { class: "space-y-6" } do |f| %>
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <%= f.label :first_name, "First name", class: "block text-sm font-medium text-gray-700 mb-1" %>
-              <%= f.text_field :first_name,
-                               class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900" %>
-            </div>
-            <div>
-              <%= f.label :last_name, "Last name", class: "block text-sm font-medium text-gray-700 mb-1" %>
-              <%= f.text_field :last_name,
-                               class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900" %>
-            </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="form-field-group">
+            <%= f.label :first_name, "First name", class: "label" %>
+            <%= f.text_field :first_name,
+                             class: "w-full px-4 py-2.5 rounded-md bg-white text-[var(--color-primary-text)] placeholder:text-[var(--color-secondary-text)]",
+                             placeholder: "John" %>
           </div>
-
-          <div>
-            <%= f.label :email, "Email", class: "block text-sm font-medium text-gray-700 mb-1" %>
+          <div class="form-field-group">
+            <%= f.label :last_name, "Last name", class: "label" %>
+            <%= f.text_field :last_name,
+                             class: "w-full px-4 py-2.5 rounded-md bg-white text-[var(--color-primary-text)] placeholder:text-[var(--color-secondary-text)]",
+                             placeholder: "Doe" %>
+          </div>
+          <div class="form-field-group">
+            <%= f.label :email, "Email", class: "label" %>
             <%= f.email_field :email,
-                              class: "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-gray-900 focus:ring-gray-900" %>
+                              class: "w-full px-4 py-2.5 rounded-md bg-white text-[var(--color-primary-text)] placeholder:text-[var(--color-secondary-text)]",
+                              placeholder: "john@example.com" %>
           </div>
+        </div>
 
-          <div>
-            <span class="block text-sm font-medium text-gray-700 mb-2">Do you accept the proposed works?</span>
-            <div class="space-y-2">
-              <label class="inline-flex items-center gap-2 text-sm text-gray-800">
-                <%= f.radio_button :decision, "accept", class: "text-gray-900 border-gray-300 focus:ring-gray-900" %>
-                <span>Accept the offer</span>
-              </label>
-              <label class="inline-flex items-center gap-2 text-sm text-gray-800">
-                <%= f.radio_button :decision, "decline", class: "text-gray-900 border-gray-300 focus:ring-gray-900" %>
-                <span>Decline the offer</span>
-              </label>
-            </div>
-          </div>
+        <div class="flex items-center gap-3 pt-2">
+          <label class="inline-flex items-start gap-2.5 text-sm text-[var(--color-primary-text)] cursor-pointer">
+            <%= f.check_box :accept_terms, class: "mt-0.5 w-4 h-4 text-[var(--color-accent-action)] border-[var(--color-border-divider)] rounded focus:ring-[var(--color-accent-action)] cursor-pointer" %>
+            <span>
+              I have read and accept the
+              <a href="https://www.bulletservices.co.uk/terms-and-conditions"
+                 target="_blank"
+                 rel="noopener"
+                 class="font-semibold text-[var(--color-accent-action)] underline hover:no-underline">
+                Terms and Conditions
+              </a>
+            </span>
+          </label>
+        </div>
 
-          <div>
-            <label class="inline-flex items-start gap-3 text-sm text-gray-700">
-              <%= f.check_box :accept_terms, class: "mt-1 text-gray-900 border-gray-300 rounded focus:ring-gray-900" %>
-              <span>
-                I have read and accept the
-                <a href="https://www.bulletservices.co.uk/terms-and-conditions"
-                   target="_blank"
-                   rel="noopener"
-                   class="font-semibold text-gray-900 underline">
-                  Terms and Conditions
-                </a>.
-              </span>
-            </label>
-          </div>
-
-          <div class="pt-4">
-            <%= f.submit "Submit", class: "inline-flex items-center justify-center px-6 py-3 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-gray-900 hover:bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-900" %>
-          </div>
-        <% end %>
-      </div>
+        <div class="flex gap-3 pt-2">
+          <%= f.hidden_field :decision, id: "decision-field" %>
+          <button
+            type="button"
+            data-decision="accept"
+            class="decision-button flex-1 bg-[var(--color-accent-action)] text-white px-6 py-3.5 rounded-md shadow-lg hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--color-accent-action)]">
+            Accept
+          </button>
+          <button
+            type="button"
+            data-decision="decline"
+            class="decision-button flex-1 bg-white border-2 border-[var(--color-border-divider)] text-[var(--color-primary-text)] px-6 py-3.5 rounded-md hover:bg-red-50 hover:text-red-600 hover:border-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-200">
+            Decline
+          </button>
+        </div>
+      <% end %>
     </div>
   </div>
-  <%= render FooterComponent.new %>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const scheduleSection = document.getElementById('schedule-section');
+    const approvalSection = document.getElementById('approval-section');
+    const floatingForm = document.getElementById('floating-decision-form');
+    const decisionField = document.getElementById('decision-field');
+    const form = document.getElementById('wrs-decision-form');
+    
+    if (!floatingForm) {
+      console.error('Floating form not found');
+      return;
+    }
+    
+    // Handle Accept/Decline button clicks
+    document.querySelectorAll('[data-decision]').forEach(button => {
+      button.addEventListener('click', (e) => {
+        e.preventDefault();
+        const decision = button.getAttribute('data-decision');
+        if (decisionField) {
+          decisionField.value = decision;
+        }
+        if (form) {
+          form.submit();
+        }
+      });
+    });
+
+    // Show/hide floating form based on scroll position
+    if (scheduleSection && approvalSection) {
+      const updateFormVisibility = () => {
+        const scheduleRect = scheduleSection.getBoundingClientRect();
+        const approvalRect = approvalSection.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+        
+        // Show form when schedule section is scrolled past (bottom is above viewport)
+        // AND approval section hasn't entered the viewport yet
+        const scheduleBottom = scheduleRect.bottom;
+        const approvalTop = approvalRect.top;
+        
+        // Show if: schedule bottom is above viewport AND approval top is below viewport
+        // More lenient: show when schedule is mostly scrolled past
+        const scheduleScrolledPast = scheduleBottom < viewportHeight + 200;
+        const approvalNotReached = approvalTop > viewportHeight - 100;
+        
+        const shouldShow = scheduleScrolledPast && approvalNotReached;
+        
+        if (shouldShow) {
+          floatingForm.classList.add('is-visible');
+        } else {
+          floatingForm.classList.remove('is-visible');
+        }
+      };
+
+      // Use IntersectionObserver for better performance
+      const observer = new IntersectionObserver((entries) => {
+        updateFormVisibility();
+      }, {
+        threshold: [0, 0.1, 0.5, 1],
+        rootMargin: "0px"
+      });
+
+      observer.observe(scheduleSection);
+      observer.observe(approvalSection);
+
+      // Scroll event listener for real-time updates
+      window.addEventListener('scroll', updateFormVisibility, { passive: true });
+      window.addEventListener('resize', updateFormVisibility, { passive: true });
+      
+      // Initial check
+      updateFormVisibility();
+    } else {
+      console.warn('Schedule or approval section not found, form visibility not managed');
+    }
+  });
+</script>
+
+<%= render FooterComponent.new %>

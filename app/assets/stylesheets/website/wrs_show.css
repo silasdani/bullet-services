@@ -1,0 +1,136 @@
+/*
+ * WRS Show Page Styles
+ * Styles for the Window Schedule Repairs public display page
+ */
+
+/* ============================================
+   CSS Variables - Design System
+   ============================================ */
+:root {
+  --color-background: #F9F9F9;
+  --color-surface: #FFFFFF;
+  --color-primary-text: #1A1A1A;
+  --color-secondary-text: #666666;
+  --color-border-divider: #EDEDED;
+  --color-accent-action: #000000;
+  --color-table-row-hover: #F5F5F5;
+}
+
+/* ============================================
+   Base Styles
+   ============================================ */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-primary-text);
+}
+
+/* ============================================
+   Custom Scrollbar
+   ============================================ */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* ============================================
+   Typography
+   ============================================ */
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ============================================
+   Floating Decision Form
+   ============================================ */
+#floating-decision-form {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1), opacity 0.5s ease;
+  transform: translateY(100%);
+  opacity: 0;
+  width: 100%;
+  pointer-events: none;
+}
+
+#floating-decision-form.is-visible {
+  transform: translateY(0) !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* Temporary: Always show for debugging - remove after testing */
+#floating-decision-form {
+  transform: translateY(0) !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+#floating-decision-form > div {
+  pointer-events: auto;
+}
+
+/* ============================================
+   Form Field Groups
+   ============================================ */
+.form-field-group {
+  position: relative;
+}
+
+.form-field-group input,
+.form-field-group input:focus {
+  outline: none;
+  border: 1px solid var(--color-border-divider);
+  transition: all 0.2s ease;
+}
+
+.form-field-group input:focus {
+  border-color: var(--color-accent-action);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+}
+
+.form-field-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: var(--color-primary-text);
+}
+
+/* ============================================
+   Decision Buttons
+   ============================================ */
+.decision-button {
+  transition: all 0.2s ease;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.875rem;
+}
+
+.decision-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.decision-button:active {
+  transform: translateY(0);
+}

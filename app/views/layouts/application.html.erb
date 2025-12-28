@@ -28,6 +28,7 @@
       import { Application } from 'https://cdn.skypack.dev/@hotwired/stimulus@3.2.1';
       window.Stimulus = Application.start();
     </script>
+    <%= yield :head if content_for?(:head) %>
   </head>
   <body class="antialiased font-sans">
     <% unless (defined?(devise_controller?) && devise_controller? && controller_name == 'sessions' && action_name == 'new') %>
