@@ -41,8 +41,8 @@ class Rack::Attack
   end
 
   # Custom response for throttled requests
-  self.throttled_response = lambda do |env|
-    match_data = env['rack.attack.match_data']
+  self.throttled_responder = lambda do |request|
+    match_data = request.env['rack.attack.match_data']
     now = match_data[:epoch_time]
     headers = {
       'X-RateLimit-Limit' => match_data[:limit].to_s,
