@@ -53,13 +53,58 @@ module Freshbooks
     end
 
     def ensure_freshbooks_client(client_id:, first_name:, last_name:, email:, building_id:)
-      return client_id if client_id.present?
-
+      # Check local client record first (needed for validation)
       local_client = FreshbooksClient.find_by(email: email)
-      existing_fb_id = extract_existing_freshbooks_id(local_client)
-      return existing_fb_id if existing_fb_id
 
+      # Validate provided client_id if present
+      if client_id.present?
+        validated_id = validate_client_id(client_id, email, local_client)
+        return validated_id if validated_id.present?
+      end
+
+      # Check existing ID from local client
+      existing_fb_id = extract_existing_freshbooks_id(local_client)
+
+      # Validate existing ID if present
+      if existing_fb_id.present?
+        validated_id = validate_client_id(existing_fb_id, email, local_client)
+        return validated_id if validated_id.present?
+      end
+
+      # Create new client if no valid ID found
       create_and_link_freshbooks_client(local_client, first_name, last_name, email, building_id)
+    end
+
+    def validate_client_id(client_id, email, local_client = nil)
+      clients_service = Freshbooks::Clients.new
+      client_data = clients_service.get(client_id)
+
+      return client_id if client_data.present?
+
+      # Client ID is invalid - clear it from local record if it exists
+      if local_client&.freshbooks_id == client_id
+        Rails.logger.warn(
+          "Invalid FreshBooks client ID #{client_id} for email #{email}. " \
+          'Clearing from local record and creating new client.'
+        )
+        local_client.update!(freshbooks_id: nil)
+      end
+
+      nil
+    rescue FreshbooksError => e
+      # If we get a 404 or 422 error, the client doesn't exist or is invalid
+      if [404, 422].include?(e.status_code)
+        Rails.logger.warn(
+          "FreshBooks client ID #{client_id} not found or invalid for email #{email} " \
+          "(status: #{e.status_code}). Clearing from local record and creating new client."
+        )
+        local_client&.update!(freshbooks_id: nil) if local_client&.freshbooks_id == client_id
+        return nil
+      end
+
+      # For other errors, log and re-raise
+      Rails.logger.error("Error validating FreshBooks client ID #{client_id}: #{e.message}")
+      raise
     end
 
     def extract_existing_freshbooks_id(local_client)

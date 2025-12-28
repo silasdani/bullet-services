@@ -88,15 +88,8 @@ module Wrs
     end
 
     def wrs_public_url
-      host = ConfigHelper.get_config(
-        key: :public_app_host,
-        env_key: 'PUBLIC_APP_HOST',
-        default: 'bulletservices.co.uk'
-      )
-      Rails.application.routes.url_helpers.wrs_show_url(
-        slug: window_schedule_repair.slug,
-        host: host
-      )
+      host = ENV.fetch('PUBLIC_APP_HOST', 'bulletservices.co.uk')
+      "#{host}/wrs/#{window_schedule_repair.slug}"
     end
 
     def invoice_identifier(invoice, _fb_client_data)
