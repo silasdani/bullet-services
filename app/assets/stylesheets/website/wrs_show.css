@@ -72,16 +72,9 @@ body {
 }
 
 #floating-decision-form.is-visible {
-  transform: translateY(0) !important;
-  opacity: 1 !important;
-  pointer-events: auto !important;
-}
-
-/* Temporary: Always show for debugging - remove after testing */
-#floating-decision-form {
-  transform: translateY(0) !important;
-  opacity: 1 !important;
-  pointer-events: auto !important;
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
 }
 
 #floating-decision-form > div {
@@ -133,4 +126,71 @@ body {
 
 .decision-button:active {
   transform: translateY(0);
+}
+
+/* ============================================
+   Window Image Zoom Effect
+   ============================================ */
+.image-zoom-container {
+  position: relative;
+  z-index: 0;
+  transition: z-index 0s, box-shadow 0.3s ease;
+}
+
+.image-zoom-container:hover {
+  z-index: 50;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+.wrs-window-image {
+  display: block;
+  transform-origin: center center;
+  transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: transform;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
+.image-zoom-container:hover .wrs-window-image {
+  transform: scale(1.5);
+  cursor: zoom-in;
+}
+
+/* Full-screen zoom on click */
+.image-zoom-container.zoomed {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9998;
+  background: rgba(0, 0, 0, 0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  border: none;
+  border-radius: 0;
+  cursor: zoom-out;
+  animation: fadeIn 0.2s ease;
+}
+
+.image-zoom-container.zoomed .wrs-window-image {
+  max-width: 95vw;
+  max-height: 95vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  transform: scale(1);
+  cursor: zoom-out;
+  box-shadow: 0 0 40px rgba(255, 255, 255, 0.1);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }

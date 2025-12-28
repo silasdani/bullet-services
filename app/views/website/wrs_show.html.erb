@@ -1,18 +1,13 @@
 <% content_for :title, "WRS #{@wrs.reference_number} - Bullet Services" %>
 
 <% content_for :head do %>
-  <!-- Additional fonts for this page -->
-  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap" rel="stylesheet"/>
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-  
   <!-- WRS Show Page Styles -->
   <%= stylesheet_link_tag "website/wrs_show", "data-turbo-track": "reload" %>
 <% end %>
 
 <%= render NavigationComponent.new(current_path: request.path) %>
 
-<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 pt-[12vh]">
   <!-- Header Section -->
   <div class="mb-10 text-center">
     <h1 class="text-3xl font-bold tracking-tight text-[var(--color-primary-text)]">Window Schedule Repairs</h1>
@@ -78,12 +73,13 @@
                 <div class="md:col-span-4">
                   <div class="font-bold text-sm mb-3 text-[var(--color-primary-text)]"><%= window.location %></div>
                   <% if window.effective_image_url.present? %>
-                    <div class="relative border border-[var(--color-border-divider)] group/image cursor-zoom-in z-0 hover:z-50 hover:shadow-2xl transition-all duration-300">
+                    <div class="relative overflow-hidden border border-[var(--color-border-divider)] rounded cursor-zoom-in image-zoom-container">
                       <img
                         src="<%= window.effective_image_url %>"
                         alt="<%= window.location %>"
-                        class="w-full h-auto object-cover group-hover/image:scale-[1.8] group-hover/image:border-4 group-hover/image:border-white transition-all duration-300 ease-out block origin-center z-0 group-hover/image:z-50 group-hover/image:shadow-2xl"
+                        class="wrs-window-image w-full h-auto object-cover transition-transform duration-500 ease-out"
                         onerror="this.style.display='none'"
+                        loading="lazy"
                       />
                     </div>
                   <% end %>
@@ -429,6 +425,44 @@
       return;
     }
     
+    // Handle image zoom on click
+    document.querySelectorAll('.image-zoom-container').forEach(container => {
+      const img = container.querySelector('.wrs-window-image');
+      if (!img) return;
+      
+      container.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (container.classList.contains('zoomed')) {
+          // Close zoom
+          container.classList.remove('zoomed');
+          document.body.style.overflow = '';
+        } else {
+          // Open zoom
+          container.classList.add('zoomed');
+          document.body.style.overflow = 'hidden';
+        }
+      });
+      
+      // Close on escape key
+      const escapeHandler = (e) => {
+        if (e.key === 'Escape' && container.classList.contains('zoomed')) {
+          container.classList.remove('zoomed');
+          document.body.style.overflow = '';
+        }
+      };
+      document.addEventListener('keydown', escapeHandler);
+      
+      // Close on background click
+      container.addEventListener('click', (e) => {
+        if (container.classList.contains('zoomed') && e.target === container) {
+          container.classList.remove('zoomed');
+          document.body.style.overflow = '';
+        }
+      });
+    });
+    
     // Handle Accept/Decline button clicks
     document.querySelectorAll('[data-decision]').forEach(button => {
       button.addEventListener('click', (e) => {
@@ -444,25 +478,26 @@
     });
 
     // Show/hide floating form based on scroll position
-    if (scheduleSection && approvalSection) {
+    if (scheduleSection) {
       const updateFormVisibility = () => {
         const scheduleRect = scheduleSection.getBoundingClientRect();
-        const approvalRect = approvalSection.getBoundingClientRect();
         const viewportHeight = window.innerHeight;
         
-        // Show form when schedule section is scrolled past (bottom is above viewport)
-        // AND approval section hasn't entered the viewport yet
+        // Show form when we're near the end of the table (bottom is approaching or just past viewport)
+        // Hide when we scroll back up to the top/middle of the table
         const scheduleBottom = scheduleRect.bottom;
-        const approvalTop = approvalRect.top;
+        const scheduleTop = scheduleRect.top;
         
-        // Show if: schedule bottom is above viewport AND approval top is below viewport
-        // More lenient: show when schedule is mostly scrolled past
-        const scheduleScrolledPast = scheduleBottom < viewportHeight + 200;
-        const approvalNotReached = approvalTop > viewportHeight - 100;
+        // Show when: schedule bottom is near or past the viewport bottom (within 200px threshold)
+        // This means we're at the end of the table or just past it
+        const threshold = 200; // pixels from viewport bottom
+        const isNearEnd = scheduleBottom <= viewportHeight + threshold;
         
-        const shouldShow = scheduleScrolledPast && approvalNotReached;
+        // Hide when: we're at the top/middle of the table (top is well above viewport)
+        const isAtTop = scheduleTop > threshold;
         
-        if (shouldShow) {
+        // Show if we're near the end AND not at the top
+        if (isNearEnd && !isAtTop) {
           floatingForm.classList.add('is-visible');
         } else {
           floatingForm.classList.remove('is-visible');
@@ -473,21 +508,31 @@
       const observer = new IntersectionObserver((entries) => {
         updateFormVisibility();
       }, {
-        threshold: [0, 0.1, 0.5, 1],
+        threshold: [0, 1],
         rootMargin: "0px"
       });
 
       observer.observe(scheduleSection);
-      observer.observe(approvalSection);
 
       // Scroll event listener for real-time updates
-      window.addEventListener('scroll', updateFormVisibility, { passive: true });
+      let ticking = false;
+      const handleScroll = () => {
+        if (!ticking) {
+          window.requestAnimationFrame(() => {
+            updateFormVisibility();
+            ticking = false;
+          });
+          ticking = true;
+        }
+      };
+      
+      window.addEventListener('scroll', handleScroll, { passive: true });
       window.addEventListener('resize', updateFormVisibility, { passive: true });
       
       // Initial check
       updateFormVisibility();
     } else {
-      console.warn('Schedule or approval section not found, form visibility not managed');
+      console.warn('Schedule section not found, form visibility not managed');
     }
   });
 </script>
