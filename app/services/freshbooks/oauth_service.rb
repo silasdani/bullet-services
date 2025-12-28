@@ -44,6 +44,11 @@ module Freshbooks
 
     def raise_token_exchange_error(response)
       error_message = build_error_message("Failed to exchange authorization code: #{response.code}", response)
+      config = Rails.application.config.freshbooks
+
+      Rails.logger.error "FreshBooks OAuth token exchange failed: #{error_message}"
+      Rails.logger.error "Redirect URI: #{config[:redirect_uri]}"
+
       raise FreshbooksError.new(error_message, response.code, response.body)
     end
 

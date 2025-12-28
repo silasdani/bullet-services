@@ -1,10 +1,15 @@
 # frozen_string_literal: true
 
+require_relative 'invoices/pdf_validation_helpers'
+require_relative 'invoices/pdf_methods'
+require_relative 'invoices/email_methods'
+require_relative 'invoices/line_builder'
+
 module Freshbooks
   class Invoices < BaseClient
-    include Invoices::PdfMethods
-    include Invoices::EmailMethods
-    include Invoices::LineBuilder
+    include Freshbooks::InvoicePdfMethods
+    include Freshbooks::InvoiceEmailMethods
+    include Freshbooks::InvoiceLineBuilder
     def list(page: 1, per_page: 100, client_id: nil)
       path = build_path('invoices/invoices')
       query = {

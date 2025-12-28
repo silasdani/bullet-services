@@ -41,6 +41,13 @@ namespace :freshbooks do
     puts 'Exchanging authorization code for tokens...'
     puts "  Code length: #{code.length}"
 
+    # Show configuration (without secrets) for debugging
+    config = Rails.application.config.freshbooks
+    puts "\nConfiguration:"
+    puts "  Client ID: #{config[:client_id].present? ? "#{config[:client_id][0..8]}..." : 'NOT SET'}"
+    puts "  Client Secret: #{config[:client_secret].present? ? 'SET' : 'NOT SET'}"
+    puts "  Redirect URI: #{config[:redirect_uri] || 'NOT SET'}"
+
     begin
       result = Freshbooks::OauthService.exchange_code(code)
       token = result[:token]
@@ -56,19 +63,114 @@ namespace :freshbooks do
       puts "FRESHBOOKS_BUSINESS_ID=#{token.business_id}"
       puts "\n"
     rescue FreshbooksError => e
-      puts "❌ Error: #{e.message}"
+      puts "\n❌ Error: #{e.message}"
+
+      # Show detailed error response if available
+      if e.respond_to?(:response_body) && e.response_body.present?
+        begin
+          error_data = JSON.parse(e.response_body)
+          puts "\nFreshBooks Error Details:"
+          puts "  Error: #{error_data['error']}" if error_data['error']
+          puts "  Description: #{error_data['error_description']}" if error_data['error_description']
+        rescue JSON::ParserError
+          puts "\nFreshBooks Response: #{e.response_body}"
+        end
+      end
+
       puts "\nCommon issues:"
       puts '  - Authorization code expired (codes expire in ~10 minutes)'
-      puts '  - Code already used'
-      puts '  - Redirect URI mismatch (must match exactly)'
+      puts '  - Code already used (each code can only be used once)'
+      puts '  - Redirect URI mismatch (must match EXACTLY, including protocol, domain, path, and trailing slashes)'
       puts '  - Invalid client credentials'
       puts '  - OAuth credentials not configured ' \
            '(FRESHBOOKS_CLIENT_ID, FRESHBOOKS_CLIENT_SECRET, FRESHBOOKS_REDIRECT_URI)'
+      puts "\n💡 The redirect_uri must match exactly: #{config[:redirect_uri]}"
+      puts "   Verify it's registered in FreshBooks app settings: https://my.freshbooks.com/#/developer"
       exit 1
     rescue StandardError => e
       puts "❌ Unexpected error: #{e.message}"
       puts e.backtrace.first(5).join("\n")
       exit 1
+    end
+  end
+
+  desc 'Show OAuth authorization URL with exact redirect_uri'
+  task show_auth_url: :environment do
+    config = Rails.application.config.freshbooks
+
+    if config[:client_id].blank? || config[:redirect_uri].blank?
+      puts '❌ Error: FRESHBOOKS_CLIENT_ID and FRESHBOOKS_REDIRECT_URI must be set'
+      exit 1
+    end
+
+    auth_url = "https://auth.freshbooks.com/oauth/authorize?client_id=#{config[:client_id]}&response_type=code&redirect_uri=#{CGI.escape(config[:redirect_uri])}"
+
+    puts 'OAuth Authorization URL:'
+    puts auth_url
+    puts "\n⚠️  Before visiting:"
+    puts "   Ensure this redirect_uri is registered in FreshBooks: #{config[:redirect_uri]}"
+    puts '   Register at: https://my.freshbooks.com/#/developer'
+    puts "\n   After authorization, copy the 'code' parameter and run:"
+    puts '   rails freshbooks:exchange_code[CODE]'
+  end
+
+  desc 'Verify OAuth configuration'
+  task verify_config: :environment do
+    config = Rails.application.config.freshbooks
+
+    puts 'Checking FreshBooks OAuth configuration...'
+    puts
+
+    issues = []
+
+    if config[:client_id].blank?
+      issues << 'FRESHBOOKS_CLIENT_ID is not set'
+    else
+      puts "✅ Client ID: #{config[:client_id][0..8]}..."
+    end
+
+    if config[:client_secret].blank?
+      issues << 'FRESHBOOKS_CLIENT_SECRET is not set'
+    else
+      puts '✅ Client Secret: SET'
+    end
+
+    if config[:redirect_uri].blank?
+      issues << 'FRESHBOOKS_REDIRECT_URI is not set'
+    else
+      puts "✅ Redirect URI: #{config[:redirect_uri]}"
+    end
+
+    if issues.any?
+      puts "\n❌ Configuration issues found:"
+      issues.each { |issue| puts "  - #{issue}" }
+      puts "\nPlease set these environment variables before attempting OAuth exchange."
+      exit 1
+    else
+      puts "\n✅ All OAuth credentials are configured!"
+      puts "\nTo get an authorization code, visit:"
+      puts "https://auth.freshbooks.com/oauth/authorize?client_id=#{config[:client_id]}&response_type=code&redirect_uri=#{CGI.escape(config[:redirect_uri])}"
+
+      # Test if callback endpoint is accessible
+      if config[:redirect_uri].present?
+        puts "\nTesting callback endpoint accessibility..."
+        begin
+          response = HTTParty.get(config[:redirect_uri], timeout: 5)
+          if [400, 405].include?(response.code)
+            # 400/405 is expected for GET without code param, means endpoint exists
+            puts "✅ Callback endpoint is accessible (returned #{response.code}, which is expected)"
+          elsif response.success?
+            puts '✅ Callback endpoint is accessible'
+          else
+            puts "⚠️  Callback endpoint returned: #{response.code}"
+          end
+        rescue Net::OpenTimeout, Errno::ECONNREFUSED, SocketError => e
+          puts "❌ Cannot reach callback endpoint: #{e.message}"
+          puts '   Make sure your ngrok tunnel is running and pointing to your Rails server'
+        rescue StandardError => e
+          puts "⚠️  Could not test callback endpoint: #{e.message}"
+        end
+      end
     end
   end
 

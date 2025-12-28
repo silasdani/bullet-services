@@ -4,7 +4,7 @@ class Invoice < ApplicationRecord
   validates :name, presence: true
   validates :slug, presence: true, uniqueness: true
   validates :webflow_item_id, uniqueness: true, allow_blank: true
-  validates :freshbooks_client_id, presence: true
+  validates :freshbooks_client_id, presence: true, unless: -> { generated_by == 'wrs_form' }
   validates :status, presence: true
   validates :final_status, presence: true
 

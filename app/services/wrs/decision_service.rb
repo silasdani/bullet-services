@@ -5,13 +5,17 @@ module Wrs
   # On accept:
   # - ensures a FreshBooks client exists
   # - creates a Rails Invoice linked to the WRS
-  # - creates a FreshBooks invoice with the correct line item and terms
-  # - mirrors the FreshBooks PDF into Active Storage
-  # - notifies the admin
+  # - marks WRS as approved
+  # - queues a background job to create FreshBooks invoice (responds immediately to client)
+  #
+  # The background job handles:
+  # - creating the FreshBooks invoice
+  # - mirroring the FreshBooks PDF into Active Storage
+  # - notifying the admin
   #
   # On decline:
   # - notifies the admin
-  # - optionally updates the WRS status
+  # - updates the WRS status
   class DecisionService < BaseService
     attribute :window_schedule_repair
     attribute :first_name, :string
@@ -40,22 +44,13 @@ module Wrs
         ActiveRecord::Base.transaction do
           fb_client = ensure_freshbooks_client!
           invoice = create_local_invoice!(fb_client)
-          result = create_freshbooks_invoice!(invoice, fb_client)
-
-          attach_pdf_to_invoice(invoice, result) if result.is_a?(Hash)
-
           mark_wrs_as_approved!
-          send_admin_accept_email!(invoice, fb_client)
+
+          # Queue FreshBooks invoice creation as background job
+          # This ensures we respond to the client immediately without waiting for 3rd party API
+          queue_freshbooks_invoice_creation(invoice, fb_client)
         end
       end
-    end
-
-    def attach_pdf_to_invoice(invoice, result)
-      pdf_data = {
-        base64: result[:pdf_base64],
-        url: result[:pdf_url]
-      }
-      PdfAttachmentService.new(invoice, pdf_data).call if pdf_data[:base64].present? || pdf_data[:url].present?
     end
 
     def handle_decline
@@ -89,7 +84,7 @@ module Wrs
       )
     end
 
-    def create_freshbooks_invoice!(invoice, fb_client_data)
+    def queue_freshbooks_invoice_creation(invoice, fb_client_data)
       fb_client_id = fb_client_data['id'] || fb_client_data['clientid']
 
       lines = [
@@ -103,10 +98,14 @@ module Wrs
         }
       ]
 
-      invoice.create_in_freshbooks!(
+      Freshbooks::CreateInvoiceJob.perform_later(
+        invoice.id,
+        lines,
         client_id: fb_client_id,
-        lines: lines,
-        send_email: false
+        first_name: first_name,
+        last_name: last_name,
+        email: email,
+        building_id: building&.id
       )
     end
 
@@ -122,10 +121,6 @@ module Wrs
       )
     end
 
-    def send_admin_accept_email!(invoice, fb_client_data)
-      email_notifier.send_accept_email(invoice, fb_client_data)
-    end
-
     def send_admin_decline_email!
       email_notifier.send_decline_email
     end
@@ -135,7 +130,6 @@ module Wrs
     end
 
     def wrs_public_url
-      require_relative '../../../lib/config_helper'
       host = ConfigHelper.get_config(
         key: :public_app_host,
         env_key: 'PUBLIC_APP_HOST',
