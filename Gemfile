@@ -55,7 +55,7 @@ gem 'ransack'
 gem 'rails_admin', '~> 3.1'
 
 group :development, :test do
-  gem 'brakeman', '~> 7.1', require: false
+  gem 'brakeman', '~> 7.1.2', require: false
   gem 'debug', platforms: %i[mri windows], require: 'debug/prelude'
   gem 'htmlbeautifier'
   gem 'pry-rails'
