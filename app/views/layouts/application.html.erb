@@ -6,6 +6,8 @@
     <title><%= content_for?(:title) ? yield(:title) : "Bullet Services" %></title>
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
+    <!-- Material Symbols Font -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
     <!-- Tailwind CSS via CDN (simple, robust, production-ready) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Configure Tailwind to use Aileron font -->
@@ -28,6 +30,7 @@
       import { Application } from 'https://cdn.skypack.dev/@hotwired/stimulus@3.2.1';
       window.Stimulus = Application.start();
     </script>
+    <%= yield :head if content_for?(:head) %>
   </head>
   <body class="antialiased font-sans">
     <% unless (defined?(devise_controller?) && devise_controller? && controller_name == 'sessions' && action_name == 'new') %>

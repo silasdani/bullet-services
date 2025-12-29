@@ -109,7 +109,7 @@ GEM
     bigdecimal (3.2.2)
     bootsnap (1.18.6)
       msgpack (~> 1.2)
-    brakeman (7.1.1)
+    brakeman (7.1.2)
       racc
     builder (3.3.0)
     case_transform (0.2)
@@ -168,6 +168,7 @@ GEM
       raabro (~> 1.4)
     globalid (1.2.1)
       activesupport (>= 6.1)
+    htmlbeautifier (1.4.3)
     http (5.3.1)
       addressable (~> 2.8)
       http-cookie (~> 1.0)
@@ -423,6 +424,12 @@ GEM
       sprockets-rails
       tilt
     securerandom (0.4.1)
+    sentry-rails (6.2.0)
+      railties (>= 5.2.0)
+      sentry-ruby (~> 6.2.0)
+    sentry-ruby (6.2.0)
+      bigdecimal
+      concurrent-ruby (~> 1.0, >= 1.0.2)
     shoulda-matchers (6.5.0)
       activesupport (>= 5.2.0)
     solid_cable (3.0.11)
@@ -504,7 +511,7 @@ DEPENDENCIES
   active_model_serializers (~> 0.10.0)
   aws-sdk-s3
   bootsnap
-  brakeman (~> 7.1)
+  brakeman (~> 7.1.2)
   csv
   debug
   devise
@@ -512,6 +519,7 @@ DEPENDENCIES
   dotenv-rails
   factory_bot_rails
   faker
+  htmlbeautifier
   httparty
   image_processing (~> 1.2)
   json (= 2.13.2)
@@ -532,6 +540,8 @@ DEPENDENCIES
   rubocop-rails-omakase
   ruby-progressbar
   sassc-rails
+  sentry-rails
+  sentry-ruby
   shoulda-matchers
   solid_cable
   solid_cache

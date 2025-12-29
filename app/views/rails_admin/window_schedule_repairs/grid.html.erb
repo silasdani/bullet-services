@@ -34,7 +34,7 @@
           <div class="stat-label"><%= I18n.t('wrs_grid.total_wrs') %></div>
         </div>
       </div>
-      
+
       <div class="stat-card">
         <div class="stat-icon stat-icon-published">
           <i class="fas fa-check-circle"></i>
@@ -44,7 +44,7 @@
           <div class="stat-label"><%= I18n.t('wrs_grid.published') %></div>
         </div>
       </div>
-      
+
       <div class="stat-card">
         <div class="stat-icon stat-icon-draft">
           <i class="fas fa-edit"></i>
@@ -54,7 +54,7 @@
           <div class="stat-label"><%= I18n.t('wrs_grid.draft') %></div>
         </div>
       </div>
-      
+
       <div class="stat-card">
         <div class="stat-icon stat-icon-value">
           <i class="fas fa-pound-sign"></i>
@@ -64,7 +64,7 @@
           <div class="stat-label"><%= I18n.t('wrs_grid.total_value') %></div>
         </div>
       </div>
-      
+
       <div class="stat-card stat-card-status">
         <div class="stat-content">
           <div class="status-breakdown">
@@ -161,7 +161,7 @@
           # Get address
           address = wrs.building ? wrs.building.full_address : (wrs.address || 'N/A')
         %>
-        
+
         <article class="wrs-card" 
                  data-wrs-name="<%= wrs.name.downcase %>"
                  data-wrs-address="<%= address.downcase %>"
@@ -169,7 +169,7 @@
                  data-is-archived="<%= wrs.is_archived %>"
                  data-is-published="<%= wrs.last_published.present? %>"
                  data-status="<%= wrs.status || 'pending' %>">
-          
+
           <!-- WRS Card Header -->
           <div class="wrs-card-header">
             <div class="wrs-header-main">
@@ -208,7 +208,7 @@
                   <span class="wrs-meta-value"><%= address %></span>
                 </div>
               </div>
-              
+
               <% if wrs.flat_number.present? %>
                 <div class="wrs-meta-item">
                   <i class="fas fa-home"></i>
@@ -218,7 +218,7 @@
                   </div>
                 </div>
               <% end %>
-              
+
               <% if wrs.reference_number.present? %>
                 <div class="wrs-meta-item">
                   <i class="fas fa-tag"></i>
@@ -228,7 +228,7 @@
                   </div>
                 </div>
               <% end %>
-              
+
               <div class="wrs-meta-item">
                 <i class="fas fa-window-maximize"></i>
                 <div class="wrs-meta-content">
@@ -293,22 +293,22 @@
     const searchClear = document.getElementById('search-clear');
     const wrsGrid = document.getElementById('wrs-grid');
     const filterButtons = document.querySelectorAll('.filter-btn');
-    
+
     if (searchInput && wrsGrid) {
       searchInput.addEventListener('input', function(e) {
         const searchTerm = e.target.value.toLowerCase().trim();
         const wrsCards = wrsGrid.querySelectorAll('.wrs-card');
-        
+
         if (searchTerm) {
           searchClear.style.display = 'block';
         } else {
           searchClear.style.display = 'none';
         }
-        
+
         wrsCards.forEach(card => {
           const name = card.dataset.wrsName || '';
           const address = card.dataset.wrsAddress || '';
-          
+
           if (name.includes(searchTerm) || address.includes(searchTerm)) {
             card.style.display = '';
           } else {
@@ -316,7 +316,7 @@
           }
         });
       });
-      
+
       searchClear.addEventListener('click', function() {
         searchInput.value = '';
         searchClear.style.display = 'none';
@@ -326,7 +326,7 @@
         });
       });
     }
-    
+
     // Filter functionality
     if (filterButtons && wrsGrid) {
       filterButtons.forEach(btn => {
@@ -334,15 +334,15 @@
           // Update active state
           filterButtons.forEach(b => b.classList.remove('active'));
           this.classList.add('active');
-          
+
           const filter = this.dataset.filter;
           const wrsCards = wrsGrid.querySelectorAll('.wrs-card');
-          
+
           wrsCards.forEach(card => {
             const isDraft = card.dataset.isDraft === 'true';
             const isArchived = card.dataset.isArchived === 'true';
             const isPublished = card.dataset.isPublished === 'true';
-            
+
             if (filter === 'all') {
               card.style.display = '';
             } else if (filter === 'published' && isPublished) {

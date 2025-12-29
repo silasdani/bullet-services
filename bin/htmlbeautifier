@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# htmlbeautifier wrapper script with customizable settings
+# Adjust the variables below to change default behavior
+
+# Configuration (adjust these to your preference)
+INDENT_SPACES=2        # Number of spaces per indent (default: 2 for Rails)
+KEEP_BLANK_LINES=1     # Number of consecutive blank lines to keep (default: 1)
+STOP_ON_ERRORS=""      # Set to "--stop-on-errors" to stop on invalid nesting
+
+# Build command arguments
+HTMLBEAUTIFIER_ARGS=()
+
+# Add indentation setting
+HTMLBEAUTIFIER_ARGS+=(--tab-stops "$INDENT_SPACES")
+
+# Add keep blank lines setting
+if [ "$KEEP_BLANK_LINES" -gt 0 ]; then
+  HTMLBEAUTIFIER_ARGS+=(--keep-blank-lines "$KEEP_BLANK_LINES")
+fi
+
+# Add stop on errors if enabled
+if [ -n "$STOP_ON_ERRORS" ]; then
+  HTMLBEAUTIFIER_ARGS+=("$STOP_ON_ERRORS")
+fi
+
+# If no files specified, default to all ERB files
+if [ $# -eq 0 ]; then
+  # No arguments, find all ERB files
+  find app/views app/components -name '*.erb' -exec bundle exec htmlbeautifier "${HTMLBEAUTIFIER_ARGS[@]}" {} +
+else
+  # Pass all arguments (options and files) to htmlbeautifier
+  bundle exec htmlbeautifier "${HTMLBEAUTIFIER_ARGS[@]}" "$@"
+fi

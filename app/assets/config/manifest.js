@@ -3,3 +3,4 @@
 //= link_directory ../stylesheets .css
 //= link application.js
 //= link application.css
+//= link website/wrs_show.css
