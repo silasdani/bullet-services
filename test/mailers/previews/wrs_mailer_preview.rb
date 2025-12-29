@@ -49,9 +49,6 @@ class WrsMailerPreview < ActionMailer::Preview
       total_vat_included_price: '£1,250.00'
     )
 
-    # Mock address method if building is present
-    if building.present?
-    end
     wrs.define_singleton_method(:address) { '123 Main Street' }
 
     wrs
@@ -71,11 +68,23 @@ class WrsMailerPreview < ActionMailer::Preview
     )
 
     # Mock freshbooks_invoices association
-    fb_invoice = OpenStruct.new(invoice_number: 'INV-2024-001')
+    fb_invoice = create_mock_fb_invoice
     invoice.define_singleton_method(:freshbooks_invoices) do
-      OpenStruct.new(last: fb_invoice)
+      create_association_mock(fb_invoice)
     end
 
     invoice
+  end
+
+  def create_mock_fb_invoice
+    mock = Object.new
+    mock.define_singleton_method(:invoice_number) { 'INV-2024-001' }
+    mock
+  end
+
+  def create_association_mock(fb_invoice)
+    mock = Object.new
+    mock.define_singleton_method(:last) { fb_invoice }
+    mock
   end
 end

@@ -3,14 +3,8 @@
 class WrsMailer < ApplicationMailer
   def wrs_accept_notification
     @window_schedule_repair = params[:window_schedule_repair]
-    @first_name = params[:first_name]
-    @last_name = params[:last_name]
-    @email = params[:email]
-    @invoice = params[:invoice]
-    @invoice_number = invoice_identifier(@invoice, params[:fb_client_data])
-    @address = "#{@window_schedule_repair.address} Flat #{@window_schedule_repair.flat_number}"
-    @wrs_link = wrs_public_url(@window_schedule_repair)
-    @total_price = @window_schedule_repair.total_vat_included_price
+    assign_wrs_variables
+    assign_client_variables
 
     mail(
       to: admin_email,
@@ -34,6 +28,20 @@ class WrsMailer < ApplicationMailer
   end
 
   private
+
+  def assign_wrs_variables
+    @invoice = params[:invoice]
+    @invoice_number = invoice_identifier(@invoice, params[:fb_client_data])
+    @address = "#{@window_schedule_repair.address} Flat #{@window_schedule_repair.flat_number}"
+    @wrs_link = wrs_public_url(@window_schedule_repair)
+    @total_price = @window_schedule_repair.total_vat_included_price
+  end
+
+  def assign_client_variables
+    @first_name = params[:first_name]
+    @last_name = params[:last_name]
+    @email = params[:email]
+  end
 
   def admin_email
     ConfigHelper.get_config(

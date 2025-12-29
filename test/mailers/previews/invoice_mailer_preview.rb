@@ -25,20 +25,22 @@ class InvoiceMailerPreview < ActionMailer::Preview
   private
 
   def create_sample_invoice
-    # Try to use existing invoice from database, otherwise create a mock
     invoice = Invoice.first
+    return mock_existing_invoice(invoice) if invoice.present?
 
-    if invoice.present?
-      # Mock wrs_link if not already defined
-      unless invoice.respond_to?(:wrs_link)
-        invoice.define_singleton_method(:wrs_link) do
-          'https://bulletservices.co.uk/wrs/sample-slug'
-        end
-      end
-      return invoice
+    create_mock_invoice
+  end
+
+  def mock_existing_invoice(invoice)
+    return invoice if invoice.respond_to?(:wrs_link)
+
+    invoice.define_singleton_method(:wrs_link) do
+      'https://bulletservices.co.uk/wrs/sample-slug'
     end
+    invoice
+  end
 
-    # Create a mock invoice for preview
+  def create_mock_invoice
     invoice = Invoice.new(
       slug: 'inv-2024-001',
       total_amount: 1250.00,
@@ -46,20 +48,31 @@ class InvoiceMailerPreview < ActionMailer::Preview
       created_at: Date.today
     )
 
-    # Mock wrs_link method
+    mock_invoice_methods(invoice)
+    invoice
+  end
+
+  def mock_invoice_methods(invoice)
     invoice.define_singleton_method(:wrs_link) do
       'https://bulletservices.co.uk/wrs/sample-slug'
     end
 
-    # Mock freshbooks_invoices association
-    fb_invoice = OpenStruct.new(
-      invoice_number: 'INV-2024-001',
-      due_date: Date.today + 30.days
-    )
+    fb_invoice = create_mock_fb_invoice
     invoice.define_singleton_method(:freshbooks_invoices) do
-      OpenStruct.new(last: fb_invoice)
+      create_association_mock(fb_invoice)
     end
+  end
 
-    invoice
+  def create_mock_fb_invoice
+    mock = Object.new
+    mock.define_singleton_method(:invoice_number) { 'INV-2024-001' }
+    mock.define_singleton_method(:due_date) { Date.today + 30.days }
+    mock
+  end
+
+  def create_association_mock(fb_invoice)
+    mock = Object.new
+    mock.define_singleton_method(:last) { fb_invoice }
+    mock
   end
 end

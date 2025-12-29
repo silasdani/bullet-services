@@ -81,30 +81,38 @@ module Freshbooks
 
       return client_id if client_data.present?
 
-      # Client ID is invalid - clear it from local record if it exists
-      if local_client&.freshbooks_id == client_id
-        Rails.logger.warn(
-          "Invalid FreshBooks client ID #{client_id} for email #{email}. " \
-          'Clearing from local record and creating new client.'
-        )
-        local_client.update!(freshbooks_id: nil)
-      end
-
+      clear_invalid_client_id(client_id, email, local_client)
       nil
     rescue FreshbooksError => e
-      # If we get a 404 or 422 error, the client doesn't exist or is invalid
-      if [404, 422].include?(e.status_code)
-        Rails.logger.warn(
-          "FreshBooks client ID #{client_id} not found or invalid for email #{email} " \
-          "(status: #{e.status_code}). Clearing from local record and creating new client."
-        )
-        local_client&.update!(freshbooks_id: nil) if local_client&.freshbooks_id == client_id
+      handle_validation_error(e, client_id, email, local_client)
+    end
+
+    def clear_invalid_client_id(client_id, email, local_client)
+      return unless local_client&.freshbooks_id == client_id
+
+      Rails.logger.warn(
+        "Invalid FreshBooks client ID #{client_id} for email #{email}. " \
+        'Clearing from local record and creating new client.'
+      )
+      local_client.update!(freshbooks_id: nil)
+    end
+
+    def handle_validation_error(error, client_id, email, local_client)
+      if [404, 422].include?(error.status_code)
+        handle_not_found_error(error, client_id, email, local_client)
         return nil
       end
 
-      # For other errors, log and re-raise
-      Rails.logger.error("Error validating FreshBooks client ID #{client_id}: #{e.message}")
+      Rails.logger.error("Error validating FreshBooks client ID #{client_id}: #{error.message}")
       raise
+    end
+
+    def handle_not_found_error(error, client_id, email, local_client)
+      Rails.logger.warn(
+        "FreshBooks client ID #{client_id} not found or invalid for email #{email} " \
+        "(status: #{error.status_code}). Clearing from local record and creating new client."
+      )
+      local_client&.update!(freshbooks_id: nil) if local_client&.freshbooks_id == client_id
     end
 
     def extract_existing_freshbooks_id(local_client)

@@ -4,19 +4,13 @@ class InvoiceMailer < ApplicationMailer
   def invoice_email
     @invoice = params[:invoice]
     @freshbooks_invoice = @invoice.freshbooks_invoices.last
-    @invoice_number = @freshbooks_invoice&.invoice_number || @invoice.slug
-    @invoice_amount = format_amount(@invoice.total_amount || 0)
-    @due_date = format_due_date(@freshbooks_invoice&.due_date || ((@invoice.created_at&.to_date || Date.today) + 30.days))
-    @client_name = params[:client_name] || 'Valued Client'
-    @flat_address = @invoice.flat_address || 'your property'
-    @wrs_link = @invoice.wrs_link
-    @payment_link = params[:payment_link]
+    assign_invoice_variables
+    assign_client_variables
 
     mail(
       to: params[:client_email],
       subject: "Invoice (#{@invoice_number}) for #{@invoice_amount}",
-      from: "#{ENV.fetch('MAILERSEND_FROM_NAME',
-                         'Bullet Services')} <#{ENV.fetch('MAILERSEND_FROM_EMAIL', 'no-reply@example.com')}>"
+      from: mailer_from_address
     )
   end
 
@@ -35,6 +29,34 @@ class InvoiceMailer < ApplicationMailer
   end
 
   private
+
+  def assign_invoice_variables
+    @invoice_number = @freshbooks_invoice&.invoice_number || @invoice.slug
+    @invoice_amount = format_amount(@invoice.total_amount || 0)
+    @due_date = calculate_due_date
+    @flat_address = @invoice.flat_address || 'your property'
+    @wrs_link = @invoice.wrs_link
+  end
+
+  def assign_client_variables
+    @client_name = params[:client_name] || 'Valued Client'
+    @payment_link = params[:payment_link]
+  end
+
+  def calculate_due_date
+    due_date = @freshbooks_invoice&.due_date || default_due_date
+    format_due_date(due_date)
+  end
+
+  def default_due_date
+    (@invoice.created_at&.to_date || Date.today) + 30.days
+  end
+
+  def mailer_from_address
+    from_name = ENV.fetch('MAILERSEND_FROM_NAME', 'Bullet Services')
+    from_email = ENV.fetch('MAILERSEND_FROM_EMAIL', 'no-reply@example.com')
+    "#{from_name} <#{from_email}>"
+  end
 
   def format_amount(amount)
     "£#{amount.round(2)}"
