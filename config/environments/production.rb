@@ -1,5 +1,5 @@
 require "active_support/core_ext/integer/time"
-require_relative "../../app/mailers/mailersend_delivery_method"
+require_relative "../../app/mailers/mailer_send_delivery_method"
 
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
