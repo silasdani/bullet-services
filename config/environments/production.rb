@@ -91,10 +91,10 @@ Rails.application.configure do
     port: ENV.fetch("DEFAULT_URL_PORT", 443)
   }
 
-  # Use SMTP or API-based providers via service objects; ActionMailer itself can remain on :smtp or :test.
-  # For now, we keep ActionMailer configuration minimal; MailerSend is used via a dedicated service object.
+  # Use MailerSend via custom delivery method
   config.action_mailer.perform_deliveries = true
   config.action_mailer.raise_delivery_errors = true
+  config.action_mailer.delivery_method = MailerSendDeliveryMethod
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
   # the I18n.default_locale when a translation cannot be found).

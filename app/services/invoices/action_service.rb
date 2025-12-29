@@ -112,15 +112,14 @@ module Invoices
       @invoices_client ||= Freshbooks::Invoices.new
     end
 
-    def send_void_confirmation_email!(fb_invoice)
+    def send_void_confirmation_email!(_fb_invoice)
       client_email = invoice.flat_address
+      return if client_email.blank? || !client_email.match?(/\A[\w+\-.]+@[a-z\d-]+(\.[a-z\d-]+)*\.[a-z]+\z/i)
 
-      MailerSendEmailService.new(
-        to: client_email,
-        subject: "Your invoice #{fb_invoice.invoice_number || invoice.name} has been voided",
-        html: '<p>Your invoice has been voided. No further payment is required.</p>',
-        text: 'Your invoice has been voided. No further payment is required.'
-      ).call
+      InvoiceMailer.with(
+        invoice: invoice,
+        client_email: client_email
+      ).voided_invoice_email.deliver_now
     end
   end
 end
