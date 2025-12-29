@@ -70,7 +70,8 @@ Rails.application.configure do
     }
   else
     # Memory store is not persistent - only use if Redis unavailable
-    Rails.logger.warn 'WARNING: Using memory cache store. Set REDIS_URL for persistent caching.'
+    Rails.logger&.warn('WARNING: Using memory cache store. Set REDIS_URL for persistent caching.') ||
+      warn('WARNING: Using memory cache store. Set REDIS_URL for persistent caching.')
     config.cache_store = :memory_store
   end
 
