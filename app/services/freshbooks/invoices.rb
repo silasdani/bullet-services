@@ -2,9 +2,9 @@
 
 module Freshbooks
   class Invoices < BaseClient
-    include Freshbooks::Invoices::PdfMethods
-    include Freshbooks::Invoices::EmailMethods
-    include Freshbooks::Invoices::LineBuilder
+    include Freshbooks::InvoicePdfMethods
+    include Freshbooks::InvoiceEmailMethods
+    include Freshbooks::InvoiceLineBuilder
     def list(page: 1, per_page: 100, client_id: nil)
       path = build_path('invoices/invoices')
       query = {
