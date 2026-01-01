@@ -40,8 +40,8 @@ class MailerSendEmailService < ApplicationService
     return self unless valid_request?
 
     with_error_handling do
-      mailersend_token = ENV.fetch('MAILERSEND_API_TOKEN', nil)
-      return add_error('MailerSend API token is not configured') if mailersend_token.blank?
+      @mailersend_token = ENV.fetch('MAILERSEND_API_TOKEN', nil)
+      return add_error('MailerSend API token is not configured') if @mailersend_token.blank?
 
       email = build_email
       response = email.send
@@ -73,19 +73,47 @@ class MailerSendEmailService < ApplicationService
   end
 
   def build_email
-    # The MailerSend Ruby SDK reads the API token from ENV['MAILERSEND_API_TOKEN']
-    email = Mailersend::Email.new
+    with_token_env do
+      email = initialize_email_client
+      configure_email_recipients(email)
+      apply_email_content(email)
+      email
+    end
+  end
 
+  def with_token_env
+    original_token = ENV.fetch('MAILERSEND_API_TOKEN', nil)
+    ENV['MAILERSEND_API_TOKEN'] = @mailersend_token
+    yield
+  ensure
+    restore_env_token(original_token)
+  end
+
+  def initialize_email_client
+    Mailersend::Email.new(api_token: @mailersend_token)
+  rescue ArgumentError
+    Mailersend::Email.new
+  end
+
+  def configure_email_recipients(email)
     email.add_recipients('email' => to)
     email.add_from('email' => from_email, 'name' => from_name)
+  end
 
+  def apply_email_content(email)
     if template_id.present?
       apply_template_content(email)
     else
       apply_direct_content(email)
     end
+  end
 
-    email
+  def restore_env_token(original_token)
+    if original_token.nil?
+      ENV.delete('MAILERSEND_API_TOKEN')
+    else
+      ENV['MAILERSEND_API_TOKEN'] = original_token
+    end
   end
 
   def apply_template_content(email)
