@@ -233,4 +233,95 @@ namespace :invoices do
 
     puts "\n✅ Import completed!"
   end
+
+  desc 'Fix invoices with broken PDF attachments (blobs that exist in DB but not in S3)'
+  task fix_broken_pdfs: :environment do
+    puts 'Checking for invoices with broken PDF attachments...'
+
+    broken_count = 0
+    fixed_count = 0
+    skipped_count = 0
+
+    Invoice.find_each do |invoice|
+      next unless invoice.invoice_pdf.attached?
+
+      blob = invoice.invoice_pdf.blob
+
+      # Check if blob exists in S3
+      unless blob.service.exist?(blob.key)
+        broken_count += 1
+        puts "\n[#{broken_count}] Invoice ##{invoice.id} (#{invoice.slug}) - Broken blob: #{blob.key}"
+
+        if invoice.invoice_pdf_link.present?
+          puts "  Attempting to re-download from: #{invoice.invoice_pdf_link}"
+
+          begin
+            # Purge the broken attachment
+            invoice.invoice_pdf.purge
+
+            # Re-attach from FreshBooks URL
+            pdf_data = { url: invoice.invoice_pdf_link }
+            Wrs::PdfAttachmentService.new(invoice, pdf_data).call
+
+            if invoice.reload.invoice_pdf.attached?
+              # Verify the new blob exists in S3
+              new_blob = invoice.invoice_pdf.blob
+              if new_blob.service.exist?(new_blob.key)
+                fixed_count += 1
+                puts "  ✅ Fixed! New blob: #{new_blob.key}"
+              else
+                puts "  ❌ Still broken - file not in S3 after re-upload"
+              end
+            else
+              puts "  ❌ Failed to re-attach PDF"
+            end
+          rescue StandardError => e
+            puts "  ❌ Error fixing invoice: #{e.class}: #{e.message}"
+            puts "     #{e.backtrace.first(3).join("\n     ")}"
+          end
+        else
+          skipped_count += 1
+          puts "  ⏭️  Skipped - no invoice_pdf_link available"
+        end
+      end
+    end
+
+    puts "\n" + "=" * 60
+    puts "Summary:"
+    puts "  Broken blobs found: #{broken_count}"
+    puts "  Fixed: #{fixed_count}"
+    puts "  Skipped (no PDF link): #{skipped_count}"
+    puts "=" * 60
+  end
+
+  desc 'List all invoices with broken PDF attachments'
+  task list_broken_pdfs: :environment do
+    puts 'Scanning for invoices with broken PDF attachments...'
+    puts ''
+
+    broken_count = 0
+
+    Invoice.find_each do |invoice|
+      next unless invoice.invoice_pdf.attached?
+
+      blob = invoice.invoice_pdf.blob
+
+      unless blob.service.exist?(blob.key)
+        broken_count += 1
+        puts "[#{broken_count}] Invoice ##{invoice.id}"
+        puts "    Slug: #{invoice.slug}"
+        puts "    Blob Key: #{blob.key}"
+        puts "    PDF Link: #{invoice.invoice_pdf_link || 'N/A'}"
+        puts "    Created: #{invoice.created_at}"
+        puts ""
+      end
+    end
+
+    if broken_count == 0
+      puts "✅ No broken PDF attachments found!"
+    else
+      puts "Found #{broken_count} invoice(s) with broken PDF attachments."
+      puts "Run 'rake invoices:fix_broken_pdfs' to attempt to fix them."
+    end
+  end
 end

@@ -44,16 +44,25 @@ module Webflow
     end
 
     def download_and_attach_pdf(attachment)
-      io = download_pdf(source_url)
-      filename = extract_filename_with_fallback
+      io = nil
+      begin
+        io = download_pdf(source_url)
+        filename = extract_filename_with_fallback
 
-      return cleanup_io(io) unless valid_pdf_content?(io)
+        unless valid_pdf_content?(io)
+          cleanup_io(io)
+          return
+        end
 
-      blob = create_pdf_blob(io, filename)
-      verify_blob_upload(blob)
-      attach_blob_with_retry(attachment, blob)
-    ensure
-      cleanup_io(io)
+        # Ensure IO is at the beginning before upload
+        io.rewind
+
+        blob = create_pdf_blob(io, filename)
+        verify_blob_upload(blob)
+        attach_blob_with_retry(attachment, blob)
+      ensure
+        cleanup_io(io) if io
+      end
     end
 
     def valid_pdf_content?(io)
@@ -68,9 +77,12 @@ module Webflow
     end
 
     def create_pdf_blob(io, filename)
+      # Ensure IO is rewound before upload
       io.rewind
       metadata = { source_url: source_url }
 
+      # Create blob and upload - create_and_upload! reads the IO and uploads to S3
+      blob = nil
       ActiveRecord::Base.uncached do
         blob = ActiveStorage::Blob.create_and_upload!(
           io: io,
@@ -78,11 +90,13 @@ module Webflow
           content_type: 'application/pdf',
           metadata: metadata
         )
-        log_info("Created blob #{blob.key} for #{filename} (#{blob.byte_size} bytes)")
-        blob
       end
+
+      log_info("Created blob #{blob.key} for #{filename} (#{blob.byte_size} bytes)")
+      blob
     rescue StandardError => e
       log_error("Failed to create and upload blob: #{e.class}: #{e.message}")
+      log_error("Backtrace: #{e.backtrace.first(5).join("\n")}")
       raise
     end
 
