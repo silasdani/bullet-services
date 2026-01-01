@@ -100,6 +100,13 @@ Rails.application.configure do
     port: ENV.fetch("DEFAULT_URL_PORT", 443)
   }
 
+  # Set ActiveStorage URL options for production
+  # This ensures ActiveStorage proxy URLs use the correct host
+  config.active_storage.default_url_options = {
+    host: ENV.fetch("DEFAULT_URL_HOST", "example.com"),
+    protocol: "https"
+  }
+
   # Use MailerSend via custom delivery method
   config.action_mailer.perform_deliveries = true
   config.action_mailer.raise_delivery_errors = true
