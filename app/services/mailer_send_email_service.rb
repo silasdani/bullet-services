@@ -141,7 +141,10 @@ class MailerSendEmailService < ApplicationService
   end
 
   def handle_response(response)
-    if response.respond_to?(:status) && !response.status.success?
+    # Handle Hash response (common with some MailerSend versions)
+    if response.is_a?(Hash)
+      handle_hash_response(response)
+    elsif response.respond_to?(:status) && response.status.respond_to?(:success?) && !response.status.success?
       handle_error_response(response)
     else
       log_info("MailerSend email queued to #{to} (template_id=#{template_id || 'none'}), response=#{response.inspect}")
@@ -150,18 +153,56 @@ class MailerSendEmailService < ApplicationService
     end
   end
 
-  def handle_error_response(response)
-    body_text =
-      if response.respond_to?(:body) && response.body.respond_to?(:to_s)
-        response.body.to_s
-      else
-        response.inspect
-      end
+  def handle_hash_response(response)
+    # Check if it's an error response
+    if response['status_code'].present? && response['status_code'] >= 400
+      status_code = response['status_code']
+      body_text = response['body'] || response['message'] || response.inspect
+      log_error("MailerSend HTTP #{status_code}: #{body_text}")
+      add_error("MailerSend HTTP #{status_code}: #{body_text}")
+      @result = { success: false, response: response }
+    else
+      log_info("MailerSend email queued to #{to} (template_id=#{template_id || 'none'}), response=#{response.inspect}")
+      @result = { success: true, response: response }
+    end
+    self
+  end
 
-    log_error("MailerSend HTTP #{response.status}: #{body_text}")
-    add_error("MailerSend HTTP #{response.status}: #{body_text}")
+  def handle_error_response(response)
+    status_code = extract_status_code(response)
+    body_text = extract_body_text(response)
+
+    log_error("MailerSend HTTP #{status_code}: #{body_text}")
+    add_error("MailerSend HTTP #{status_code}: #{body_text}")
     @result = { success: false, response: response }
     self
+  end
+
+  def extract_status_code(response)
+    if response.respond_to?(:status)
+      status = response.status
+      if status.respond_to?(:code)
+        status.code
+      elsif status.is_a?(Numeric)
+        status
+      else
+        status.to_s
+      end
+    elsif response.is_a?(Hash)
+      response['status_code'] || response[:status_code] || response['status'] || response[:status] || 'unknown'
+    else
+      'unknown'
+    end
+  end
+
+  def extract_body_text(response)
+    if response.respond_to?(:body) && response.body.respond_to?(:to_s)
+      response.body.to_s
+    elsif response.is_a?(Hash)
+      response['body'] || response[:body] || response['message'] || response[:message] || response.inspect
+    else
+      response.inspect
+    end
   end
 
   def handle_exception(error)
