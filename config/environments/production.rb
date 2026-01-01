@@ -64,8 +64,15 @@ Rails.application.configure do
   # Use Redis for cache store in production (persistent across restarts)
   # Fall back to memory_store if Redis is not available (for development/testing)
   if ENV['REDIS_URL'].present?
+    # Normalize Redis URL to ensure it has a proper scheme
+    redis_url = ENV['REDIS_URL'].strip
+    unless redis_url.match?(/\A(redis|rediss):\/\//)
+      # Prepend redis:// if no scheme is present
+      redis_url = "redis://#{redis_url}"
+    end
+
     config.cache_store = :redis_cache_store, {
-      url: ENV['REDIS_URL'],
+      url: redis_url,
       namespace: 'bullet-services-cache',
       expires_in: 90.minutes
     }
