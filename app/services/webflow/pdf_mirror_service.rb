@@ -50,6 +50,7 @@ module Webflow
       return cleanup_io(io) unless valid_pdf_content?(io)
 
       blob = create_pdf_blob(io, filename)
+      verify_blob_upload(blob)
       attach_blob_with_retry(attachment, blob)
     ensure
       cleanup_io(io)
@@ -71,13 +72,26 @@ module Webflow
       metadata = { source_url: source_url }
 
       ActiveRecord::Base.uncached do
-        ActiveStorage::Blob.create_and_upload!(
+        blob = ActiveStorage::Blob.create_and_upload!(
           io: io,
           filename: filename,
           content_type: 'application/pdf',
           metadata: metadata
         )
+        log_info("Created blob #{blob.key} for #{filename} (#{blob.byte_size} bytes)")
+        blob
       end
+    rescue StandardError => e
+      log_error("Failed to create and upload blob: #{e.class}: #{e.message}")
+      raise
+    end
+
+    def verify_blob_upload(blob)
+      return if blob.service.exist?(blob.key)
+
+      log_error("Blob #{blob.key} was created but file does not exist in storage")
+      blob.purge
+      raise "Failed to upload blob #{blob.key} to storage"
     end
 
     def cleanup_io(io)
@@ -121,6 +135,8 @@ module Webflow
         end
 
         attachment.attach(blob)
+        log_info("Successfully attached blob #{blob.key} to #{record.class.name} ##{record.id}")
+        blob
       rescue ActiveRecord::InvalidForeignKey, PG::ForeignKeyViolation, ActiveRecord::RecordNotFound => e
         attempts += 1
         if attempts <= 3
@@ -128,9 +144,26 @@ module Webflow
           blob.reload if blob.persisted?
           retry
         else
-          log_error("Skipping attach due to FK error for blob ##{blob.id}: #{e.class} - #{e.message}")
+          log_error("Failed to attach blob ##{blob.id} after #{attempts} attempts: #{e.class} - #{e.message}")
+          # Clean up orphaned blob if attachment fails
+          cleanup_orphaned_blob(blob)
           nil
         end
+      rescue StandardError => e
+        log_error("Unexpected error attaching blob ##{blob.id}: #{e.class} - #{e.message}")
+        cleanup_orphaned_blob(blob)
+        raise
+      end
+    end
+
+    def cleanup_orphaned_blob(blob)
+      return unless blob&.persisted?
+
+      begin
+        log_info("Cleaning up orphaned blob #{blob.key}")
+        blob.purge
+      rescue StandardError => e
+        log_error("Failed to cleanup orphaned blob #{blob.key}: #{e.message}")
       end
     end
 
