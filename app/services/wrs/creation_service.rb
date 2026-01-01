@@ -6,23 +6,25 @@ module Wrs
     attribute :params, default: -> { {} }
 
     def call
-      result = with_error_handling do
-        with_transaction do
-          return nil unless create_wrs?
+      service_result = nil
+
+      with_error_handling do
+        service_result = with_transaction do
+          next nil unless create_wrs?
 
           create_associated_windows
           recalculate_totals
-        end
 
-        # trigger_webflow_sync if @wrs.persisted?  # Disabled - manual sync only via API
-        success_result
+          # trigger_webflow_sync if @wrs.persisted?  # Disabled - manual sync only via API
+          success_result
+        end
       end
 
-      if result.nil?
+      if service_result.nil? || failure?
         Rails.logger.error "Service failed with errors: #{errors.inspect}"
         { success: false, errors: errors }
       else
-        result
+        service_result
       end
     end
 
