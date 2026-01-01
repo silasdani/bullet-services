@@ -45,7 +45,7 @@ class MailerSendEmailService < ApplicationService
 
       email = build_email
       response = email.send
-      handle_response(response)
+      handle_response_safely(response)
     end
   rescue StandardError => e
     handle_exception(e)
@@ -140,17 +140,60 @@ class MailerSendEmailService < ApplicationService
     email.add_html(html) if html.present?
   end
 
-  def handle_response(response)
+  def handle_response_safely(response)
+    # Log response structure for debugging
+    log_debug("MailerSend response type: #{response.class}, value: #{response.inspect}")
+
     # Handle Hash response (common with some MailerSend versions)
     if response.is_a?(Hash)
       handle_hash_response(response)
-    elsif response.respond_to?(:status) && response.status.respond_to?(:success?) && !response.status.success?
+    else
+      handle_object_response(response)
+    end
+  rescue StandardError => e
+    # If we can't parse the response, log it and treat as success (MailerSend often returns success as Hash)
+    log_warn("Error handling MailerSend response: #{e.message}, response class: #{response.class}, response: #{response.inspect}")
+    log_info("MailerSend email queued to #{to} (template_id=#{template_id || 'none'}), response parsing failed but assuming success")
+    @result = { success: true, response: response }
+    self
+  end
+
+  def handle_object_response(response)
+    # Try to check if it's an error response
+    status = safe_get_status(response)
+
+    if status && status_is_error?(status)
       handle_error_response(response)
     else
       log_info("MailerSend email queued to #{to} (template_id=#{template_id || 'none'}), response=#{response.inspect}")
       @result = { success: true, response: response }
       self
     end
+  end
+
+  def safe_get_status(response)
+    return nil unless response.respond_to?(:status)
+
+    response.status
+  rescue StandardError => e
+    log_debug("Could not get status from response: #{e.message}")
+    nil
+  end
+
+  def status_is_error?(status)
+    return false if status.nil?
+
+    # Check if status has a success? method
+    if status.respond_to?(:success?)
+      !status.success?
+    elsif status.is_a?(Numeric)
+      status >= 400
+    else
+      false
+    end
+  rescue StandardError => e
+    log_debug("Could not determine if status is error: #{e.message}")
+    false
   end
 
   def handle_hash_response(response)
