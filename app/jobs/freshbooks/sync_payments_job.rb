@@ -4,7 +4,7 @@ module Freshbooks
   class SyncPaymentsJob < ApplicationJob
     queue_as :default
 
-    retry_on FreshbooksError, wait: :exponentially_longer, attempts: 3
+    retry_on FreshbooksError, wait: ->(executions) { (2**executions) + 1 }, attempts: 3
     discard_on ActiveRecord::RecordNotFound
 
     def perform(payment_id = nil)

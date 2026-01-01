@@ -4,7 +4,7 @@ module Freshbooks
   class CreateInvoiceJob < ApplicationJob
     queue_as :default
 
-    retry_on FreshbooksError, wait: :exponentially_longer, attempts: 3
+    retry_on FreshbooksError, wait: ->(executions) { (2**executions) + 1 }, attempts: 3
     discard_on ActiveRecord::RecordNotFound
 
     def perform(invoice_id, lines_data, client_info = {})

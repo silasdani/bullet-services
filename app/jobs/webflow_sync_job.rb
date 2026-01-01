@@ -3,7 +3,7 @@
 class WebflowSyncJob < ApplicationJob
   queue_as :webflow
 
-  retry_on WebflowApiError, wait: :exponentially_longer, attempts: 3
+  retry_on WebflowApiError, wait: ->(executions) { (2**executions) + 1 }, attempts: 3
 
   def perform(model_class, model_id)
     model = find_model(model_class, model_id)

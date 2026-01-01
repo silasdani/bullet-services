@@ -7,8 +7,8 @@ class AutoSyncToWebflowJob < ApplicationJob
   queue_as :default
 
   # Retry up to 3 times with exponential backoff
-  retry_on WebflowApiError, wait: :exponentially_longer, attempts: 3
-  retry_on StandardError, wait: :exponentially_longer, attempts: 2
+  retry_on WebflowApiError, wait: ->(executions) { (2**executions) + 1 }, attempts: 3
+  retry_on StandardError, wait: ->(executions) { (2**executions) + 1 }, attempts: 2
 
   def perform(wrs_id)
     wrs = WindowScheduleRepair.find_by(id: wrs_id)
