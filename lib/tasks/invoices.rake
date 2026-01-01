@@ -270,10 +270,10 @@ namespace :invoices do
                 fixed_count += 1
                 puts "  ✅ Fixed! New blob: #{new_blob.key}"
               else
-                puts "  ❌ Still broken - file not in S3 after re-upload"
+                puts '  ❌ Still broken - file not in S3 after re-upload'
               end
             else
-              puts "  ❌ Failed to re-attach PDF"
+              puts '  ❌ Failed to re-attach PDF'
             end
           rescue StandardError => e
             puts "  ❌ Error fixing invoice: #{e.class}: #{e.message}"
@@ -281,17 +281,17 @@ namespace :invoices do
           end
         else
           skipped_count += 1
-          puts "  ⏭️  Skipped - no invoice_pdf_link available"
+          puts '  ⏭️  Skipped - no invoice_pdf_link available'
         end
       end
     end
 
-    puts "\n" + "=" * 60
-    puts "Summary:"
+    puts "\n#{'=' * 60}"
+    puts 'Summary:'
     puts "  Broken blobs found: #{broken_count}"
     puts "  Fixed: #{fixed_count}"
     puts "  Skipped (no PDF link): #{skipped_count}"
-    puts "=" * 60
+    puts '=' * 60
   end
 
   desc 'List all invoices with broken PDF attachments'
@@ -313,12 +313,12 @@ namespace :invoices do
         puts "    Blob Key: #{blob.key}"
         puts "    PDF Link: #{invoice.invoice_pdf_link || 'N/A'}"
         puts "    Created: #{invoice.created_at}"
-        puts ""
+        puts ''
       end
     end
 
-    if broken_count == 0
-      puts "✅ No broken PDF attachments found!"
+    if broken_count.zero?
+      puts '✅ No broken PDF attachments found!'
     else
       puts "Found #{broken_count} invoice(s) with broken PDF attachments."
       puts "Run 'rake invoices:fix_broken_pdfs' to attempt to fix them."
