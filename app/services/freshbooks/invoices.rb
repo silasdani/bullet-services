@@ -72,7 +72,13 @@ module Freshbooks
     end
 
     def build_invoice_attributes(params, is_update: false)
-      attributes = {
+      attributes = build_base_attributes(params)
+      add_optional_attributes(attributes, params, is_update)
+      attributes.compact
+    end
+
+    def build_base_attributes(params)
+      {
         customerid: extract_customer_id(params),
         create_date: extract_create_date(params),
         currency_code: extract_currency_code(params),
@@ -84,13 +90,11 @@ module Freshbooks
         action_email: params[:action_email],
         email_recipients: params[:email_recipients]
       }
+    end
 
-      # FreshBooks API doesn't allow setting due_date during invoice creation or updates
-      # The due_date is managed by FreshBooks based on payment terms
-      # Only include it for create operations (though it may still be rejected)
+    def add_optional_attributes(attributes, params, is_update)
+      attributes[:discount_value] = params[:discount_value] if params[:discount_value].present?
       attributes[:due_date] = extract_due_date(params) unless is_update
-
-      attributes.compact
     end
 
     def extract_customer_id(params)

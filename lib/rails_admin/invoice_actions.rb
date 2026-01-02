@@ -491,63 +491,295 @@ module RailsAdmin
             freshbooks_invoice = invoice.freshbooks_invoices.first
             fallback_path = rails_admin.show_path(model_name: 'invoice', id: invoice.id)
 
-            if freshbooks_invoice.nil?
+            unless freshbooks_invoice
               flash[:error] = 'No FreshBooks invoice found for this invoice'
               redirect_back(fallback_location: fallback_path)
               next
             end
 
             begin
-              invoices_client = Freshbooks::Invoices.new
-              current_invoice = invoices_client.get(freshbooks_invoice.freshbooks_id)
-
-              if current_invoice.nil?
-                flash[:error] = 'Could not retrieve invoice from FreshBooks'
-                redirect_back(fallback_location: fallback_path)
-                next
-              end
-
-              # Apply 10% discount to all lines
-              discount_rate = 0.10
-              lines = (current_invoice['lines'] || []).map do |line|
-                original_cost = line.dig('unit_cost', 'amount') || line['unit_cost'] || 0
-                discounted_cost = original_cost.to_f * (1 - discount_rate)
-
-                {
-                  name: line['name'],
-                  description: line['description'],
-                  quantity: line['qty'] || 1,
-                  cost: discounted_cost.round(2),
-                  currency: line.dig('unit_cost', 'code') || 'USD',
-                  type: line['type'] || 0
-                }
-              end
-
-              # Update invoice in FreshBooks
-              invoices_client.update(
-                freshbooks_invoice.freshbooks_id,
-                client_id: current_invoice['customerid'] || invoice.freshbooks_client_id,
-                date: current_invoice['create_date'] || invoice.created_at&.to_date&.to_s,
-                due_date: current_invoice['due_date'],
-                currency: current_invoice['currency_code'] || 'USD',
-                notes: current_invoice['notes'],
-                lines: lines,
-                status: current_invoice['status'] || invoice.status
-              )
-
-              # Update local invoice amounts (recalculate with discount)
-              total_excluded = lines.sum { |line| (line[:cost] || 0) * (line[:quantity] || 1) }
-              invoice.update!(
-                excluded_vat_amount: total_excluded,
-                included_vat_amount: total_excluded * 0.20 # Assuming 20% VAT
-              )
-
-              flash[:success] = '10% discount applied successfully'
+              DiscountHelper.apply_discount_to_invoice(invoice, freshbooks_invoice, fallback_path, flash)
+              flash[:success] = '10% discount applied successfully' unless flash[:error]
             rescue StandardError => e
+              Rails.logger.error("Failed to apply discount: #{e.message}")
+              Rails.logger.error(e.backtrace.first(5).join("\n"))
               flash[:error] = "Failed to apply discount: #{e.message}"
             end
 
             redirect_back(fallback_location: fallback_path)
+          end
+        end
+      end
+
+      # Helper module for discount application logic
+      module DiscountHelper
+        DISCOUNT_PERCENTAGE = 0.10
+        VAT_RATE = 1.20
+
+        module_function
+
+        def apply_discount_to_invoice(invoice, freshbooks_invoice, fallback_path, flash)
+          invoices_client = Freshbooks::Invoices.new
+          current_invoice = InvoiceFetcher.fetch(invoices_client, freshbooks_invoice, flash)
+          return unless current_invoice
+
+          invoice_lines = LinePreparer.prepare(invoice, current_invoice, fallback_path, flash)
+          return unless invoice_lines
+
+          lines = LineBuilder.build(invoice_lines, current_invoice)
+          total_amount = LineCalculator.total(lines)
+
+          unless total_amount.positive?
+            flash[:error] = 'Invoice total is zero. Cannot apply discount.'
+            return
+          end
+
+          lines << DiscountLineBuilder.build(total_amount, current_invoice)
+          InvoiceUpdater.update(invoices_client, freshbooks_invoice, current_invoice, invoice, lines)
+          AmountSyncer.sync(invoices_client, freshbooks_invoice, invoice)
+        end
+      end
+
+      # Handles fetching invoice data from FreshBooks
+      module InvoiceFetcher
+        module_function
+
+        def fetch(invoices_client, freshbooks_invoice, flash)
+          current_invoice = invoices_client.get(freshbooks_invoice.freshbooks_id)
+          flash[:error] = 'Could not retrieve invoice from FreshBooks' unless current_invoice
+          current_invoice
+        end
+      end
+
+      # Handles preparing and reconstructing invoice lines
+      module LinePreparer
+        module_function
+
+        def prepare(invoice, current_invoice, _fallback_path, flash)
+          invoice_lines = filter_existing_discounts(current_invoice['lines'] || [])
+
+          if invoice_lines.empty?
+            invoice_lines = LineReconstructor.reconstruct(invoice, current_invoice, flash)
+            return nil unless invoice_lines
+          end
+
+          invoice_lines
+        end
+
+        def filter_existing_discounts(lines)
+          lines.reject { |line| line['name']&.downcase&.include?('discount') }
+        end
+      end
+
+      # Handles reconstructing line items from invoice amount
+      module LineReconstructor
+        module_function
+
+        def reconstruct(invoice, current_invoice, flash)
+          amount_data = current_invoice['amount'] || {}
+          invoice_amount = AmountExtractor.extract(amount_data)
+
+          if invoice_amount.zero?
+            flash[:error] = 'Invoice has no line items and amount is zero. Cannot apply discount.'
+            return nil
+          end
+
+          currency_code = CurrencyExtractor.extract(amount_data, current_invoice)
+          build_line_item(invoice, current_invoice, invoice_amount, currency_code)
+        end
+
+        def build_line_item(invoice, current_invoice, invoice_amount, currency_code)
+          [{
+            'name' => invoice.name || current_invoice['description'] || 'Invoice Item',
+            'description' => invoice.job || invoice.wrs_link || current_invoice['notes'] || '',
+            'qty' => 1,
+            'unit_cost' => { 'amount' => invoice_amount.to_s, 'code' => currency_code },
+            'type' => 0
+          }]
+        end
+      end
+
+      # Extracts amount values from FreshBooks data structures
+      module AmountExtractor
+        module_function
+
+        def extract(amount_data)
+          return 0.0 unless amount_data
+
+          amount_data.is_a?(Hash) ? amount_data['amount'].to_f : amount_data.to_f
+        end
+      end
+
+      # Extracts currency codes from FreshBooks data structures
+      module CurrencyExtractor
+        module_function
+
+        def extract(amount_data, current_invoice)
+          if amount_data.is_a?(Hash)
+            amount_data['code'] || current_invoice['currency_code'] || 'USD'
+          else
+            current_invoice['currency_code'] || 'USD'
+          end
+        end
+      end
+
+      # Builds line items for FreshBooks API
+      module LineBuilder
+        module_function
+
+        def build(invoice_lines, current_invoice)
+          invoice_lines.map do |line|
+            unit_cost = UnitCostExtractor.extract(line)
+            quantity = (line['qty'] || line['quantity'] || 1).to_f
+            LineItemBuilder.build(line, unit_cost, quantity, current_invoice)
+          end
+        end
+      end
+
+      # Extracts unit cost from line data
+      module UnitCostExtractor
+        module_function
+
+        def extract(line)
+          unit_cost_data = line['unit_cost'] || {}
+          cost_value = unit_cost_data.is_a?(Hash) ? unit_cost_data['amount'] : unit_cost_data
+          cost_value.to_f
+        end
+      end
+
+      # Builds individual line item hash
+      module LineItemBuilder
+        module_function
+
+        def build(line, unit_cost, quantity, current_invoice)
+          currency = CurrencyExtractor.extract_from_line(line, current_invoice)
+          line_item = build_base(line, unit_cost, quantity, currency)
+          TaxAttributeAdder.add(line_item, line, current_invoice)
+          line_item
+        end
+
+        def build_base(line, unit_cost, quantity, currency)
+          {
+            name: line['name'],
+            description: line['description'],
+            quantity: quantity.to_i,
+            cost: unit_cost,
+            currency: currency,
+            type: line['type'] || 0
+          }
+        end
+      end
+
+      # Extracts currency from line data
+      module CurrencyExtractor
+        module_function
+
+        def extract_from_line(line, current_invoice)
+          unit_cost_data = line['unit_cost'] || {}
+          currency = unit_cost_data.is_a?(Hash) ? unit_cost_data['code'] : nil
+          currency || current_invoice['currency_code'] || 'USD'
+        end
+      end
+
+      # Adds tax attributes to line items
+      module TaxAttributeAdder
+        module_function
+
+        def add(line_item, line, current_invoice)
+          line_item[:tax_amount1] = line['tax_amount1'] if line['tax_amount1'].present?
+          line_item[:tax_amount2] = line['tax_amount2'] if line['tax_amount2'].present?
+
+          tax_included = TaxIncludedDeterminer.determine(line, current_invoice)
+          line_item[:tax_included] = tax_included if tax_included
+        end
+      end
+
+      # Determines if tax is included
+      module TaxIncludedDeterminer
+        module_function
+
+        def determine(line, current_invoice)
+          line['tax_included'].present? ? line['tax_included'] : current_invoice['tax_included'] == 'yes'
+        end
+      end
+
+      # Calculates totals from line items
+      module LineCalculator
+        module_function
+
+        def total(lines)
+          lines.sum { |line| line[:cost] * line[:quantity] }
+        end
+      end
+
+      # Builds discount line item
+      module DiscountLineBuilder
+        module_function
+
+        def build(total_amount, current_invoice)
+          discount_amount = total_amount * DiscountHelper::DISCOUNT_PERCENTAGE
+
+          {
+            name: '10% Discount',
+            description: 'Applied 10% discount',
+            quantity: 1,
+            cost: -discount_amount.round(2),
+            currency: current_invoice['currency_code'] || 'USD',
+            type: 0,
+            tax_included: current_invoice['tax_included'] == 'yes'
+          }
+        end
+      end
+
+      # Updates invoice in FreshBooks
+      module InvoiceUpdater
+        module_function
+
+        def update(invoices_client, freshbooks_invoice, current_invoice, invoice, lines)
+          invoices_client.update(
+            freshbooks_invoice.freshbooks_id,
+            client_id: current_invoice['customerid'] || invoice.freshbooks_client_id,
+            currency: current_invoice['currency_code'] || 'USD',
+            lines: lines
+          )
+        end
+      end
+
+      # Syncs invoice amounts from FreshBooks to local database
+      module AmountSyncer
+        module_function
+
+        def sync(invoices_client, freshbooks_invoice, invoice)
+          sleep(0.5) # Allow FreshBooks to process the update
+          freshbooks_invoice.sync_from_freshbooks
+          freshbooks_invoice.reload
+
+          updated_invoice = invoices_client.get(freshbooks_invoice.freshbooks_id)
+          amounts = AmountCalculator.calculate(updated_invoice, freshbooks_invoice)
+
+          invoice.update_columns(
+            excluded_vat_amount: amounts[:excluded].round(2),
+            included_vat_amount: amounts[:included].round(2),
+            updated_at: Time.current
+          )
+        end
+      end
+
+      # Calculates VAT amounts from FreshBooks data
+      module AmountCalculator
+        module_function
+
+        def calculate(updated_invoice, freshbooks_invoice)
+          if updated_invoice
+            amount_data = updated_invoice['amount'] || {}
+            total_amount = AmountExtractor.extract(amount_data)
+
+            # FreshBooks always returns amounts with VAT included
+            { included: total_amount, excluded: total_amount / DiscountHelper::VAT_RATE }
+          else
+            # Fallback: use synced amount from freshbooks_invoice record
+            excluded = freshbooks_invoice.amount || 0
+            { excluded: excluded, included: excluded * DiscountHelper::VAT_RATE }
           end
         end
       end
