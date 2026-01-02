@@ -191,7 +191,6 @@ module Wrs
       true
     end
 
-
     def handle_attachment_error(error, tempfile, retry_count, max_retries)
       raise if retry_count >= max_retries - 1
 
