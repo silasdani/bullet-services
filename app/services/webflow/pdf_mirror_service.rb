@@ -205,18 +205,41 @@ module Webflow
     end
 
     def perform_http_download(uri, tempfile)
-      Net::HTTP.start(uri.host, uri.port, use_ssl: true) do |http|
-        http.request_get(uri.request_uri) do |resp|
+      Net::HTTP.start(uri.host, uri.port, use_ssl: true, open_timeout: 10, read_timeout: 30) do |http|
+        request = Net::HTTP::Get.new(uri.request_uri)
+        request['User-Agent'] = 'Bullet Services/1.0'
+
+        http.request(request) do |resp|
           validate_response_code(resp)
-          resp.read_body { |chunk| tempfile.write(chunk) }
+
+          # Read response body in chunks
+          resp.read_body do |chunk|
+            tempfile.write(chunk)
+          end
+
+          # Ensure all data is flushed to disk
+          tempfile.flush
         end
       end
+    rescue Net::TimeoutError, Net::OpenTimeout, Net::ReadTimeout => e
+      log_error("Timeout downloading PDF from #{uri}: #{e.message}")
+      raise "PDF download timed out: #{e.message}"
+    rescue SocketError, Errno::ECONNREFUSED, Errno::EHOSTUNREACH => e
+      log_error("Connection error downloading PDF from #{uri}: #{e.message}")
+      raise "Failed to connect to PDF server: #{e.message}"
+    rescue StandardError => e
+      log_error("Unexpected error downloading PDF from #{uri}: #{e.class}: #{e.message}")
+      raise
     end
 
     def validate_response_code(resp)
       return if resp.code.to_i.between?(200, 299)
 
-      raise "Failed to download PDF: HTTP #{resp.code}"
+      error_msg = "Failed to download PDF: HTTP #{resp.code}"
+      if resp.body.present?
+        error_msg += " - #{resp.body[0..200]}"
+      end
+      raise error_msg
     end
   end
 end
