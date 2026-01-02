@@ -41,6 +41,12 @@ module Wrs
 
     def handle_accept
       with_error_handling do
+        # Prevent duplicate invoice creation
+        if window_schedule_repair.invoices.exists?
+          add_error('An invoice already exists for this WRS. A decision has already been made.')
+          return
+        end
+
         ActiveRecord::Base.transaction do
           fb_client = ensure_freshbooks_client!
           invoice = create_local_invoice!(fb_client)
@@ -70,14 +76,15 @@ module Wrs
       fb_client_id = fb_client_data['id'] || fb_client_data['clientid']
 
       Invoice.create!(
-        name: 'Flat | Windows Schedule Repairs',
+        name: "Invoice #{window_schedule_repair.name}",
         slug: generate_invoice_slug,
+        job: window_schedule_repair.name,
         freshbooks_client_id: fb_client_id,
         window_schedule_repair_id: window_schedule_repair.id,
         wrs_link: wrs_public_url,
         included_vat_amount: window_schedule_repair.total_vat_included_price,
         excluded_vat_amount: window_schedule_repair.total_vat_excluded_price,
-        status: 'pending',
+        status: 'draft',
         final_status: 'draft',
         flat_address: flat_address,
         generated_by: 'wrs_form'
@@ -150,7 +157,7 @@ module Wrs
     end
 
     def generate_invoice_slug
-      base = "wrs-#{window_schedule_repair.reference_number}-#{Time.current.to_i}"
+      base = "invoice-#{window_schedule_repair.name}"
       base.parameterize
     end
   end

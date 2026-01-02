@@ -49,6 +49,14 @@ module Freshbooks
       )
 
       InvoiceRecordSyncer.new(freshbooks_invoice_data, invoice, client_id, invoice_url).call
+
+      # Use lifecycle service to ensure full sync and reconciliation
+      freshbooks_invoice = FreshbooksInvoice.find_by(freshbooks_id: invoice_id)
+      if freshbooks_invoice
+        lifecycle_service = Freshbooks::InvoiceLifecycleService.new(freshbooks_invoice)
+        lifecycle_service.propagate_status_to_invoice
+      end
+
       log_info("Created FreshBooks invoice #{invoice_id} for invoice #{invoice.id}")
     end
 
@@ -56,6 +64,8 @@ module Freshbooks
       {
         client_id: client_id,
         date: invoice.created_at&.to_date || Date.current,
+        # NOTE: FreshBooks API doesn't allow setting due_date during invoice creation
+        # The due_date will be set by FreshBooks based on their default payment terms
         currency: 'USD',
         notes: build_notes,
         tax_included: 'yes', # VAT is already included in the price

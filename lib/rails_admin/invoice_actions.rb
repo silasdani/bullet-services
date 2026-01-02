@@ -7,7 +7,12 @@ module RailsAdmin
         RailsAdmin::Config::Actions.register(self)
 
         register_instance_option :visible? do
-          authorized? && bindings[:object].is_a?(Invoice)
+          invoice = bindings[:object]
+          result = false
+          if authorized? && invoice.is_a?(Invoice) && invoice.freshbooks_invoices.exists?
+            result = RailsAdmin::InvoiceLifecycle.can_send?(invoice)
+          end
+          result
         end
 
         register_instance_option :link_icon do
@@ -105,7 +110,12 @@ module RailsAdmin
         RailsAdmin::Config::Actions.register(self)
 
         register_instance_option :visible? do
-          authorized? && bindings[:object].is_a?(Invoice)
+          invoice = bindings[:object]
+          result = false
+          if authorized? && invoice.is_a?(Invoice) && invoice.freshbooks_invoices.exists?
+            result = RailsAdmin::InvoiceLifecycle.can_void?(invoice)
+          end
+          result
         end
 
         register_instance_option :link_icon do
@@ -151,29 +161,11 @@ module RailsAdmin
                   invoices_client = Freshbooks::Invoices.new
                   current_invoice = invoices_client.get(freshbooks_invoice.freshbooks_id)
 
-                  if current_invoice
-                    # Build lines array from current invoice
-                    lines = (current_invoice['lines'] || []).map do |line|
-                      {
-                        name: line['name'],
-                        description: line['description'],
-                        quantity: line['qty'] || 1,
-                        cost: line.dig('unit_cost', 'amount') || line['unit_cost'],
-                        currency: line.dig('unit_cost', 'code') || 'USD',
-                        type: line['type'] || 0
-                      }
-                    end
-
-                    invoices_client.update(
-                      freshbooks_invoice.freshbooks_id,
-                      client_id: current_invoice['customerid'] || invoice.freshbooks_client_id,
-                      date: current_invoice['create_date'] || invoice.created_at&.to_date&.to_s,
-                      currency: current_invoice['currency_code'] || 'USD',
-                      notes: current_invoice['notes'],
-                      lines: lines,
-                      status: 'voided'
-                    )
-                  end
+                  # Note: FreshBooks API doesn't allow setting status to 'void' via update endpoint
+                  # Status can only be set to: 'draft', 'sent', 'viewed', or 'disputed'
+                  # We only update local records. The invoice status in FreshBooks will remain as-is
+                  # or can be voided manually through FreshBooks UI if needed
+                  # No FreshBooks API update call needed for void operation
                 rescue StandardError => e
                   # Log but don't fail - local update succeeded
                   Rails.logger.warn("Failed to update FreshBooks invoice: #{e.message}")
@@ -194,7 +186,12 @@ module RailsAdmin
         RailsAdmin::Config::Actions.register(self)
 
         register_instance_option :visible? do
-          authorized? && bindings[:object].is_a?(Invoice)
+          invoice = bindings[:object]
+          result = false
+          if authorized? && invoice.is_a?(Invoice) && invoice.freshbooks_invoices.exists?
+            result = RailsAdmin::InvoiceLifecycle.can_mark_paid?(invoice)
+          end
+          result
         end
 
         register_instance_option :link_icon do
@@ -288,7 +285,12 @@ module RailsAdmin
         end
 
         register_instance_option :visible? do
-          authorized? && bindings[:object].is_a?(Invoice)
+          invoice = bindings[:object]
+          result = false
+          if authorized? && invoice.is_a?(Invoice) && invoice.freshbooks_invoices.exists?
+            result = RailsAdmin::InvoiceLifecycle.can_void?(invoice)
+          end
+          result
         end
 
         register_instance_option :link_icon do
@@ -348,30 +350,13 @@ module RailsAdmin
                 begin
                   current_invoice = invoices_client.get(freshbooks_invoice.freshbooks_id)
 
+                  # Note: FreshBooks API doesn't allow setting status to 'void' via update endpoint
+                  # Status can only be set to: 'draft', 'sent', 'viewed', or 'disputed'
+                  # We only update local records. The invoice status in FreshBooks will remain as-is
+                  # or can be voided manually through FreshBooks UI if needed
+
+                  # Send voidance email to notify the client
                   if current_invoice
-                    # Build lines array from current invoice
-                    lines = (current_invoice['lines'] || []).map do |line|
-                      {
-                        name: line['name'],
-                        description: line['description'],
-                        quantity: line['qty'] || 1,
-                        cost: line.dig('unit_cost', 'amount') || line['unit_cost'],
-                        currency: line.dig('unit_cost', 'code') || 'USD',
-                        type: line['type'] || 0
-                      }
-                    end
-
-                    invoices_client.update(
-                      freshbooks_invoice.freshbooks_id,
-                      client_id: current_invoice['customerid'] || invoice.freshbooks_client_id,
-                      date: current_invoice['create_date'] || invoice.created_at&.to_date&.to_s,
-                      currency: current_invoice['currency_code'] || 'USD',
-                      notes: current_invoice['notes'],
-                      lines: lines,
-                      status: 'voided'
-                    )
-
-                    # Send voidance email
                     invoices_client.send_by_email(
                       freshbooks_invoice.freshbooks_id,
                       email: client_email,
@@ -403,7 +388,12 @@ module RailsAdmin
         end
 
         register_instance_option :visible? do
-          authorized? && bindings[:object].is_a?(Invoice)
+          invoice = bindings[:object]
+          result = false
+          if authorized? && invoice.is_a?(Invoice) && invoice.freshbooks_invoices.exists?
+            result = RailsAdmin::InvoiceLifecycle.can_apply_discount?(invoice)
+          end
+          result
         end
 
         register_instance_option :link_icon do

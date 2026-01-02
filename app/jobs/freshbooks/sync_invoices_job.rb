@@ -28,22 +28,41 @@ module Freshbooks
 
     def sync_all_invoices(invoices_service)
       page = 1
+      errors = []
+
       loop do
         result = invoices_service.list(page: page, per_page: 100)
         invoices = result[:invoices]
 
-        invoices.each { |invoice_data| create_or_update_invoice(invoice_data) }
+        invoices.each do |invoice_data|
+          begin
+            create_or_update_invoice(invoice_data)
+          rescue StandardError => e
+            errors << "Invoice #{invoice_data['id']}: #{e.message}"
+            Rails.logger.error("Failed to sync invoice #{invoice_data['id']}: #{e.message}")
+          end
+        end
 
         break if page >= result[:pages]
 
         page += 1
       end
+
+      Rails.logger.warn("Invoice sync completed with #{errors.length} errors") if errors.any?
     end
 
     def create_or_update_invoice(invoice_data)
       invoice = find_or_initialize_invoice(invoice_data)
       assign_invoice_attributes(invoice, invoice_data)
       invoice.save!
+
+      # Use lifecycle service to ensure full reconciliation
+      lifecycle_service = Freshbooks::InvoiceLifecycleService.new(invoice)
+      lifecycle_service.reconcile_payments
+      lifecycle_service.propagate_status_to_invoice
+    rescue StandardError => e
+      Rails.logger.error("Failed to sync invoice #{invoice_data['id']}: #{e.message}")
+      raise
     end
 
     def find_or_initialize_invoice(invoice_data)
@@ -51,10 +70,13 @@ module Freshbooks
     end
 
     def assign_invoice_attributes(invoice, invoice_data)
+      raw_status = invoice_data['status']
+      normalized_status = normalize_status(raw_status)
+
       invoice.assign_attributes(
         freshbooks_client_id: invoice_data['clientid'],
         invoice_number: invoice_data['invoice_number'],
-        status: invoice_data['status'],
+        status: normalized_status,
         amount: extract_amount(invoice_data['amount']),
         amount_outstanding: extract_amount(invoice_data['amount_outstanding']),
         date: parse_date(invoice_data['date']),
@@ -64,6 +86,13 @@ module Freshbooks
         pdf_url: build_pdf_url(invoice_data['id']),
         raw_data: invoice_data
       )
+    end
+
+    def normalize_status(status)
+      return nil if status.blank?
+
+      # Convert numeric status to string for database consistency
+      InvoiceStatusConverter.to_string_safe(status) || status.to_s
     end
 
     def extract_amount(amount_data)

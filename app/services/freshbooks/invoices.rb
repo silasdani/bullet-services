@@ -66,7 +66,7 @@ module Freshbooks
       {
         customerid: extract_customer_id(params),
         create_date: extract_create_date(params),
-        due_date: params[:due_date],
+        due_date: extract_due_date(params),
         currency_code: extract_currency_code(params),
         notes: params[:notes],
         terms: params[:terms],
@@ -84,12 +84,28 @@ module Freshbooks
       params[:date] || Date.current.to_s
     end
 
+    def extract_due_date(params)
+      return nil unless params[:due_date].present?
+
+      # Convert Date object to string format expected by FreshBooks API
+      due_date = params[:due_date]
+      due_date.is_a?(Date) ? due_date.to_s : due_date.to_s
+    end
+
     def extract_currency_code(params)
       params[:currency] || params[:currency_code] || 'USD'
     end
 
     def add_status_if_present(payload, params)
-      payload[:invoice][:status] = params[:status] if params[:status].present?
+      return unless params[:status].present?
+
+      numeric_status = InvoiceStatusConverter.to_numeric(params[:status])
+
+      # FreshBooks API doesn't allow setting status to 'void' (5) via update endpoint
+      # Status can only be set to: 'draft', 'sent', 'viewed', or 'disputed'
+      return if numeric_status == InvoiceStatusConverter::VOID
+
+      payload[:invoice][:status] = numeric_status
     end
 
     def build_payment_url_from_invoice(invoice_data)

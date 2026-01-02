@@ -51,3 +51,4 @@ RSpec.describe Invoices::ActionService do
     end
   end
 end
+

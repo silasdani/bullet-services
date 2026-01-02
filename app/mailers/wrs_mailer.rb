@@ -44,15 +44,7 @@ class WrsMailer < ApplicationMailer
   end
 
   def admin_email
-    ConfigHelper.get_config(
-      key: :admin_email,
-      env_key: 'ADMIN_EMAIL',
-      default: ConfigHelper.get_config(
-        key: :contact_email,
-        env_key: 'CONTACT_EMAIL',
-        default: 'office@bulletservices.co.uk'
-      )
-    )
+    ENV.fetch('ADMIN_EMAIL', 'danielsilas32@gmail.com')
   end
 
   def wrs_public_url(window_schedule_repair)

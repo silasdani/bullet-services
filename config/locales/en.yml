@@ -113,3 +113,12 @@ en:
     rejected: "Rejected"
     completed: "Completed"
     pending: "Pending"
+  
+  dashboard:
+    title: "Dashboard"
+    outstanding_invoices: "Outstanding Invoices"
+    outstanding_amount: "Outstanding Amount"
+    overdue: "Overdue"
+    overdue_amount: "Overdue Amount"
+    view_all: "View All"
+    no_outstanding: "No outstanding invoices"

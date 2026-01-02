@@ -15,12 +15,18 @@ module FreshbooksWebhookHandling
     freshbooks_invoice = find_freshbooks_invoice(invoice_id)
     return unless freshbooks_invoice
 
-    update_invoice_status(freshbooks_invoice)
-    create_or_update_payment(payment_id, invoice_id, payment_data)
+    # Use lifecycle service for bulletproof payment handling
+    lifecycle_service = Freshbooks::InvoiceLifecycleService.new(freshbooks_invoice)
+    lifecycle_service.handle_payment_received(payment_data)
 
-    Rails.logger.info "Payment processed for invoice #{invoice_id}"
+    # Also trigger a full invoice sync to ensure everything is in sync
+    Freshbooks::SyncInvoicesJob.perform_later(invoice_id)
+
+    Rails.logger.info "Payment webhook processed for invoice #{invoice_id}"
   rescue FreshbooksError => e
     Rails.logger.error "Failed to fetch payment #{payment_id}: #{e.message}"
+  rescue StandardError => e
+    Rails.logger.error "Payment webhook error: #{e.message}\n#{e.backtrace.join("\n")}"
   end
 
   def fetch_payment_data(payment_id)
@@ -36,52 +42,22 @@ module FreshbooksWebhookHandling
     FreshbooksInvoice.find_by(freshbooks_id: invoice_id)
   end
 
-  def update_invoice_status(freshbooks_invoice)
-    freshbooks_invoice.update!(
-      status: 'paid',
-      amount_outstanding: 0
-    )
-
-    freshbooks_invoice.invoice&.update!(
-      final_status: 'paid',
-      status: 'paid'
-    )
-  end
-
-  def create_or_update_payment(payment_id, invoice_id, payment_data)
-    FreshbooksPayment.find_or_create_by(freshbooks_id: payment_id) do |payment|
-      payment.freshbooks_invoice_id = invoice_id
-      payment.amount = extract_amount(payment_data['amount'])
-      payment.date = parse_date(payment_data['date'])
-      payment.payment_method = payment_data['type']
-      payment.currency_code = payment_data.dig('amount', 'code')
-      payment.raw_data = payment_data
-    end
-  end
 
   def handle_invoice_webhook_by_id(invoice_id)
     return unless invoice_id
 
-    # Fetch invoice details from FreshBooks API
-    begin
-      invoices = Freshbooks::Invoices.new
-      invoice_data = invoices.get(invoice_id)
-      return unless invoice_data
+    # Use lifecycle service for bulletproof invoice sync
+    freshbooks_invoice = FreshbooksInvoice.find_by(freshbooks_id: invoice_id)
+    return unless freshbooks_invoice
 
-      # Update local invoice record if it exists
-      freshbooks_invoice = FreshbooksInvoice.find_by(freshbooks_id: invoice_id)
-      return unless freshbooks_invoice
+    lifecycle_service = Freshbooks::InvoiceLifecycleService.new(freshbooks_invoice)
+    lifecycle_service.sync_from_freshbooks
 
-      freshbooks_invoice.update!(
-        status: invoice_data['status'] || invoice_data['v3_status'],
-        amount_outstanding: extract_amount(invoice_data['outstanding'] || invoice_data['amount_outstanding']),
-        raw_data: invoice_data
-      )
-
-      Rails.logger.info "Invoice updated: #{invoice_id}"
-    rescue FreshbooksError => e
-      Rails.logger.error "Failed to fetch invoice #{invoice_id}: #{e.message}"
-    end
+    Rails.logger.info "Invoice webhook processed: #{invoice_id}"
+  rescue FreshbooksError => e
+    Rails.logger.error "Failed to fetch invoice #{invoice_id}: #{e.message}"
+  rescue StandardError => e
+    Rails.logger.error "Invoice webhook error: #{e.message}\n#{e.backtrace.join("\n")}"
   end
 
   def extract_amount(amount_data)
@@ -96,5 +72,12 @@ module FreshbooksWebhookHandling
     Date.parse(date_string)
   rescue ArgumentError
     nil
+  end
+
+  def normalize_status(status)
+    return nil if status.blank?
+
+    # Convert numeric status to string for database consistency
+    InvoiceStatusConverter.to_string_safe(status) || status.to_s
   end
 end

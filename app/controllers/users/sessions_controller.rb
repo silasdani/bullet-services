@@ -13,10 +13,8 @@ module Users
 
       user = User.find_by(email: email)
 
-      if user.nil?
-        # Don't set flash message here - let Devise handle authentication errors
-        redirect_to new_user_session_path and return
-      end
+      # Let Devise handle authentication errors for non-existent users
+      return if user.nil?
 
       return if user.is_admin?
 

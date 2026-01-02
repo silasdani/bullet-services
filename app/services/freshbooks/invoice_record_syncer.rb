@@ -34,13 +34,23 @@ module Freshbooks
     end
 
     def build_basic_attributes
+      raw_status = freshbooks_data['status'] || freshbooks_data['v3_status']
+      normalized_status = normalize_status(raw_status)
+
       {
         freshbooks_client_id: client_id,
         invoice_number: freshbooks_data['invoice_number'],
-        status: freshbooks_data['status'] || freshbooks_data['v3_status'],
+        status: normalized_status,
         notes: freshbooks_data['notes'],
         invoice_id: invoice.id
       }
+    end
+
+    def normalize_status(status)
+      return nil if status.blank?
+
+      # Convert numeric status to string for database consistency
+      InvoiceStatusConverter.to_string_safe(status) || status.to_s
     end
 
     def build_financial_attributes

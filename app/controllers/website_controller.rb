@@ -28,6 +28,13 @@ class WebsiteController < ApplicationController
     load_wrs
     return unless @wrs
 
+    # Prevent duplicate submissions if invoice already exists
+    if @wrs.invoices.exists?
+      redirect_to wrs_show_path(slug: @wrs.slug),
+                  alert: 'A decision has already been made for this WRS. Invoice already exists.'
+      return
+    end
+
     @decision_form = WrsDecisionForm.new(wrs_decision_params)
 
     return render_invalid_wrs_decision unless @decision_form.valid?
@@ -52,7 +59,8 @@ class WebsiteController < ApplicationController
 
   def load_wrs
     # Find WRS by slug, excluding soft-deleted records
-    @wrs = WindowScheduleRepair.active.includes(windows: :tools).find_by(slug: params[:slug])
+    # Eager load invoices to check if decision form should be shown
+    @wrs = WindowScheduleRepair.active.includes(windows: :tools, invoices: []).find_by(slug: params[:slug])
 
     return if @wrs
 

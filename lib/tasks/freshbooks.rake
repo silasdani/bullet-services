@@ -308,6 +308,142 @@ namespace :freshbooks do
     end
   end
 
+  namespace :invoices do
+    desc 'Verify all FreshBooks invoices are in sync'
+    task verify_sync: :environment do
+      puts 'Verifying FreshBooks invoice sync...'
+      puts '=' * 80
+
+      stats = {
+        total: 0,
+        synced: 0,
+        out_of_sync: 0,
+        errors: []
+      }
+
+      FreshbooksInvoice.find_each do |fb_invoice|
+        stats[:total] += 1
+        print "Invoice #{fb_invoice.freshbooks_id}... "
+
+        result = fb_invoice.verify_sync
+
+        if result[:synced]
+          stats[:synced] += 1
+          puts '✅ Synced'
+        else
+          stats[:out_of_sync] += 1
+          puts "❌ Out of sync: #{result[:errors].join(', ')}"
+          stats[:errors] << { id: fb_invoice.freshbooks_id, errors: result[:errors] }
+        end
+      end
+
+      puts "\n#{'=' * 80}"
+      puts 'Summary:'
+      puts "  Total invoices: #{stats[:total]}"
+      puts "  ✅ Synced: #{stats[:synced]}"
+      puts "  ❌ Out of sync: #{stats[:out_of_sync]}"
+      puts '=' * 80
+
+      if stats[:out_of_sync] > 0
+        puts "\n⚠️  Found #{stats[:out_of_sync]} invoice(s) out of sync."
+        puts "Run 'rake freshbooks:invoices:reconcile_all' to fix them."
+      end
+    end
+
+    desc 'Reconcile all FreshBooks invoices (sync from API and reconcile payments)'
+    task reconcile_all: :environment do
+      puts 'Reconciling all FreshBooks invoices...'
+      puts '=' * 80
+
+      stats = {
+        total: 0,
+        synced: 0,
+        reconciled: 0,
+        failed: 0,
+        errors: []
+      }
+
+      FreshbooksInvoice.find_each do |fb_invoice|
+        stats[:total] += 1
+        print "Invoice #{fb_invoice.freshbooks_id}... "
+
+        begin
+          lifecycle_service = Freshbooks::InvoiceLifecycleService.new(fb_invoice)
+          lifecycle_service.sync_from_freshbooks
+          lifecycle_service.reconcile_payments
+
+          if lifecycle_service.success?
+            stats[:synced] += 1
+            stats[:reconciled] += 1
+            puts '✅ Synced & Reconciled'
+          else
+            stats[:failed] += 1
+            error_msg = lifecycle_service.errors.join(', ')
+            puts "❌ Failed: #{error_msg}"
+            stats[:errors] << { id: fb_invoice.freshbooks_id, errors: lifecycle_service.errors }
+          end
+        rescue StandardError => e
+          stats[:failed] += 1
+          error_msg = e.message
+          puts "❌ Error: #{error_msg}"
+          stats[:errors] << { id: fb_invoice.freshbooks_id, errors: [error_msg] }
+        end
+      end
+
+      puts "\n#{'=' * 80}"
+      puts 'Summary:'
+      puts "  Total invoices: #{stats[:total]}"
+      puts "  ✅ Synced & Reconciled: #{stats[:synced]}"
+      puts "  ❌ Failed: #{stats[:failed]}"
+      puts '=' * 80
+
+      if stats[:errors].any?
+        puts "\nErrors encountered:"
+        stats[:errors].first(10).each do |error|
+          puts "  Invoice #{error[:id]}: #{error[:errors].join(', ')}"
+        end
+        puts "  ... and #{stats[:errors].length - 10} more" if stats[:errors].length > 10
+      end
+    end
+
+    desc 'Reconcile a specific invoice by FreshBooks ID'
+    task :reconcile, [:freshbooks_id] => :environment do |_t, args|
+      freshbooks_id = args[:freshbooks_id]
+
+      if freshbooks_id.blank?
+        puts 'Error: FreshBooks invoice ID is required'
+        puts 'Usage: rails freshbooks:invoices:reconcile[FRESHBOOKS_ID]'
+        exit 1
+      end
+
+      fb_invoice = FreshbooksInvoice.find_by(freshbooks_id: freshbooks_id)
+
+      unless fb_invoice
+        puts "❌ Invoice not found: #{freshbooks_id}"
+        exit 1
+      end
+
+      puts "Reconciling invoice #{freshbooks_id}..."
+      puts '=' * 80
+
+      lifecycle_service = Freshbooks::InvoiceLifecycleService.new(fb_invoice)
+      lifecycle_service.sync_from_freshbooks
+      lifecycle_service.reconcile_payments
+
+      if lifecycle_service.success?
+        puts '✅ Invoice synced and reconciled successfully!'
+        puts "\nCurrent status:"
+        puts "  Status: #{fb_invoice.reload.status}"
+        puts "  Amount: #{fb_invoice.amount}"
+        puts "  Outstanding: #{fb_invoice.amount_outstanding}"
+        puts "  Payments: #{fb_invoice.freshbooks_payments.count}"
+      else
+        puts "❌ Failed: #{lifecycle_service.errors.join(', ')}"
+        exit 1
+      end
+    end
+  end
+
   private
 
   def fetch_business_info(access_token)

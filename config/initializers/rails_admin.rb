@@ -2,14 +2,18 @@
 
 # Ignore this file from Zeitwerk autoloading since it's explicitly required
 # and doesn't follow Zeitwerk naming conventions
+Rails.autoloaders.main.ignore(Rails.root.join('lib/rails_admin/invoice_lifecycle.rb'))
 Rails.autoloaders.main.ignore(Rails.root.join('lib/rails_admin/invoice_actions.rb'))
 Rails.autoloaders.main.ignore(Rails.root.join('lib/rails_admin/buildings_grid_action.rb'))
 Rails.autoloaders.main.ignore(Rails.root.join('lib/rails_admin/wrs_grid_action.rb'))
+Rails.autoloaders.main.ignore(Rails.root.join('lib/rails_admin/custom_dashboard_action.rb'))
 
-# Load custom Rails Admin actions
+# Load custom Rails Admin actions and lifecycle rules
+require Rails.root.join('lib/rails_admin/invoice_lifecycle')
 require Rails.root.join('lib/rails_admin/invoice_actions')
 require Rails.root.join('lib/rails_admin/buildings_grid_action')
 require Rails.root.join('lib/rails_admin/wrs_grid_action')
+require Rails.root.join('lib/rails_admin/custom_dashboard_action')
 
 RailsAdmin.config do |config|
   # Explicitly set asset_source for RailsAdmin 3.x to silence warnings
@@ -31,14 +35,36 @@ RailsAdmin.config do |config|
   config.current_user_method(&:current_user)
 
   config.actions do
-    dashboard                     # mandatory
+    dashboard                     # Uses custom dashboard action from custom_dashboard_action.rb
     index                         # mandatory
     new
     export
     bulk_delete
     show
     edit
-    delete
+
+    # Customize delete action to skip callbacks for invoices
+    delete do
+      controller do
+        proc do
+          if @object.is_a?(Invoice)
+            # Delete associated freshbooks_invoices without callbacks
+            @object.freshbooks_invoices.delete_all
+
+            # Use delete instead of destroy to skip callbacks
+            @object.delete
+
+            flash[:success] = "Invoice deleted successfully (callbacks skipped)"
+            redirect_to rails_admin.index_path(model_name: 'invoice')
+          else
+            # Default behavior for other models
+            @object.destroy
+            flash[:success] = I18n.t('admin.flash.successful', name: @model_config.label, action: I18n.t('admin.actions.delete.done'))
+            redirect_to back_or_index
+          end
+        end
+      end
+    end
 
     # Custom invoice actions
     send_invoice
@@ -100,7 +126,11 @@ RailsAdmin.config do |config|
     list do
       field :id
       field :reference_number
-      field :name
+      field :name do
+        pretty_value do
+          bindings[:view].link_to(bindings[:object].name, bindings[:view].main_app.wrs_show_path(bindings[:object].slug), target: '_blank')
+        end
+      end
       field :address
       field :flat_number
       field :status
