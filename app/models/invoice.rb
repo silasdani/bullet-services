@@ -96,13 +96,13 @@ class Invoice < ApplicationRecord
     invoice_status = map_freshbooks_status_to_invoice_status(fb_status)
 
     # Update if status differs
-    if status != invoice_status || final_status != invoice_status
-      update_columns(
-        status: invoice_status,
-        final_status: invoice_status,
-        updated_at: Time.current
-      )
-    end
+    return unless status != invoice_status || final_status != invoice_status
+
+    update_columns(
+      status: invoice_status,
+      final_status: invoice_status,
+      updated_at: Time.current
+    )
   end
 
   private

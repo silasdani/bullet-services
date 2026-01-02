@@ -51,13 +51,18 @@ module Invoices
         fb_invoice = freshbooks_invoice_record
         return add_error('FreshBooks invoice not found') unless fb_invoice
 
-        # Note: FreshBooks API doesn't allow setting status to 'void' via update endpoint
-        # Status can only be set to: 'draft', 'sent', 'viewed', or 'disputed'
-        # We only update local records. The invoice status in FreshBooks will remain as-is
-        # or can be voided manually through FreshBooks UI if needed
+        # Void invoice in FreshBooks first
+        if fb_invoice.freshbooks_id.present?
+          invoices_client.void(fb_invoice.freshbooks_id)
 
-        fb_invoice.update!(status: 'void')
-        invoice.update!(final_status: 'void')
+          # Sync from FreshBooks to get the updated status
+          sleep(0.5)
+          fb_invoice.sync_from_freshbooks
+          fb_invoice.reload
+        end
+
+        # Update local records (sync should have already updated status)
+        invoice.update!(status: 'voided', final_status: 'voided')
 
         send_void_confirmation_email!(fb_invoice) if notify_client
 

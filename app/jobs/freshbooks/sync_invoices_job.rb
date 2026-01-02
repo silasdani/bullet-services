@@ -35,12 +35,10 @@ module Freshbooks
         invoices = result[:invoices]
 
         invoices.each do |invoice_data|
-          begin
-            create_or_update_invoice(invoice_data)
-          rescue StandardError => e
-            errors << "Invoice #{invoice_data['id']}: #{e.message}"
-            Rails.logger.error("Failed to sync invoice #{invoice_data['id']}: #{e.message}")
-          end
+          create_or_update_invoice(invoice_data)
+        rescue StandardError => e
+          errors << "Invoice #{invoice_data['id']}: #{e.message}"
+          Rails.logger.error("Failed to sync invoice #{invoice_data['id']}: #{e.message}")
         end
 
         break if page >= result[:pages]

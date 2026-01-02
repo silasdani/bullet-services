@@ -344,7 +344,7 @@ namespace :freshbooks do
       puts "  ❌ Out of sync: #{stats[:out_of_sync]}"
       puts '=' * 80
 
-      if stats[:out_of_sync] > 0
+      if stats[:out_of_sync].positive?
         puts "\n⚠️  Found #{stats[:out_of_sync]} invoice(s) out of sync."
         puts "Run 'rake freshbooks:invoices:reconcile_all' to fix them."
       end

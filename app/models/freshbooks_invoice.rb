@@ -50,9 +50,9 @@ class FreshbooksInvoice < ApplicationRecord
 
   def reconcile_if_needed
     # If outstanding amount is 0 or negative but status isn't paid, reconcile
-    if amount_outstanding.to_f <= 0 && status != 'paid' && status != 'void' && status != 'voided'
-      reconcile_payments
-    end
+    return unless amount_outstanding.to_f <= 0 && status != 'paid' && status != 'void' && status != 'voided'
+
+    reconcile_payments
   end
 
   def sync_from_freshbooks_async

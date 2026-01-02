@@ -73,11 +73,11 @@ module InvoiceStatus
   end
 
   def void?
-    status == 'void' || status == 'voided'
+    %w[void voided].include?(status)
   end
 
   def voided?
-    status == 'void' || status == 'voided'
+    %w[void voided].include?(status)
   end
 
   def unpaid?

@@ -47,12 +47,12 @@ module Freshbooks
       new_status = determine_status_from_payments(invoice_amount, total_paid, outstanding)
 
       # Update if status or outstanding amount changed
-      if freshbooks_invoice.status != new_status || freshbooks_invoice.amount_outstanding != outstanding
-        freshbooks_invoice.update!(
-          status: new_status,
-          amount_outstanding: outstanding
-        )
-      end
+      return unless freshbooks_invoice.status != new_status || freshbooks_invoice.amount_outstanding != outstanding
+
+      freshbooks_invoice.update!(
+        status: new_status,
+        amount_outstanding: outstanding
+      )
     end
 
     # Propagate status changes from FreshbooksInvoice to Invoice model
@@ -66,12 +66,12 @@ module Freshbooks
       invoice_status = map_freshbooks_status_to_invoice_status(fb_status)
 
       # Update invoice if status changed
-      if invoice.status != invoice_status || invoice.final_status != invoice_status
-        invoice.update!(
-          status: invoice_status,
-          final_status: invoice_status
-        )
-      end
+      return unless invoice.status != invoice_status || invoice.final_status != invoice_status
+
+      invoice.update!(
+        status: invoice_status,
+        final_status: invoice_status
+      )
     end
 
     # Handle payment received - update invoice status and reconcile
@@ -108,14 +108,20 @@ module Freshbooks
 
       # Check status
       fb_status = normalize_status(freshbooks_data['status'] || freshbooks_data['v3_status'])
-      discrepancies << "Status mismatch: local=#{freshbooks_invoice.status}, freshbooks=#{fb_status}" if freshbooks_invoice.status != fb_status
+      if freshbooks_invoice.status != fb_status
+        discrepancies << "Status mismatch: local=#{freshbooks_invoice.status}, freshbooks=#{fb_status}"
+      end
 
       # Check amounts
       fb_amount = extract_amount(freshbooks_data['amount'])
-      discrepancies << "Amount mismatch: local=#{freshbooks_invoice.amount}, freshbooks=#{fb_amount}" if freshbooks_invoice.amount != fb_amount
+      if freshbooks_invoice.amount != fb_amount
+        discrepancies << "Amount mismatch: local=#{freshbooks_invoice.amount}, freshbooks=#{fb_amount}"
+      end
 
       fb_outstanding = extract_amount(freshbooks_data['outstanding'] || freshbooks_data['amount_outstanding'])
-      discrepancies << "Outstanding mismatch: local=#{freshbooks_invoice.amount_outstanding}, freshbooks=#{fb_outstanding}" if freshbooks_invoice.amount_outstanding != fb_outstanding
+      if freshbooks_invoice.amount_outstanding != fb_outstanding
+        discrepancies << "Outstanding mismatch: local=#{freshbooks_invoice.amount_outstanding}, freshbooks=#{fb_outstanding}"
+      end
 
       {
         synced: discrepancies.empty?,
@@ -132,8 +138,14 @@ module Freshbooks
     private
 
     def update_invoice_from_freshbooks_data(invoice_data)
-      raw_status = invoice_data['status'] || invoice_data['v3_status']
-      normalized_status = normalize_status(raw_status)
+      # Check vis_state first - if it's 1, invoice is voided/deleted
+      vis_state = invoice_data['vis_state']
+      normalized_status = if vis_state == 1
+                            'voided'
+                          else
+                            raw_status = invoice_data['status'] || invoice_data['v3_status']
+                            normalize_status(raw_status)
+                          end
 
       freshbooks_invoice.update!(
         freshbooks_client_id: invoice_data['clientid'] || freshbooks_invoice.freshbooks_client_id,
@@ -143,7 +155,8 @@ module Freshbooks
         amount_outstanding: extract_amount(invoice_data['outstanding'] || invoice_data['amount_outstanding']),
         date: parse_date(invoice_data['date'] || invoice_data['create_date']),
         due_date: parse_date(invoice_data['due_date']),
-        currency_code: invoice_data.dig('amount', 'code') || invoice_data['currency_code'] || freshbooks_invoice.currency_code,
+        currency_code: invoice_data.dig('amount',
+                                        'code') || invoice_data['currency_code'] || freshbooks_invoice.currency_code,
         notes: invoice_data['notes'] || freshbooks_invoice.notes,
         raw_data: invoice_data
       )
@@ -168,13 +181,13 @@ module Freshbooks
     end
 
     def determine_status_from_payments(invoice_amount, total_paid, outstanding)
-      return 'void' if freshbooks_invoice.status == 'void' || freshbooks_invoice.status == 'voided'
+      return 'void' if %w[void voided].include?(freshbooks_invoice.status)
 
-      if outstanding <= 0 && invoice_amount > 0
+      if outstanding <= 0 && invoice_amount.positive?
         'paid'
-      elsif total_paid > 0 && outstanding > 0
+      elsif total_paid.positive? && outstanding.positive?
         'sent' # Partially paid
-      elsif total_paid == 0 && invoice_amount > 0
+      elsif total_paid.zero? && invoice_amount.positive?
         freshbooks_invoice.status || 'sent'
       else
         freshbooks_invoice.status || 'draft'

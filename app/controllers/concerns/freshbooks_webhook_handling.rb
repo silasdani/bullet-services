@@ -42,7 +42,6 @@ module FreshbooksWebhookHandling
     FreshbooksInvoice.find_by(freshbooks_id: invoice_id)
   end
 
-
   def handle_invoice_webhook_by_id(invoice_id)
     return unless invoice_id
 

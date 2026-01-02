@@ -55,11 +55,10 @@ module RailsAdmin
 
               # Get client email and name from FreshbooksClient
               client_email = nil
-              client_name = nil
               if invoice.freshbooks_client_id.present?
                 client = FreshbooksClient.find_by(freshbooks_id: invoice.freshbooks_client_id)
                 client_email = client&.email
-                client_name = [client&.first_name, client&.last_name].compact.join(' ') if client
+                [client&.first_name, client&.last_name].compact.join(' ') if client
               end
 
               # Allow override email from params
@@ -180,29 +179,62 @@ module RailsAdmin
             end
 
             begin
-              # Update local records first
-              freshbooks_invoice&.update!(status: 'voided')
-              invoice.update!(status: 'voided', final_status: 'voided')
+              invoices_client = Freshbooks::Invoices.new
 
-              # Try to update in FreshBooks if we have the invoice ID
+              # Check invoice status in FreshBooks before voiding
               if freshbooks_invoice&.freshbooks_id.present?
-                begin
-                  invoices_client = Freshbooks::Invoices.new
-                  current_invoice = invoices_client.get(freshbooks_invoice.freshbooks_id)
+                current_invoice = invoices_client.get(freshbooks_invoice.freshbooks_id)
 
-                  # NOTE: FreshBooks API doesn't allow setting status to 'void' via update endpoint
-                  # Status can only be set to: 'draft', 'sent', 'viewed', or 'disputed'
-                  # We only update local records. The invoice status in FreshBooks will remain as-is
-                  # or can be voided manually through FreshBooks UI if needed
-                  # No FreshBooks API update call needed for void operation
+                if current_invoice && current_invoice['status'] == 1 # draft status
+                  flash[:error] = 'Cannot void a draft invoice. Please send the invoice first before voiding.'
+                  redirect_back(fallback_location: fallback_path)
+                  next
+                end
+
+                begin
+                  invoices_client.void(freshbooks_invoice.freshbooks_id)
+
+                  # Sync from FreshBooks to get the updated status (includes vis_state check)
+                  sleep(0.5) # Brief delay to allow FreshBooks to process
+                  freshbooks_invoice.sync_from_freshbooks
+                  freshbooks_invoice.reload
+
+                  # Status will be updated by sync based on vis_state
+                  if freshbooks_invoice.status != 'voided' && freshbooks_invoice.status != 'void'
+                    Rails.logger.warn("Invoice voided in FreshBooks but sync didn't update status. Manual check may be needed.")
+                  end
+                rescue FreshbooksError => e
+                  error_msg = "Failed to void FreshBooks invoice: #{e.message}"
+                  if e.respond_to?(:response_body) && e.response_body.present?
+                    begin
+                      error_data = JSON.parse(e.response_body)
+                      if error_data.dig('response', 'errors')
+                        detailed_errors = error_data.dig('response', 'errors').map { |err| err['message'] }.join(', ')
+                        error_msg += " - #{detailed_errors}"
+                      end
+                    rescue JSON::ParserError
+                      # Ignore JSON parse errors
+                    end
+                  end
+                  raise StandardError, error_msg
                 rescue StandardError => e
-                  # Log but don't fail - local update succeeded
-                  Rails.logger.warn("Failed to update FreshBooks invoice: #{e.message}")
+                  Rails.logger.error("Failed to void FreshBooks invoice: #{e.message}")
+                  raise e
                 end
               end
 
-              flash[:success] = 'Invoice voided successfully'
+              # Sync already updated the status based on vis_state
+              # Just ensure invoice is updated to match
+              freshbooks_invoice.reload
+              invoice.update!(status: 'voided', final_status: 'voided')
+              flash[:success] = if %w[voided void].include?(freshbooks_invoice.status)
+                                  'Invoice voided successfully'
+                                else
+                                  'Invoice voided successfully (status may update on next sync)'
+                                end
             rescue StandardError => e
+              Rails.logger.error("Failed to void invoice: #{e.message}")
+              Rails.logger.error("Backtrace: #{e.backtrace.first(5).join('\n')}")
               flash[:error] = "Failed to void invoice: #{e.message}"
             end
 
@@ -370,34 +402,32 @@ module RailsAdmin
 
               invoices_client = Freshbooks::Invoices.new
 
-              # Update local records first
-              freshbooks_invoice&.update!(status: 'voided')
-              invoice.update!(status: 'voided', final_status: 'voided')
-
-              # Try to update in FreshBooks if we have the invoice ID
+              # Void invoice in FreshBooks first
               if freshbooks_invoice&.freshbooks_id.present?
                 begin
-                  current_invoice = invoices_client.get(freshbooks_invoice.freshbooks_id)
+                  invoices_client.void(freshbooks_invoice.freshbooks_id)
 
-                  # NOTE: FreshBooks API doesn't allow setting status to 'void' via update endpoint
-                  # Status can only be set to: 'draft', 'sent', 'viewed', or 'disputed'
-                  # We only update local records. The invoice status in FreshBooks will remain as-is
-                  # or can be voided manually through FreshBooks UI if needed
+                  # Sync from FreshBooks to get the updated status
+                  sleep(0.5)
+                  freshbooks_invoice.sync_from_freshbooks
+                  freshbooks_invoice.reload
 
                   # Send voidance email to notify the client
-                  if current_invoice
-                    invoices_client.send_by_email(
-                      freshbooks_invoice.freshbooks_id,
-                      email: client_email,
-                      subject: "Invoice #{invoice.name || invoice.slug} - Voided",
-                      message: 'This invoice has been voided. Please contact us if you have any questions.'
-                    )
-                  end
+                  invoices_client.send_by_email(
+                    freshbooks_invoice.freshbooks_id,
+                    email: client_email,
+                    subject: "Invoice #{invoice.name || invoice.slug} - Voided",
+                    message: 'This invoice has been voided. Please contact us if you have any questions.'
+                  )
                 rescue StandardError => e
-                  # Log but don't fail - local update succeeded
-                  Rails.logger.warn("Failed to update FreshBooks invoice or send email: #{e.message}")
+                  Rails.logger.error("Failed to void FreshBooks invoice or send email: #{e.message}")
+                  raise e
                 end
               end
+
+              # Update local records (sync should have already updated status)
+              freshbooks_invoice.reload
+              invoice.update!(status: 'voided', final_status: 'voided')
 
               flash[:success] = 'Invoice voided and voidance email sent successfully'
             rescue StandardError => e

@@ -26,7 +26,7 @@ module RailsAdmin
           proc do
             # Outstanding invoices (unpaid, not voided, not draft)
             outstanding_scope = Invoice.where(is_draft: false)
-                                     .where.not(final_status: ['paid', 'voided', 'voided + email sent'])
+                                       .where.not(final_status: ['paid', 'voided', 'voided + email sent'])
 
             @outstanding_invoices = outstanding_scope.includes(:freshbooks_invoices)
                                                      .order(created_at: :desc)
@@ -41,12 +41,16 @@ module RailsAdmin
             overdue_ids = []
             outstanding_scope.includes(:freshbooks_invoices).each do |invoice|
               freshbooks_invoice = invoice.freshbooks_invoices.first
-              if freshbooks_invoice&.due_date && freshbooks_invoice.due_date < Date.current
-                overdue_ids << invoice.id
-              end
+              overdue_ids << invoice.id if freshbooks_invoice&.due_date && freshbooks_invoice.due_date < Date.current
             end
             @overdue_count = overdue_ids.count
-            @overdue_amount = overdue_ids.any? ? Invoice.where(id: overdue_ids).to_a.sum { |i| (i.total_amount || 0).to_f } : 0.0
+            @overdue_amount = if overdue_ids.any?
+                                Invoice.where(id: overdue_ids).to_a.sum do |i|
+                                  (i.total_amount || 0).to_f
+                                end
+                              else
+                                0.0
+                              end
 
             # Ensure arrays are never nil
             @outstanding_invoices ||= []

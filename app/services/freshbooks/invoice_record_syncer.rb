@@ -34,8 +34,14 @@ module Freshbooks
     end
 
     def build_basic_attributes
-      raw_status = freshbooks_data['status'] || freshbooks_data['v3_status']
-      normalized_status = normalize_status(raw_status)
+      # Check vis_state first - if it's 1, invoice is voided/deleted
+      vis_state = freshbooks_data['vis_state']
+      normalized_status = if vis_state == 1
+                            'voided'
+                          else
+                            raw_status = freshbooks_data['status'] || freshbooks_data['v3_status']
+                            normalize_status(raw_status)
+                          end
 
       {
         freshbooks_client_id: client_id,
