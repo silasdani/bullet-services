@@ -340,6 +340,7 @@ RailsAdmin.config do |config|
       # Status
       field :final_status do
         label 'Status'
+        read_only true
         pretty_value do
           invoice = bindings[:object]
           status = invoice.final_status || 'draft'
@@ -365,7 +366,7 @@ RailsAdmin.config do |config|
             'Sent'
           when 'draft'
             'Draft'
-          when 'voided',
+          when 'voided'
             'Voided'
           when 'voided + email sent'
             'Voided + Emailed'

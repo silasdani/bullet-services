@@ -18,13 +18,14 @@ class InvoiceMailer < ApplicationMailer
     @invoice = params[:invoice]
     @freshbooks_invoice = @invoice.freshbooks_invoices.last
     @invoice_number = @freshbooks_invoice&.invoice_number || @invoice.slug
-    @address = @invoice.flat_address || 'your property'
-    @wrs_link = @invoice.wrs_link
+    @wrs_link = @invoice.wrs_link || 'https://bulletservices.co.uk/wrs/'
     @submission_date = (@invoice.created_at&.to_date || Date.today).strftime('%B %d, %Y')
 
     mail(
       to: params[:client_email],
-      subject: 'Windows Schedule Repairs Invoice'
+      subject: "Bullet Services | Void Invoice no. #{@invoice_number} |",
+      from: mailer_from_address,
+      reply_to: 'office@bulletservices.co.uk'
     )
   end
 

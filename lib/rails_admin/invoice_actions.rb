@@ -412,32 +412,32 @@ module RailsAdmin
 
               invoices_client = Freshbooks::Invoices.new
 
-              # Void invoice in FreshBooks first
+              # Void (delete) invoice in FreshBooks
               if freshbooks_invoice&.freshbooks_id.present?
-                begin
-                  invoices_client.void(freshbooks_invoice.freshbooks_id)
+                invoices_client.void(freshbooks_invoice.freshbooks_id)
 
-                  # Sync from FreshBooks to get the updated status
-                  sleep(0.5)
-                  freshbooks_invoice.sync_from_freshbooks
-                  freshbooks_invoice.reload
-
-                  # Send voidance email to notify the client
-                  invoices_client.send_by_email(
-                    freshbooks_invoice.freshbooks_id,
-                    email: client_email,
-                    subject: "Invoice #{invoice.name || invoice.slug} - Voided",
-                    message: 'This invoice has been voided. Please contact us if you have any questions.'
-                  )
-                rescue StandardError => e
-                  Rails.logger.error("Failed to void FreshBooks invoice or send email: #{e.message}")
-                  raise e
-                end
+                # Sync from FreshBooks to get the updated status
+                # This will trigger propagate_status_to_invoice callback which sets status to "voided"
+                sleep(0.5)
+                freshbooks_invoice.sync_from_freshbooks
+                freshbooks_invoice.reload
               end
 
-              # Update local records (sync should have already updated status)
-              freshbooks_invoice.reload
-              invoice.update!(status: 'voided', final_status: 'voided')
+              # Send voidance email from Rails (not FreshBooks)
+              InvoiceMailer.with(
+                invoice: invoice,
+                client_email: client_email
+              ).voided_invoice_email.deliver_now
+
+              # Update local invoice status to indicate email was sent
+              # Use update_columns to skip callbacks and prevent sync from overwriting our status
+              # This must happen AFTER the sync/callback to ensure our status persists
+              invoice.reload
+              invoice.update_columns(
+                status: 'voided + email sent',
+                final_status: 'voided + email sent',
+                updated_at: Time.current
+              )
 
               flash[:success] = 'Invoice voided and voidance email sent successfully'
             rescue StandardError => e
