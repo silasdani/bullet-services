@@ -62,39 +62,68 @@ module RailsAdmin
                 client_name = [client&.first_name, client&.last_name].compact.join(' ') if client
               end
 
-              if client_email.blank?
+              # Allow override email from params
+              email_to = params[:email] || client_email
+
+              if email_to.blank?
                 flash[:error] = 'No email address found for client. Please provide an email address.'
                 redirect_back(fallback_location: fallback_path)
                 next
               end
 
-              # Get payment link from FreshBooks
-              payment_link = invoices_client.get_payment_link(freshbooks_invoice.freshbooks_id)
+              # Get current invoice data from FreshBooks to preserve all fields
+              current_invoice = invoices_client.get(freshbooks_invoice.freshbooks_id)
+              unless current_invoice
+                flash[:error] = 'Could not retrieve invoice from FreshBooks'
+                redirect_back(fallback_location: fallback_path)
+                next
+              end
 
-              # Get invoice details
-              freshbooks_invoice.invoice_number || 'N/A'
-              invoice.total_amount || 0
-              due_date = freshbooks_invoice.due_date || ((invoice.created_at&.to_date || Date.today) + 30.days)
-              due_date&.strftime('%B %d, %Y')
+              # Build lines array from current invoice
+              lines = (current_invoice['lines'] || []).map do |line|
+                {
+                  name: line['name'],
+                  description: line['description'],
+                  quantity: line['qty'] || 1,
+                  cost: line.dig('unit_cost', 'amount') || line['unit_cost'],
+                  currency: line.dig('unit_cost', 'code') || 'USD',
+                  type: line['type'] || 0
+                }
+              end
 
-              # Get WRS link if available
-              invoice.wrs_link
-              invoice.flat_address || 'your property'
+              # Update invoice in FreshBooks with action_email to send it
+              # This will automatically mark the invoice as 'sent' in FreshBooks
+              invoices_client.update(
+                freshbooks_invoice.freshbooks_id,
+                client_id: current_invoice['customerid'] || invoice.freshbooks_client_id,
+                date: current_invoice['create_date'] || invoice.created_at&.to_date&.to_s,
+                due_date: current_invoice['due_date'],
+                currency: current_invoice['currency_code'] || 'USD',
+                notes: current_invoice['notes'],
+                lines: lines,
+                action_email: true,
+                email_recipients: [email_to]
+              )
 
-              # Send email via ActionMailer
-              client_display_name = client_name || 'Valued Client'
+              # Sync invoice from FreshBooks to get the updated status (should be 'sent' now)
+              if freshbooks_invoice&.freshbooks_id.present?
+                begin
+                  freshbooks_invoice.sync_from_freshbooks
+                  # Propagate status to Invoice model
+                  invoice.sync_status_from_freshbooks_invoice
+                rescue StandardError => e
+                  # If sync fails, update local records to 'sent' as fallback
+                  Rails.logger.warn("Failed to sync from FreshBooks after sending: #{e.message}")
+                  invoice.update!(status: 'sent', final_status: 'sent')
+                  freshbooks_invoice&.update!(status: 'sent')
+                end
+              else
+                # Fallback: update local records if we can't sync
+                invoice.update!(status: 'sent', final_status: 'sent')
+                freshbooks_invoice&.update!(status: 'sent')
+              end
 
-              InvoiceMailer.with(
-                invoice: invoice,
-                client_email: params[:email] || client_email,
-                client_name: client_display_name,
-                payment_link: payment_link
-              ).invoice_email.deliver_now
-
-              # Update local invoice status
-              invoice.update!(status: 'sent', final_status: 'sent')
-              freshbooks_invoice&.update!(status: 'sent')
-              flash[:success] = "Invoice email sent successfully to #{client_email}"
+              flash[:success] = "Invoice sent successfully via FreshBooks to #{email_to}"
             rescue StandardError => e
               Rails.logger.error("Failed to send invoice: #{e.message}")
               Rails.logger.error("Backtrace: #{e.backtrace.first(10).join('\n')}")
@@ -161,7 +190,7 @@ module RailsAdmin
                   invoices_client = Freshbooks::Invoices.new
                   current_invoice = invoices_client.get(freshbooks_invoice.freshbooks_id)
 
-                  # Note: FreshBooks API doesn't allow setting status to 'void' via update endpoint
+                  # NOTE: FreshBooks API doesn't allow setting status to 'void' via update endpoint
                   # Status can only be set to: 'draft', 'sent', 'viewed', or 'disputed'
                   # We only update local records. The invoice status in FreshBooks will remain as-is
                   # or can be voided manually through FreshBooks UI if needed
@@ -350,7 +379,7 @@ module RailsAdmin
                 begin
                   current_invoice = invoices_client.get(freshbooks_invoice.freshbooks_id)
 
-                  # Note: FreshBooks API doesn't allow setting status to 'void' via update endpoint
+                  # NOTE: FreshBooks API doesn't allow setting status to 'void' via update endpoint
                   # Status can only be set to: 'draft', 'sent', 'viewed', or 'disputed'
                   # We only update local records. The invoice status in FreshBooks will remain as-is
                   # or can be voided manually through FreshBooks UI if needed

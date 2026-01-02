@@ -39,7 +39,7 @@ module Freshbooks
 
     def update(invoice_id, params)
       path = build_path("invoices/invoices/#{invoice_id}")
-      payload = build_invoice_payload(params)
+      payload = build_invoice_payload(params, is_update: true)
 
       response = make_request(:put, path, body: payload.to_json)
       response.dig('response', 'result', 'invoice')
@@ -56,24 +56,32 @@ module Freshbooks
 
     private
 
-    def build_invoice_payload(params)
-      payload = { invoice: build_invoice_attributes(params) }
+    def build_invoice_payload(params, is_update: false)
+      payload = { invoice: build_invoice_attributes(params, is_update: is_update) }
       add_status_if_present(payload, params)
       payload
     end
 
-    def build_invoice_attributes(params)
-      {
+    def build_invoice_attributes(params, is_update: false)
+      attributes = {
         customerid: extract_customer_id(params),
         create_date: extract_create_date(params),
-        due_date: extract_due_date(params),
         currency_code: extract_currency_code(params),
         notes: params[:notes],
         terms: params[:terms],
         tax_included: params[:tax_included] || 'yes',
         tax_calculation: params[:tax_calculation] || 'item',
-        lines: build_lines(params[:lines] || [])
-      }.compact
+        lines: build_lines(params[:lines] || []),
+        action_email: params[:action_email],
+        email_recipients: params[:email_recipients]
+      }
+
+      # FreshBooks API doesn't allow setting due_date during invoice creation or updates
+      # The due_date is managed by FreshBooks based on payment terms
+      # Only include it for create operations (though it may still be rejected)
+      attributes[:due_date] = extract_due_date(params) unless is_update
+
+      attributes.compact
     end
 
     def extract_customer_id(params)
