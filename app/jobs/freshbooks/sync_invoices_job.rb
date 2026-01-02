@@ -32,21 +32,33 @@ module Freshbooks
 
       loop do
         result = invoices_service.list(page: page, per_page: 100)
-        invoices = result[:invoices]
-
-        invoices.each do |invoice_data|
-          create_or_update_invoice(invoice_data)
-        rescue StandardError => e
-          errors << "Invoice #{invoice_data['id']}: #{e.message}"
-          Rails.logger.error("Failed to sync invoice #{invoice_data['id']}: #{e.message}")
-        end
+        errors.concat(sync_invoice_page(result[:invoices]))
 
         break if page >= result[:pages]
 
         page += 1
       end
 
-      Rails.logger.warn("Invoice sync completed with #{errors.length} errors") if errors.any?
+      log_sync_errors(errors)
+    end
+
+    def sync_invoice_page(invoices)
+      errors = []
+      invoices.each do |invoice_data|
+        create_or_update_invoice(invoice_data)
+      rescue StandardError => e
+        invoice_id = invoice_data['id']
+        error_msg = "Invoice #{invoice_id}: #{e.message}"
+        errors << error_msg
+        Rails.logger.error("Failed to sync invoice #{invoice_id}: #{e.message}")
+      end
+      errors
+    end
+
+    def log_sync_errors(errors)
+      return unless errors.any?
+
+      Rails.logger.warn("Invoice sync completed with #{errors.length} errors")
     end
 
     def create_or_update_invoice(invoice_data)
@@ -68,10 +80,15 @@ module Freshbooks
     end
 
     def assign_invoice_attributes(invoice, invoice_data)
+      attributes = build_invoice_attributes_hash(invoice_data)
+      invoice.assign_attributes(attributes)
+    end
+
+    def build_invoice_attributes_hash(invoice_data)
       raw_status = invoice_data['status']
       normalized_status = normalize_status(raw_status)
 
-      invoice.assign_attributes(
+      {
         freshbooks_client_id: invoice_data['clientid'],
         invoice_number: invoice_data['invoice_number'],
         status: normalized_status,
@@ -83,7 +100,7 @@ module Freshbooks
         notes: invoice_data['notes'],
         pdf_url: build_pdf_url(invoice_data['id']),
         raw_data: invoice_data
-      )
+      }
     end
 
     def normalize_status(status)

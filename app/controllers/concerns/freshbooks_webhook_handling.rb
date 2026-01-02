@@ -11,22 +11,29 @@ module FreshbooksWebhookHandling
     payment_data = fetch_payment_data(payment_id)
     return unless payment_data
 
-    invoice_id = extract_invoice_id(payment_data)
-    freshbooks_invoice = find_freshbooks_invoice(invoice_id)
+    freshbooks_invoice = find_invoice_from_payment(payment_data)
     return unless freshbooks_invoice
 
-    # Use lifecycle service for bulletproof payment handling
-    lifecycle_service = Freshbooks::InvoiceLifecycleService.new(freshbooks_invoice)
-    lifecycle_service.handle_payment_received(payment_data)
-
-    # Also trigger a full invoice sync to ensure everything is in sync
-    Freshbooks::SyncInvoicesJob.perform_later(invoice_id)
-
-    Rails.logger.info "Payment webhook processed for invoice #{invoice_id}"
+    process_payment_webhook(freshbooks_invoice, payment_data)
   rescue FreshbooksError => e
     Rails.logger.error "Failed to fetch payment #{payment_id}: #{e.message}"
   rescue StandardError => e
     Rails.logger.error "Payment webhook error: #{e.message}\n#{e.backtrace.join("\n")}"
+  end
+
+  def find_invoice_from_payment(payment_data)
+    invoice_id = extract_invoice_id(payment_data)
+    return unless invoice_id
+
+    find_freshbooks_invoice(invoice_id)
+  end
+
+  def process_payment_webhook(freshbooks_invoice, payment_data)
+    lifecycle_service = Freshbooks::InvoiceLifecycleService.new(freshbooks_invoice)
+    lifecycle_service.handle_payment_received(payment_data)
+
+    Freshbooks::SyncInvoicesJob.perform_later(freshbooks_invoice.freshbooks_id)
+    Rails.logger.info "Payment webhook processed for invoice #{freshbooks_invoice.freshbooks_id}"
   end
 
   def fetch_payment_data(payment_id)

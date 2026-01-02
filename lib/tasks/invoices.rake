@@ -263,17 +263,14 @@ namespace :invoices do
             pdf_data = { url: invoice.invoice_pdf_link }
             Wrs::PdfAttachmentService.new(invoice, pdf_data).call
 
-            if invoice.reload.invoice_pdf.attached?
-              # Verify the new blob exists in S3
-              new_blob = invoice.invoice_pdf.blob
-              if new_blob.service.exist?(new_blob.key)
-                fixed_count += 1
-                puts "  ✅ Fixed! New blob: #{new_blob.key}"
-              else
-                puts '  ❌ Still broken - file not in S3 after re-upload'
-              end
+            next puts('  ❌ Failed to re-attach PDF') unless invoice.reload.invoice_pdf.attached?
+
+            new_blob = invoice.invoice_pdf.blob
+            if new_blob.service.exist?(new_blob.key)
+              fixed_count += 1
+              puts "  ✅ Fixed! New blob: #{new_blob.key}"
             else
-              puts '  ❌ Failed to re-attach PDF'
+              puts '  ❌ Still broken - file not in S3 after re-upload'
             end
           rescue StandardError => e
             puts "  ❌ Error fixing invoice: #{e.class}: #{e.message}"

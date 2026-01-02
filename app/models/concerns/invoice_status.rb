@@ -2,6 +2,7 @@
 
 # Shared concern for invoice status management
 # Ensures consistent status values across Invoice and FreshbooksInvoice models
+# rubocop:disable Metrics/ModuleLength
 module InvoiceStatus
   extend ActiveSupport::Concern
 
@@ -96,12 +97,10 @@ module InvoiceStatus
 
     # Handle variations
     case normalized
-    when 'voided + email sent', 'voided+email sent', 'voided'
+    when 'voided + email sent', 'voided+email sent', 'voided', 'void'
       self.status = 'voided'
     when 'sent - awaiting payment', 'sent-awaiting payment'
       self.status = 'sent'
-    when 'void'
-      self.status = 'voided' # Standardize to 'voided'
     else
       self.status = normalized if VALID_STATUSES.include?(normalized)
     end
@@ -123,4 +122,34 @@ module InvoiceStatus
     normalize_status_value
     status
   end
+
+  # Normalize a status string (helper for safe navigation)
+  def normalize_status_string(status)
+    return nil unless status
+
+    status_str = status.to_s
+    status_str.downcase.strip
+  end
+
+  # Map FreshBooks status to invoice status
+  def map_freshbooks_status_to_invoice_status(fb_status)
+    normalized = normalize_status_string(fb_status)
+    normalized = 'voided' if normalized == 'void'
+
+    # Invoice model uses same status values as FreshbooksInvoice
+    # Both models now use: draft, sent, viewed, paid, voided
+    case normalized
+    when 'paid'
+      'paid'
+    when 'voided'
+      'voided'
+    when 'sent', 'viewed'
+      normalized # Keep sent/viewed as-is since Invoice supports both
+    when 'draft'
+      'draft'
+    else
+      normalized || 'draft'
+    end
+  end
 end
+# rubocop:enable Metrics/ModuleLength

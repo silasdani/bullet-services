@@ -123,25 +123,4 @@ class Invoice < ApplicationRecord
     fb_status = map_freshbooks_status_to_invoice_status(fb_invoice.status)
     status != fb_status || final_status != fb_status
   end
-
-  def map_freshbooks_status_to_invoice_status(fb_status)
-    # Normalize the status first
-    normalized = fb_status&.to_s&.downcase&.strip
-    normalized = 'voided' if normalized == 'void'
-
-    # Invoice model uses same status values as FreshbooksInvoice
-    # Both models now use: draft, sent, viewed, paid, voided
-    case normalized
-    when 'paid'
-      'paid'
-    when 'voided'
-      'voided'
-    when 'sent', 'viewed'
-      normalized # Keep sent/viewed as-is since Invoice supports both
-    when 'draft'
-      'draft'
-    else
-      normalized || 'draft'
-    end
-  end
 end

@@ -3,6 +3,7 @@
 module Freshbooks
   # Central service for managing FreshBooks invoice lifecycle and ensuring data consistency
   # This service ensures that invoice status, payments, and related records stay in sync
+  # rubocop:disable Metrics/ClassLength
   class InvoiceLifecycleService
     attr_reader :freshbooks_invoice, :errors
 
@@ -15,44 +16,69 @@ module Freshbooks
     def sync_from_freshbooks
       return add_error('FreshBooks invoice not found') unless freshbooks_invoice
 
+      invoice_data = fetch_invoice_data
+      return false unless invoice_data
+
+      sync_invoice_with_data(invoice_data)
+    rescue StandardError => e
+      handle_sync_error(e)
+      false
+    end
+
+    def fetch_invoice_data
       invoices_service = Freshbooks::Invoices.new
       invoice_data = invoices_service.get(freshbooks_invoice.freshbooks_id)
-      return add_error('Failed to fetch invoice from FreshBooks') unless invoice_data
+      return invoice_data if invoice_data
 
+      add_error('Failed to fetch invoice from FreshBooks')
+      nil
+    end
+
+    # rubocop:disable Naming/PredicateMethod
+    # This method syncs data but is not a predicate
+    def sync_invoice_with_data(invoice_data)
       ActiveRecord::Base.transaction do
         update_invoice_from_freshbooks_data(invoice_data)
         reconcile_payments
         propagate_status_to_invoice
       end
-
       true
-    rescue StandardError => e
-      add_error("Sync failed: #{e.message}")
-      Rails.logger.error("InvoiceLifecycleService sync error: #{e.message}\n#{e.backtrace.join("\n")}")
-      false
+    end
+    # rubocop:enable Naming/PredicateMethod
+
+    def handle_sync_error(error)
+      add_error("Sync failed: #{error.message}")
+      Rails.logger.error("InvoiceLifecycleService sync error: #{error.message}\n#{error.backtrace.join("\n")}")
     end
 
     # Reconcile invoice status based on payments
     def reconcile_payments
       return unless freshbooks_invoice
 
+      invoice_amount, total_paid = calculate_payment_totals
+      outstanding = invoice_amount - total_paid
+      new_status = determine_status_from_payments(invoice_amount, total_paid, outstanding)
+      update_invoice_if_changed(new_status, outstanding)
+    end
+
+    def calculate_payment_totals
       payments = FreshbooksPayment.where(freshbooks_invoice_id: freshbooks_invoice.freshbooks_id)
       total_paid = payments.sum(:amount) || 0
       invoice_amount = freshbooks_invoice.amount || 0
+      [invoice_amount, total_paid]
+    end
 
-      # Calculate outstanding amount
-      outstanding = invoice_amount - total_paid
-
-      # Determine status based on payments
-      new_status = determine_status_from_payments(invoice_amount, total_paid, outstanding)
-
-      # Update if status or outstanding amount changed
-      return unless freshbooks_invoice.status != new_status || freshbooks_invoice.amount_outstanding != outstanding
+    def update_invoice_if_changed(new_status, outstanding)
+      return if status_and_outstanding_unchanged?(new_status, outstanding)
 
       freshbooks_invoice.update!(
         status: new_status,
         amount_outstanding: outstanding
       )
+    end
+
+    def status_and_outstanding_unchanged?(new_status, outstanding)
+      freshbooks_invoice.status == new_status && freshbooks_invoice.amount_outstanding == outstanding
     end
 
     # Propagate status changes from FreshbooksInvoice to Invoice model
@@ -104,24 +130,7 @@ module Freshbooks
       freshbooks_data = invoices_service.get(freshbooks_invoice.freshbooks_id)
       return { synced: false, errors: ['Failed to fetch from FreshBooks'] } unless freshbooks_data
 
-      discrepancies = []
-
-      # Check status
-      fb_status = normalize_status(freshbooks_data['status'] || freshbooks_data['v3_status'])
-      if freshbooks_invoice.status != fb_status
-        discrepancies << "Status mismatch: local=#{freshbooks_invoice.status}, freshbooks=#{fb_status}"
-      end
-
-      # Check amounts
-      fb_amount = extract_amount(freshbooks_data['amount'])
-      if freshbooks_invoice.amount != fb_amount
-        discrepancies << "Amount mismatch: local=#{freshbooks_invoice.amount}, freshbooks=#{fb_amount}"
-      end
-
-      fb_outstanding = extract_amount(freshbooks_data['outstanding'] || freshbooks_data['amount_outstanding'])
-      if freshbooks_invoice.amount_outstanding != fb_outstanding
-        discrepancies << "Outstanding mismatch: local=#{freshbooks_invoice.amount_outstanding}, freshbooks=#{fb_outstanding}"
-      end
+      discrepancies = check_sync_discrepancies(freshbooks_data)
 
       {
         synced: discrepancies.empty?,
@@ -138,28 +147,10 @@ module Freshbooks
     private
 
     def update_invoice_from_freshbooks_data(invoice_data)
-      # Check vis_state first - if it's 1, invoice is voided/deleted
-      vis_state = invoice_data['vis_state']
-      normalized_status = if vis_state == 1
-                            'voided'
-                          else
-                            raw_status = invoice_data['status'] || invoice_data['v3_status']
-                            normalize_status(raw_status)
-                          end
+      normalized_status = determine_status_from_invoice_data(invoice_data)
+      invoice_attributes = build_invoice_attributes(invoice_data, normalized_status)
 
-      freshbooks_invoice.update!(
-        freshbooks_client_id: invoice_data['clientid'] || freshbooks_invoice.freshbooks_client_id,
-        invoice_number: invoice_data['invoice_number'] || freshbooks_invoice.invoice_number,
-        status: normalized_status,
-        amount: extract_amount(invoice_data['amount']),
-        amount_outstanding: extract_amount(invoice_data['outstanding'] || invoice_data['amount_outstanding']),
-        date: parse_date(invoice_data['date'] || invoice_data['create_date']),
-        due_date: parse_date(invoice_data['due_date']),
-        currency_code: invoice_data.dig('amount',
-                                        'code') || invoice_data['currency_code'] || freshbooks_invoice.currency_code,
-        notes: invoice_data['notes'] || freshbooks_invoice.notes,
-        raw_data: invoice_data
-      )
+      freshbooks_invoice.update!(invoice_attributes)
     end
 
     def create_or_update_payment(payment_data)
@@ -181,38 +172,30 @@ module Freshbooks
     end
 
     def determine_status_from_payments(invoice_amount, total_paid, outstanding)
-      return 'void' if %w[void voided].include?(freshbooks_invoice.status)
+      return 'void' if invoice_voided?
 
-      if outstanding <= 0 && invoice_amount.positive?
-        'paid'
-      elsif total_paid.positive? && outstanding.positive?
-        'sent' # Partially paid
-      elsif total_paid.zero? && invoice_amount.positive?
-        freshbooks_invoice.status || 'sent'
-      else
-        freshbooks_invoice.status || 'draft'
-      end
+      return 'paid' if fully_paid?(outstanding, invoice_amount)
+      return 'sent' if partially_paid?(total_paid, outstanding)
+
+      freshbooks_invoice.status || default_status_for_amount(invoice_amount)
     end
 
     def map_freshbooks_status_to_invoice_status(fb_status)
-      # Normalize the status first
-      normalized = fb_status&.to_s&.downcase&.strip
+      return 'draft' unless fb_status
+
+      status_str = fb_status.to_s
+      normalized = status_str.downcase.strip
       normalized = 'voided' if normalized == 'void'
 
+      map_normalized_status(normalized)
+    end
+
+    def map_normalized_status(normalized)
       # Invoice model uses same status values as FreshbooksInvoice
       # Both models now use: draft, sent, viewed, paid, voided
-      case normalized
-      when 'paid'
-        'paid'
-      when 'voided'
-        'voided'
-      when 'sent', 'viewed'
-        normalized # Keep sent/viewed as-is since Invoice supports both
-      when 'draft'
-        'draft'
-      else
-        normalized || 'draft'
-      end
+      return normalized if %w[paid voided sent viewed draft].include?(normalized)
+
+      normalized || 'draft'
     end
 
     def normalize_status(status)
@@ -235,9 +218,105 @@ module Freshbooks
       nil
     end
 
+    def check_sync_discrepancies(freshbooks_data)
+      discrepancies = []
+      check_status_discrepancy(freshbooks_data, discrepancies)
+      check_amount_discrepancy(freshbooks_data, discrepancies)
+      check_outstanding_discrepancy(freshbooks_data, discrepancies)
+      discrepancies
+    end
+
+    def check_status_discrepancy(freshbooks_data, discrepancies)
+      fb_status = normalize_status(freshbooks_data['status'] || freshbooks_data['v3_status'])
+      return if freshbooks_invoice.status == fb_status
+
+      discrepancies << "Status mismatch: local=#{freshbooks_invoice.status}, freshbooks=#{fb_status}"
+    end
+
+    def check_amount_discrepancy(freshbooks_data, discrepancies)
+      fb_amount = extract_amount(freshbooks_data['amount'])
+      return if freshbooks_invoice.amount == fb_amount
+
+      discrepancies << "Amount mismatch: local=#{freshbooks_invoice.amount}, freshbooks=#{fb_amount}"
+    end
+
+    def check_outstanding_discrepancy(freshbooks_data, discrepancies)
+      fb_outstanding = extract_amount(freshbooks_data['outstanding'] || freshbooks_data['amount_outstanding'])
+      return if freshbooks_invoice.amount_outstanding == fb_outstanding
+
+      local_outstanding = freshbooks_invoice.amount_outstanding
+      discrepancies << "Outstanding mismatch: local=#{local_outstanding}, freshbooks=#{fb_outstanding}"
+    end
+
+    def determine_status_from_invoice_data(invoice_data)
+      return 'voided' if invoice_data['vis_state'] == 1
+
+      raw_status = invoice_data['status'] || invoice_data['v3_status']
+      normalize_status(raw_status)
+    end
+
+    def build_invoice_attributes(invoice_data, normalized_status)
+      {
+        freshbooks_client_id: get_client_id(invoice_data),
+        invoice_number: get_invoice_number(invoice_data),
+        status: normalized_status,
+        amount: extract_amount(invoice_data['amount']),
+        amount_outstanding: extract_amount_outstanding(invoice_data),
+        date: extract_date(invoice_data),
+        due_date: parse_date(invoice_data['due_date']),
+        currency_code: extract_currency_code(invoice_data),
+        notes: get_notes(invoice_data),
+        raw_data: invoice_data
+      }
+    end
+
+    def get_client_id(invoice_data)
+      invoice_data['clientid'] || freshbooks_invoice.freshbooks_client_id
+    end
+
+    def get_invoice_number(invoice_data)
+      invoice_data['invoice_number'] || freshbooks_invoice.invoice_number
+    end
+
+    def extract_amount_outstanding(invoice_data)
+      extract_amount(invoice_data['outstanding'] || invoice_data['amount_outstanding'])
+    end
+
+    def extract_date(invoice_data)
+      parse_date(invoice_data['date'] || invoice_data['create_date'])
+    end
+
+    def get_notes(invoice_data)
+      invoice_data['notes'] || freshbooks_invoice.notes
+    end
+
+    def extract_currency_code(invoice_data)
+      invoice_data.dig('amount', 'code') || invoice_data['currency_code'] || freshbooks_invoice.currency_code
+    end
+
+    def invoice_voided?
+      %w[void voided].include?(freshbooks_invoice.status)
+    end
+
+    def fully_paid?(outstanding, invoice_amount)
+      outstanding <= 0 && invoice_amount.positive?
+    end
+
+    def partially_paid?(total_paid, outstanding)
+      total_paid.positive? && outstanding.positive?
+    end
+
+    def default_status_for_amount(invoice_amount)
+      invoice_amount.positive? ? 'sent' : 'draft'
+    end
+
+    # rubocop:disable Naming/PredicateMethod
+    # This method returns false for convenience in early returns, but it's not a predicate
     def add_error(message)
       @errors << message
       false
     end
+    # rubocop:enable Naming/PredicateMethod
   end
+  # rubocop:enable Metrics/ClassLength
 end

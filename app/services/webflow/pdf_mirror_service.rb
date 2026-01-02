@@ -2,6 +2,7 @@
 
 module Webflow
   # Service for handling PDF mirroring from Webflow
+  # rubocop:disable Metrics/ClassLength
   class PdfMirrorService < ApplicationService
     attribute :record
     attribute :source_url
@@ -144,30 +145,44 @@ module Webflow
     def attach_blob_with_retry(attachment, blob)
       attempts = 0
       begin
-        unless ActiveStorage::Blob.where(id: blob.id).exists?
-          raise ActiveRecord::RecordNotFound, 'Blob not persisted yet'
-        end
-
-        attachment.attach(blob)
-        log_info("Successfully attached blob #{blob.key} to #{record.class.name} ##{record.id}")
+        verify_blob_persisted(blob)
+        attach_blob(attachment, blob)
         blob
       rescue ActiveRecord::InvalidForeignKey, PG::ForeignKeyViolation, ActiveRecord::RecordNotFound => e
-        attempts += 1
-        if attempts <= 3
-          sleep 0.2
-          blob.reload if blob.persisted?
-          retry
-        else
-          log_error("Failed to attach blob ##{blob.id} after #{attempts} attempts: #{e.class} - #{e.message}")
-          # Clean up orphaned blob if attachment fails
-          cleanup_orphaned_blob(blob)
-          nil
-        end
+        handle_attachment_retry(e, blob, attempts)
       rescue StandardError => e
-        log_error("Unexpected error attaching blob ##{blob.id}: #{e.class} - #{e.message}")
-        cleanup_orphaned_blob(blob)
-        raise
+        handle_attachment_error(e, blob)
       end
+    end
+
+    def verify_blob_persisted(blob)
+      return if ActiveStorage::Blob.where(id: blob.id).exists?
+
+      raise ActiveRecord::RecordNotFound, 'Blob not persisted yet'
+    end
+
+    def attach_blob(attachment, blob)
+      attachment.attach(blob)
+      log_info("Successfully attached blob #{blob.key} to #{record.class.name} ##{record.id}")
+    end
+
+    def handle_attachment_retry(error, blob, attempts)
+      attempts += 1
+      if attempts <= 3
+        sleep 0.2
+        blob.reload if blob.persisted?
+        retry
+      else
+        log_error("Failed to attach blob ##{blob.id} after #{attempts} attempts: #{error.class} - #{error.message}")
+        cleanup_orphaned_blob(blob)
+        nil
+      end
+    end
+
+    def handle_attachment_error(error, blob)
+      log_error("Unexpected error attaching blob ##{blob.id}: #{error.class} - #{error.message}")
+      cleanup_orphaned_blob(blob)
+      raise
     end
 
     def cleanup_orphaned_blob(blob)
@@ -205,30 +220,44 @@ module Webflow
     end
 
     def perform_http_download(uri, tempfile)
+      download_with_http(uri, tempfile)
+    rescue Net::TimeoutError, Net::OpenTimeout, Net::ReadTimeout => e
+      handle_download_timeout(uri, e)
+    rescue SocketError, Errno::ECONNREFUSED, Errno::EHOSTUNREACH => e
+      handle_download_connection_error(uri, e)
+    rescue StandardError => e
+      handle_download_error(uri, e)
+    end
+
+    def download_with_http(uri, tempfile)
       Net::HTTP.start(uri.host, uri.port, use_ssl: true, open_timeout: 10, read_timeout: 30) do |http|
         request = Net::HTTP::Get.new(uri.request_uri)
         request['User-Agent'] = 'Bullet Services/1.0'
 
         http.request(request) do |resp|
           validate_response_code(resp)
-
-          # Read response body in chunks
-          resp.read_body do |chunk|
-            tempfile.write(chunk)
-          end
-
-          # Ensure all data is flushed to disk
-          tempfile.flush
+          write_response_to_tempfile(resp, tempfile)
         end
       end
-    rescue Net::TimeoutError, Net::OpenTimeout, Net::ReadTimeout => e
-      log_error("Timeout downloading PDF from #{uri}: #{e.message}")
-      raise "PDF download timed out: #{e.message}"
-    rescue SocketError, Errno::ECONNREFUSED, Errno::EHOSTUNREACH => e
-      log_error("Connection error downloading PDF from #{uri}: #{e.message}")
-      raise "Failed to connect to PDF server: #{e.message}"
-    rescue StandardError => e
-      log_error("Unexpected error downloading PDF from #{uri}: #{e.class}: #{e.message}")
+    end
+
+    def write_response_to_tempfile(resp, tempfile)
+      resp.read_body { |chunk| tempfile.write(chunk) }
+      tempfile.flush
+    end
+
+    def handle_download_timeout(uri, error)
+      log_error("Timeout downloading PDF from #{uri}: #{error.message}")
+      raise "PDF download timed out: #{error.message}"
+    end
+
+    def handle_download_connection_error(uri, error)
+      log_error("Connection error downloading PDF from #{uri}: #{error.message}")
+      raise "Failed to connect to PDF server: #{error.message}"
+    end
+
+    def handle_download_error(uri, error)
+      log_error("Unexpected error downloading PDF from #{uri}: #{error.class}: #{error.message}")
       raise
     end
 
@@ -240,4 +269,5 @@ module Webflow
       raise error_msg
     end
   end
+  # rubocop:enable Metrics/ClassLength
 end

@@ -1,6 +1,25 @@
 # frozen_string_literal: true
 
 module RailsAdmin
+  # Helper methods for invoice actions
+  module InvoiceActionHelpers
+    def self.parse_freshbooks_error(error)
+      error_msg = "Failed to void FreshBooks invoice: #{error.message}"
+      return error_msg unless error.respond_to?(:response_body) && error.response_body.present?
+
+      begin
+        error_data = JSON.parse(error.response_body)
+        if error_data.dig('response', 'errors')
+          detailed_errors = error_data.dig('response', 'errors').map { |err| err['message'] }.join(', ')
+          error_msg += " - #{detailed_errors}"
+        end
+      rescue JSON::ParserError
+        # Ignore JSON parse errors
+      end
+      error_msg
+    end
+  end
+
   module Config
     module Actions
       class SendInvoice < RailsAdmin::Config::Actions::Base
@@ -200,22 +219,13 @@ module RailsAdmin
                   freshbooks_invoice.reload
 
                   # Status will be updated by sync based on vis_state
+                  void_status_warning = "Invoice voided in FreshBooks but sync didn't update status. " \
+                                        'Manual check may be needed.'
                   if freshbooks_invoice.status != 'voided' && freshbooks_invoice.status != 'void'
-                    Rails.logger.warn("Invoice voided in FreshBooks but sync didn't update status. Manual check may be needed.")
+                    Rails.logger.warn(void_status_warning)
                   end
                 rescue FreshbooksError => e
-                  error_msg = "Failed to void FreshBooks invoice: #{e.message}"
-                  if e.respond_to?(:response_body) && e.response_body.present?
-                    begin
-                      error_data = JSON.parse(e.response_body)
-                      if error_data.dig('response', 'errors')
-                        detailed_errors = error_data.dig('response', 'errors').map { |err| err['message'] }.join(', ')
-                        error_msg += " - #{detailed_errors}"
-                      end
-                    rescue JSON::ParserError
-                      # Ignore JSON parse errors
-                    end
-                  end
+                  error_msg = InvoiceActionHelpers.parse_freshbooks_error(e)
                   raise StandardError, error_msg
                 rescue StandardError => e
                   Rails.logger.error("Failed to void FreshBooks invoice: #{e.message}")

@@ -33,22 +33,34 @@ module Freshbooks
 
       loop do
         result = payments_service.list(page: page, per_page: 100)
-        payments = result[:payments]
-
-        payments.each do |payment_data|
-          create_or_update_payment(payment_data)
-          reconcile_invoice_for_payment(payment_data)
-        rescue StandardError => e
-          errors << "Payment #{payment_data['id']}: #{e.message}"
-          Rails.logger.error("Failed to sync payment #{payment_data['id']}: #{e.message}")
-        end
+        errors.concat(sync_payment_page(result[:payments]))
 
         break if page >= result[:pages]
 
         page += 1
       end
 
-      Rails.logger.warn("Payment sync completed with #{errors.length} errors") if errors.any?
+      log_sync_errors(errors)
+    end
+
+    def sync_payment_page(payments)
+      errors = []
+      payments.each do |payment_data|
+        create_or_update_payment(payment_data)
+        reconcile_invoice_for_payment(payment_data)
+      rescue StandardError => e
+        payment_id = payment_data['id']
+        error_msg = "Payment #{payment_id}: #{e.message}"
+        errors << error_msg
+        Rails.logger.error("Failed to sync payment #{payment_id}: #{e.message}")
+      end
+      errors
+    end
+
+    def log_sync_errors(errors)
+      return unless errors.any?
+
+      Rails.logger.warn("Payment sync completed with #{errors.length} errors")
     end
 
     def create_or_update_payment(payment_data)

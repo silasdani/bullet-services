@@ -58,25 +58,4 @@ class FreshbooksInvoice < ApplicationRecord
   def sync_from_freshbooks_async
     Freshbooks::SyncInvoicesJob.perform_later(freshbooks_id)
   end
-
-  def map_freshbooks_status_to_invoice_status(fb_status)
-    # Normalize the status first
-    normalized = fb_status&.to_s&.downcase&.strip
-    normalized = 'voided' if normalized == 'void'
-
-    # Map to invoice status (Invoice model uses same statuses)
-    # Both models now use: draft, sent, viewed, paid, voided
-    case normalized
-    when 'paid'
-      'paid'
-    when 'voided'
-      'voided'
-    when 'sent', 'viewed'
-      normalized # Keep sent/viewed as-is since Invoice supports both
-    when 'draft'
-      'draft'
-    else
-      normalized || 'draft'
-    end
-  end
 end

@@ -148,31 +148,9 @@ module Wrs
     end
 
     def attempt_pdf_attachment(tempfile, retry_count, max_retries)
-      # Use create_and_upload! to ensure the file is uploaded to S3 before creating the blob record
       tempfile.rewind
-      filename = "invoice_#{invoice.slug}_#{Time.current.to_i}.pdf"
-
-      blob = ActiveStorage::Blob.create_and_upload!(
-        io: tempfile,
-        filename: filename,
-        content_type: 'application/pdf',
-        metadata: { source: 'freshbooks_api_base64' }
-      )
-
-      # Verify the blob exists in S3 before attaching
-      unless blob.service.exist?(blob.key)
-        blob.purge
-        raise "PDF upload failed: File does not exist in S3 storage (blob key: #{blob.key})"
-      end
-
-      # Now attach the verified blob to the invoice
-      invoice.invoice_pdf.attach(blob)
-
-      # Double-check attachment
-      return false unless attachment_verified?
-
-      Rails.logger.info("Successfully attached and verified PDF blob #{blob.key} in S3")
-      true
+      blob = create_pdf_blob(tempfile)
+      verify_and_attach_blob(blob)
     rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotSaved => e
       handle_attachment_error(e, tempfile, retry_count, max_retries)
       false
@@ -180,6 +158,35 @@ module Wrs
       Rails.logger.error("Error in attempt_pdf_attachment: #{e.class}: #{e.message}")
       handle_attachment_error(e, tempfile, retry_count, max_retries)
       false
+    end
+
+    def create_pdf_blob(tempfile)
+      filename = "invoice_#{invoice.slug}_#{Time.current.to_i}.pdf"
+      ActiveStorage::Blob.create_and_upload!(
+        io: tempfile,
+        filename: filename,
+        content_type: 'application/pdf',
+        metadata: { source: 'freshbooks_api_base64' }
+      )
+    end
+
+    # rubocop:disable Naming/PredicateMethod
+    # This method performs an action and returns success status, but is not a traditional predicate
+    def verify_and_attach_blob(blob)
+      check_blob_exists_in_s3(blob)
+      invoice.invoice_pdf.attach(blob)
+      return false unless attachment_verified?
+
+      Rails.logger.info("Successfully attached and verified PDF blob #{blob.key} in S3")
+      true
+    end
+    # rubocop:enable Naming/PredicateMethod
+
+    def check_blob_exists_in_s3(blob)
+      return if blob.service.exist?(blob.key)
+
+      blob.purge
+      raise "PDF upload failed: File does not exist in S3 storage (blob key: #{blob.key})"
     end
 
     def attachment_verified?
