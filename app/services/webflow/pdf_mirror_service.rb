@@ -236,9 +236,7 @@ module Webflow
       return if resp.code.to_i.between?(200, 299)
 
       error_msg = "Failed to download PDF: HTTP #{resp.code}"
-      if resp.body.present?
-        error_msg += " - #{resp.body[0..200]}"
-      end
+      error_msg += " - #{resp.body[0..200]}" if resp.body.present?
       raise error_msg
     end
   end
