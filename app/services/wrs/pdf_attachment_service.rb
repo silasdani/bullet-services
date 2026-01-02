@@ -148,27 +148,38 @@ module Wrs
     end
 
     def attempt_pdf_attachment(tempfile, retry_count, max_retries)
-      invoice.invoice_pdf.attach(build_attachment_params(tempfile))
+      # Use create_and_upload! to ensure the file is uploaded to S3 before creating the blob record
+      tempfile.rewind
+      filename = "invoice_#{invoice.slug}_#{Time.current.to_i}.pdf"
 
-      # Verify attachment was successful and file exists in S3
+      blob = ActiveStorage::Blob.create_and_upload!(
+        io: tempfile,
+        filename: filename,
+        content_type: 'application/pdf',
+        metadata: { source: 'freshbooks_api_base64' }
+      )
+
+      # Verify the blob exists in S3 before attaching
+      unless blob.service.exist?(blob.key)
+        blob.purge
+        raise "PDF upload failed: File does not exist in S3 storage (blob key: #{blob.key})"
+      end
+
+      # Now attach the verified blob to the invoice
+      invoice.invoice_pdf.attach(blob)
+
+      # Double-check attachment
       return false unless attachment_verified?
 
-      # Verify the blob actually exists in S3 storage
-      verify_blob_in_storage
-
+      Rails.logger.info("Successfully attached and verified PDF blob #{blob.key} in S3")
       true
     rescue ActiveRecord::RecordInvalid, ActiveRecord::RecordNotSaved => e
       handle_attachment_error(e, tempfile, retry_count, max_retries)
       false
-    end
-
-    def build_attachment_params(tempfile)
-      {
-        io: tempfile.dup,
-        filename: "invoice_#{invoice.slug}_#{Time.current.to_i}.pdf",
-        content_type: 'application/pdf',
-        metadata: { source: 'freshbooks_api_base64' }
-      }
+    rescue StandardError => e
+      Rails.logger.error("Error in attempt_pdf_attachment: #{e.class}: #{e.message}")
+      handle_attachment_error(e, tempfile, retry_count, max_retries)
+      false
     end
 
     def attachment_verified?
@@ -180,26 +191,6 @@ module Wrs
       true
     end
 
-    def verify_blob_in_storage
-      return unless invoice.invoice_pdf.attached?
-
-      blob = invoice.invoice_pdf.blob
-
-      unless blob.service.exist?(blob.key)
-        Rails.logger.error("CRITICAL: Blob #{blob.key} was attached but file does not exist in S3 storage!")
-        Rails.logger.error("Purging broken blob and raising error")
-
-        # Purge the broken attachment
-        invoice.invoice_pdf.purge
-
-        raise "PDF upload failed: File does not exist in S3 storage (blob key: #{blob.key})"
-      end
-
-      Rails.logger.info("Blob #{blob.key} verified in S3 storage")
-    rescue StandardError => e
-      Rails.logger.error("Error verifying blob in storage: #{e.class}: #{e.message}")
-      raise
-    end
 
     def handle_attachment_error(error, tempfile, retry_count, max_retries)
       raise if retry_count >= max_retries - 1
