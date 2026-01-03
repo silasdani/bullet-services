@@ -437,6 +437,16 @@ RailsAdmin.config do |config|
         end
       end
 
+      # VAT Included Amount (for filtering and sorting, hidden from list display)
+      field :included_vat_amount do
+        label 'VAT Included Amount'
+        # hide
+        filterable true
+        sortable true
+        # Allow sorting even when hidden
+        searchable true
+      end
+
       # Submit (Actions dropdown)
       field :submit do
         label 'Submit'
