@@ -144,12 +144,22 @@ module Webflow
 
     def attach_blob_with_retry(attachment, blob)
       attempts = 0
-      begin
+      max_attempts = 3
+
+      loop do
         verify_blob_persisted(blob)
         attach_blob(attachment, blob)
-        blob
+        return blob
       rescue ActiveRecord::InvalidForeignKey, PG::ForeignKeyViolation, ActiveRecord::RecordNotFound => e
-        handle_attachment_retry(e, blob, attempts)
+        attempts += 1
+        if attempts <= max_attempts
+          sleep 0.2
+          blob.reload if blob.persisted?
+        else
+          log_error("Failed to attach blob ##{blob.id} after #{attempts} attempts: #{e.class} - #{e.message}")
+          cleanup_orphaned_blob(blob)
+          return nil
+        end
       rescue StandardError => e
         handle_attachment_error(e, blob)
       end
@@ -164,19 +174,6 @@ module Webflow
     def attach_blob(attachment, blob)
       attachment.attach(blob)
       log_info("Successfully attached blob #{blob.key} to #{record.class.name} ##{record.id}")
-    end
-
-    def handle_attachment_retry(error, blob, attempts)
-      attempts += 1
-      if attempts <= 3
-        sleep 0.2
-        blob.reload if blob.persisted?
-        retry
-      else
-        log_error("Failed to attach blob ##{blob.id} after #{attempts} attempts: #{error.class} - #{error.message}")
-        cleanup_orphaned_blob(blob)
-        nil
-      end
     end
 
     def handle_attachment_error(error, blob)
