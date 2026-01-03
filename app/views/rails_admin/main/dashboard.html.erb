@@ -1,13 +1,5 @@
 <% content_for :title, I18n.t('dashboard.title') %>
-
 <div class="dashboard-container">
-  <!-- Header -->
-  <div class="dashboard-header">
-    <h1 class="dashboard-title">
-      Dashboard
-    </h1>
-  </div>
-
   <!-- Key Metrics -->
   <div class="stats-grid">
     <div class="stat-card">
@@ -26,60 +18,27 @@
       <div class="stat-value">£<%= sprintf("%.2f", (@overdue_amount || 0).to_f).gsub(/(\d)(?=(\d{3})+(?!\d))/, '\1,') %></div>
       <div class="stat-label"><%= I18n.t('dashboard.overdue_amount') %></div>
     </div>
-  </div>
-
-  <!-- Outstanding Invoices List -->
-  <div class="invoices-section">
-    <div class="section-header">
-      <h2><%= I18n.t('dashboard.outstanding_invoices') %></h2>
-      <a href="<%= rails_admin.index_path(model_name: 'invoice') %>" class="btn-link">
-        <%= I18n.t('dashboard.view_all') %> →
-      </a>
-    </div>
-
-    <% if @outstanding_invoices.blank? %>
-      <div class="empty-state">
-        <p><%= I18n.t('dashboard.no_outstanding') %></p>
+    <a href="<%= rails_admin.index_path(model_name: 'invoice', q: { included_vat_amount_gteq: 500, s: 'included_vat_amount desc' }) %>" class="stat-card stat-card-link">
+      <div class="stat-value">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M14 2V8H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M12 18V12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M9 15H15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
       </div>
-    <% else %>
-      <table class="invoices-table">
-        <thead>
-          <tr>
-            <th>Invoice</th>
-            <th>Status</th>
-            <th>Amount</th>
-            <th>Due Date</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <% @outstanding_invoices.each do |invoice| %>
-            <% 
-              status = invoice.final_status&.downcase || 'draft'
-              freshbooks_invoice = invoice.freshbooks_invoices.first
-              is_overdue = freshbooks_invoice&.due_date && freshbooks_invoice.due_date < Date.current
-              status = 'overdue' if is_overdue && status != 'paid'
-            %>
-            <tr>
-              <td>
-                <a href="<%= rails_admin.show_path(model_name: 'invoice', id: invoice.id) %>">
-                  <%= invoice.name || invoice.slug %>
-                </a>
-              </td>
-              <td>
-                <span class="status-badge <%= status %>"><%= status.upcase %></span>
-              </td>
-              <td>£<%= sprintf("%.2f", invoice.total_amount || 0) %></td>
-              <td class="<%= 'overdue' if is_overdue %>">
-                <%= freshbooks_invoice&.due_date ? freshbooks_invoice.due_date.strftime('%d %b %Y') : '-' %>
-              </td>
-              <td>
-                <a href="<%= rails_admin.show_path(model_name: 'invoice', id: invoice.id) %>" class="btn-sm">View</a>
-              </td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
-    <% end %>
+      <div class="stat-label">OUTSTANDING invoices</div>
+    </a>
+    <a href="<%= rails_admin.index_path(model_name: 'invoice', q: { s: 'created_at desc' }) %>" class="stat-card stat-card-link">
+      <div class="stat-value">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M14 2V8H20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="12" cy="15" r="1" fill="currentColor"/>
+          <path d="M12 12V14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="stat-label">RECENT invoices</div>
+    </a>
   </div>
 </div>

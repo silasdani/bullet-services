@@ -355,7 +355,6 @@
    ============================================ */
 .rails_admin a:not(.btn):not(.dropdown-item):not(.nav-link):not(.page-link) {
   color: #0066cc;
-  text-decoration: underline;
   transition: color 0.2s ease;
 }
 
@@ -873,33 +872,33 @@
     position: fixed;
     z-index: 1000;
   }
-  
+
   .rails_admin .card-header {
     font-size: 0.6875rem;
   }
-  
+
   .rails_admin header h1 {
     font-size: 1.5rem;
   }
-  
+
   .rails_admin .btn {
     padding: 8px 16px;
     font-size: 0.75rem;
   }
-  
+
   .rails_admin .content {
     padding: 16px;
   }
-  
+
   .rails_admin .modal-body {
     padding: 20px;
   }
-  
+
   .rails_admin .modal-footer {
     padding: 12px 20px;
     flex-direction: column;
   }
-  
+
   .rails_admin .modal-footer .btn {
     width: 100%;
     margin: 4px 0;
@@ -1049,6 +1048,16 @@
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stat-value svg {
+  width: 32px;
+  height: 32px;
+  color: #6b7280;
+  flex-shrink: 0;
 }
 
 .stat-label {
@@ -1695,7 +1704,7 @@
   .buildings-grid {
     grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   }
-  
+
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -1706,40 +1715,40 @@
     padding: 24px;
     margin: -24px -24px 24px -24px;
   }
-  
+
   .header-content {
     flex-direction: column;
   }
-  
+
   .dashboard-title {
     font-size: 1.5rem;
   }
-  
+
   .header-actions {
     width: 100%;
   }
-  
+
   .header-actions .btn {
     flex: 1;
   }
-  
+
   .stats-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .buildings-grid {
     grid-template-columns: 1fr;
     gap: 20px;
   }
-  
+
   .flats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .building-card-footer {
     flex-direction: column;
   }
-  
+
   .footer-link {
     width: 100%;
   }
@@ -1749,11 +1758,11 @@
   .flats-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .filter-buttons {
     flex-direction: column;
   }
-  
+
   .filter-btn {
     width: 100%;
     justify-content: center;
@@ -2050,7 +2059,7 @@
   .wrs-grid {
     grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   }
-  
+
   .wrs-meta-grid {
     grid-template-columns: 1fr;
   }
@@ -2061,15 +2070,15 @@
     grid-template-columns: 1fr;
     gap: 20px;
   }
-  
+
   .wrs-card-footer {
     flex-direction: column;
   }
-  
+
   .wrs-footer-actions {
     flex-direction: column;
   }
-  
+
   .wrs-footer-actions .footer-link {
     width: 100%;
   }
@@ -2120,6 +2129,16 @@
   border: 1px solid #e5e7eb;
   min-width: 0;
   overflow: visible;
+}
+
+.rails_admin .stat-card-link {
+  text-decoration: none;
+}
+
+.rails_admin .stat-card-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  text-decoration: none !important;
 }
 
 .rails_admin .stat-value {
@@ -2270,11 +2289,11 @@
   .rails_admin .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .rails_admin .invoices-table {
     font-size: 0.875rem;
   }
-  
+
   .rails_admin .invoices-table thead th,
   .rails_admin .invoices-table tbody td {
     padding: 8px;
