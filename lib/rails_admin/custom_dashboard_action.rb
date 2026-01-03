@@ -24,36 +24,42 @@ module RailsAdmin
 
         register_instance_option :controller do
           proc do
-            # Outstanding invoices (unpaid, not voided, not draft)
+            # Set all instance variables that the view expects
+            # Outstanding invoices scope (unpaid, not voided, not draft)
             outstanding_scope = Invoice.where(is_draft: false)
                                        .where.not(final_status: ['paid', 'voided', 'voided + email sent'])
 
+            # Load outstanding invoices with freshbooks_invoices for display (limit 10)
             @outstanding_invoices = outstanding_scope.includes(:freshbooks_invoices)
                                                      .order(created_at: :desc)
                                                      .limit(10)
                                                      .to_a
 
-            # Simple stats
+            # Calculate outstanding count
             @outstanding_count = outstanding_scope.count
-            @outstanding_amount = outstanding_scope.to_a.sum { |i| (i.total_amount || 0).to_f }
 
-            # Overdue count
-            overdue_ids = []
-            outstanding_scope.includes(:freshbooks_invoices).each do |invoice|
+            # Load all outstanding invoices once for calculations
+            today = Date.current
+            all_outstanding = outstanding_scope.includes(:freshbooks_invoices).to_a
+
+            # Calculate outstanding amount
+            @outstanding_amount = all_outstanding.sum { |invoice| (invoice.total_amount || 0).to_f }
+
+            # Calculate overdue invoices
+            overdue_invoices = all_outstanding.select do |invoice|
               freshbooks_invoice = invoice.freshbooks_invoices.first
-              overdue_ids << invoice.id if freshbooks_invoice&.due_date && freshbooks_invoice.due_date < Date.current
+              freshbooks_invoice&.due_date && freshbooks_invoice.due_date < today
             end
-            @overdue_count = overdue_ids.count
-            @overdue_amount = if overdue_ids.any?
-                                Invoice.where(id: overdue_ids).to_a.sum do |i|
-                                  (i.total_amount || 0).to_f
-                                end
-                              else
-                                0.0
-                              end
 
-            # Ensure arrays are never nil
+            @overdue_count = overdue_invoices.count
+            @overdue_amount = overdue_invoices.sum { |invoice| (invoice.total_amount || 0).to_f }
+
+            # Ensure all variables have default values
             @outstanding_invoices ||= []
+            @outstanding_count ||= 0
+            @outstanding_amount ||= 0.0
+            @overdue_count ||= 0
+            @overdue_amount ||= 0.0
 
             render template: 'rails_admin/main/dashboard'
           end
