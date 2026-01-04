@@ -7,10 +7,11 @@
 // This file uses Sprockets asset pipeline
 // Learn more: https://github.com/rails/sprockets
 
-// Load hero carousel, typewriter animation, and accordion
+// Load hero carousel, typewriter animation, accordion, and mobile menu
 //= require hero_carousel
 //= require typewriter
 //= require accordion
+//= require mobile_menu
 // Load Rails Admin mobile sidebar (only runs on Rails Admin pages)
 //= require rails_admin_mobile_sidebar
 // Load auto-dismiss alerts

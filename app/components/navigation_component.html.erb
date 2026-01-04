@@ -13,11 +13,43 @@
       <% end %>
     </div>
 
-    <!-- Navigation links on the right (white, uppercase) -->
-    <div class="flex items-center space-x-8 relative z-10">
+    <!-- Desktop Navigation links on the right (hidden on mobile) -->
+    <div class="hidden lg:flex items-center space-x-8 relative z-10">
       <%= link_to "HOME", root_path, class: "text-white hover:text-gray-200 transition-colors uppercase tracking-wider text-lg font-light #{active_class(root_path)}" %>
       <%= link_to "ABOUT", about_path, class: "text-white hover:text-gray-200 transition-colors uppercase tracking-wider text-lg font-light #{active_class(about_path)}" %>
       <%= link_to "CONTACT", "mailto:office@bulletservices.co.uk", class: "text-white hover:text-gray-200 transition-colors uppercase tracking-wider text-lg font-light" %>
     </div>
+
+    <!-- Mobile Menu Button (visible on mobile only) - Animated Hamburger -->
+    <button 
+      data-mobile-menu-button 
+      class="mobile-menu-button lg:hidden relative z-10" 
+      aria-label="Toggle navigation menu" 
+      aria-expanded="false"
+      aria-controls="mobile-menu-panel"
+    >
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
   </div>
+
+  <!-- Mobile Menu Backdrop -->
+  <div data-mobile-menu-backdrop class="mobile-menu-backdrop"></div>
+
+  <!-- Mobile Menu Panel -->
+  <aside 
+    id="mobile-menu-panel"
+    data-mobile-menu-panel 
+    class="mobile-menu-panel"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Navigation menu"
+  >
+    <nav class="mobile-menu-content" role="navigation" aria-label="Main navigation">
+      <%= link_to "HOME", root_path, class: "mobile-menu-link #{active_class(root_path) ? 'is-active' : ''}", data: { mobile_menu_link: true } %>
+      <%= link_to "ABOUT", about_path, class: "mobile-menu-link #{active_class(about_path) ? 'is-active' : ''}", data: { mobile_menu_link: true } %>
+      <%= link_to "CONTACT", "mailto:office@bulletservices.co.uk", class: "mobile-menu-link", data: { mobile_menu_link: true } %>
+    </nav>
+  </aside>
 </nav>
