@@ -1465,10 +1465,10 @@
 }
 
 .flat-card:hover {
-  border-color: #000000;
+  border-color: #d1d5db;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
-  text-decoration: none;
+  transform: translateY(-1px);
+  text-decoration: none !important;
 }
 
 .flat-card-header {
@@ -1574,7 +1574,7 @@
 }
 
 .flat-card:hover .flat-link-text i {
-  transform: translateX(2px);
+  transform: translateX(4px);
 }
 
 .flat-link-text i {
@@ -1819,7 +1819,7 @@
 
 .wrs-card:hover {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  transform: translateY(-4px);
+  transform: translateY(-0.1px);
   border-color: #d1d5db;
 }
 
