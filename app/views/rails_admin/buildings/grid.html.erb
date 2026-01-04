@@ -1,5 +1,4 @@
 <% content_for :title, I18n.t('buildings_grid.title') %>
-
 <div class="buildings-dashboard">
   <!-- Header Section -->
   <div class="dashboard-header">
@@ -21,14 +20,13 @@
       </div>
     </div>
   </div>
-
   <!-- Statistics Dashboard -->
   <% if @buildings_data.any? %>
-    <% 
+    <%
       total_buildings = @buildings_data.length
       total_flats = @buildings_data.sum { |d| d[:flats].length }
       total_wrs = @buildings_data.sum { |d| d[:building].window_schedule_repairs.count }
-      
+
       # Calculate status breakdown
       status_counts = { approved: 0, rejected: 0, completed: 0, draft: 0, pending: 0 }
       @buildings_data.each do |data|
@@ -47,7 +45,6 @@
         end
       end
     %>
-
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-icon stat-icon-buildings">
@@ -58,7 +55,6 @@
           <div class="stat-label"><%= I18n.t('buildings_grid.buildings') %></div>
         </div>
       </div>
-
       <div class="stat-card">
         <div class="stat-icon stat-icon-flats">
           <i class="fas fa-home"></i>
@@ -68,7 +64,6 @@
           <div class="stat-label"><%= I18n.t('buildings_grid.flats') %></div>
         </div>
       </div>
-
       <div class="stat-card">
         <div class="stat-icon stat-icon-wrs">
           <i class="fas fa-clipboard-list"></i>
@@ -78,7 +73,6 @@
           <div class="stat-label"><%= I18n.t('buildings_grid.total_wrs') %></div>
         </div>
       </div>
-
       <div class="stat-card stat-card-status">
         <div class="stat-content">
           <div class="status-breakdown">
@@ -107,7 +101,6 @@
       </div>
     </div>
   <% end %>
-
   <!-- Search and Filters -->
   <div class="filters-section">
     <div class="search-box">
@@ -129,7 +122,6 @@
       </button>
     </div>
   </div>
-
   <!-- Buildings Grid -->
   <% if @buildings_data.empty? %>
     <div class="empty-state">
@@ -147,18 +139,15 @@
       <% @buildings_data.each do |building_data| %>
         <% building = building_data[:building] %>
         <% flats = building_data[:flats] %>
-        <% 
-          # Limit flats display to prevent UI discrepancy
+        <%
           max_flats_display = 12
           flats_to_show = flats.take(max_flats_display)
           remaining_flats = flats.length - max_flats_display
         %>
-
-        <article class="building-card" 
+        <article class="building-card"
                  data-building-name="<%= building.name.downcase %>"
                  data-building-address="<%= building.full_address.downcase %>"
                  data-wrs-count="<%= building.window_schedule_repairs.count %>">
-
           <!-- Building Header -->
           <div class="building-card-header">
             <div class="building-header-main">
@@ -175,62 +164,37 @@
                 </div>
               </div>
             </div>
-            <div class="building-quick-actions">
-              <a href="<%= rails_admin.show_path(model_name: 'building', id: building.id) %>" 
-                 class="action-btn" 
-                 title="<%= I18n.t('buildings_grid.view_details') %>">
-                <i class="fas fa-eye"></i>
-              </a>
-              <a href="<%= rails_admin.edit_path(model_name: 'building', id: building.id) %>" 
-                 class="action-btn" 
-                 title="<%= I18n.t('buildings_grid.edit_building') %>">
-                <i class="fas fa-edit"></i>
-              </a>
-            </div>
           </div>
-
           <!-- Building Stats -->
           <div class="building-stats">
             <div class="stat-badge">
-              <i class="fas fa-clipboard-list"></i>
-              <span><%= building.window_schedule_repairs.count %></span>
-              <small><%= I18n.t('buildings_grid.wrs') %></small>
-            </div>
-            <div class="stat-badge">
               <i class="fas fa-home"></i>
               <span><%= flats.count %></span>
-              <small><%= flats.count == 1 ? I18n.t('buildings_grid.flat') : I18n.t('buildings_grid.flats') %></small>
             </div>
             <div class="stat-badge">
               <i class="fas fa-calendar"></i>
-              <span><%= building.created_at.strftime('%b %Y') %></span>
-              <small><%= I18n.t('buildings_grid.created') %></small>
+              <span><%= building.created_at.strftime('%d %b %Y') %></span>
             </div>
           </div>
-
           <!-- Flats Section -->
           <% if flats.empty? %>
             <div class="flats-empty">
               <i class="fas fa-home"></i>
               <p><%= I18n.t('buildings_grid.no_flats_assigned') %></p>
-              <a href="<%= rails_admin.new_path(model_name: 'window_schedule_repair') %>" class="btn-link">
-                <%= I18n.t('buildings_grid.create_wrs_for_building') %>
-              </a>
             </div>
           <% else %>
             <div class="flats-section">
-              <div class="flats-header">
-                <h3 class="flats-title">
-                  <i class="fas fa-th"></i>
-                  <%= I18n.t('buildings_grid.flats_count', count: flats.count) %>
-                </h3>
+              <div class="view-all-flats-btn"
+                   id="view-all-btn-<%= building.id %>"
+                   data-building-id="<%= building.id %>">
+                <i class="fas fa-eye"></i>
+                <p>View</p>
               </div>
-              <div class="flats-container">
+              <div class="flats-container" id="flats-container-<%= building.id %>" style="display: none;">
                 <div class="flats-grid" data-flats-total="<%= flats.length %>">
                   <% flats_to_show.each do |flat_data| %>
                     <% flat_number = flat_data[:flat_number] %>
                     <% wrs_items = flat_data[:wrs_items] %>
-
                     <%# Determine status %>
                     <% status_info = { color: '#6b7280', label: I18n.t('buildings_grid.no_wrs'), class: 'status-none' } %>
                     <% if wrs_items.any? %>
@@ -247,14 +211,12 @@
                         <% status_info = { color: '#6b7280', label: I18n.t('buildings_grid.pending'), class: 'status-pending' } %>
                       <% end %>
                     <% end %>
-
                     <%# Determine link destination %>
                     <% if wrs_items.length == 1 && wrs_items.first.id %>
                       <% flat_link = rails_admin.show_path(model_name: 'window_schedule_repair', id: wrs_items.first.id) %>
                     <% else %>
                       <% flat_link = rails_admin.index_path(model_name: 'window_schedule_repair', q: { building_id_eq: building.id, flat_number_eq: flat_number }) %>
                     <% end %>
-
                     <a href="<%= flat_link %>" class="flat-card">
                       <div class="flat-card-header">
                         <div class="flat-icon">
@@ -284,7 +246,6 @@
                     </a>
                   <% end %>
                 </div>
-
                 <% if remaining_flats > 0 %>
                   <div class="flats-more">
                     <a href="<%= rails_admin.index_path(model_name: 'window_schedule_repair', q: { building_id_eq: building.id }) %>" 
@@ -297,7 +258,6 @@
               </div>
             </div>
           <% end %>
-
           <!-- Building Footer Actions -->
           <div class="building-card-footer">
             <a href="<%= rails_admin.show_path(model_name: 'building', id: building.id) %>" 
@@ -321,7 +281,6 @@
     </div>
   <% end %>
 </div>
-
 <script>
   (function() {
     // Search functionality
@@ -390,5 +349,18 @@
         });
       });
     }
+
+    // Toggle flats visibility
+    const viewAllButtons = document.querySelectorAll('.view-all-flats-btn');
+    viewAllButtons.forEach(btn => {
+      btn.addEventListener('click', function() {
+        const buildingId = this.dataset.buildingId;
+        const flatsContainer = document.getElementById('flats-container-' + buildingId);
+
+        // Hide the button and show the flats
+        this.style.display = 'none';
+        flatsContainer.style.display = '';
+      });
+    });
   })();
 </script>

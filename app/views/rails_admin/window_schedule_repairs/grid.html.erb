@@ -1,5 +1,4 @@
 <% content_for :title, I18n.t('wrs_grid.title') %>
-
 <div class="wrs-dashboard">
   <!-- Header Section -->
   <div class="dashboard-header">
@@ -21,7 +20,6 @@
       </div>
     </div>
   </div>
-
   <!-- Statistics Dashboard -->
   <% if @wrs_items.any? %>
     <div class="stats-grid">
@@ -34,7 +32,6 @@
           <div class="stat-label"><%= I18n.t('wrs_grid.total_wrs') %></div>
         </div>
       </div>
-
       <div class="stat-card">
         <div class="stat-icon stat-icon-published">
           <i class="fas fa-check-circle"></i>
@@ -44,7 +41,6 @@
           <div class="stat-label"><%= I18n.t('wrs_grid.published') %></div>
         </div>
       </div>
-
       <div class="stat-card">
         <div class="stat-icon stat-icon-draft">
           <i class="fas fa-edit"></i>
@@ -54,7 +50,6 @@
           <div class="stat-label"><%= I18n.t('wrs_grid.draft') %></div>
         </div>
       </div>
-
       <div class="stat-card">
         <div class="stat-icon stat-icon-value">
           <i class="fas fa-pound-sign"></i>
@@ -64,7 +59,6 @@
           <div class="stat-label"><%= I18n.t('wrs_grid.total_value') %></div>
         </div>
       </div>
-
       <div class="stat-card stat-card-status">
         <div class="stat-content">
           <div class="status-breakdown">
@@ -93,7 +87,6 @@
       </div>
     </div>
   <% end %>
-
   <!-- Search and Filters -->
   <div class="filters-section">
     <div class="search-box">
@@ -118,7 +111,6 @@
       </button>
     </div>
   </div>
-
   <!-- WRS Grid -->
   <% if @wrs_items.empty? %>
     <div class="empty-state">
@@ -161,7 +153,6 @@
           # Get address
           address = wrs.building ? wrs.building.full_address : (wrs.address || 'N/A')
         %>
-
         <article class="wrs-card" 
                  data-wrs-name="<%= wrs.name.downcase %>"
                  data-wrs-address="<%= address.downcase %>"
@@ -169,7 +160,6 @@
                  data-is-archived="<%= wrs.is_archived %>"
                  data-is-published="<%= wrs.last_published.present? %>"
                  data-status="<%= wrs.status || 'pending' %>">
-
           <!-- WRS Card Header -->
           <div class="wrs-card-header">
             <div class="wrs-header-main">
@@ -184,20 +174,7 @@
                 <% end %>
               </div>
             </div>
-            <div class="wrs-quick-actions">
-              <a href="<%= rails_admin.show_path(model_name: 'window_schedule_repair', id: wrs.id) %>" 
-                 class="action-btn" 
-                 title="<%= I18n.t('wrs_grid.view_details') %>">
-                <i class="fas fa-eye"></i>
-              </a>
-              <a href="<%= rails_admin.edit_path(model_name: 'window_schedule_repair', id: wrs.id) %>" 
-                 class="action-btn" 
-                 title="<%= I18n.t('wrs_grid.edit_wrs') %>">
-                <i class="fas fa-edit"></i>
-              </a>
-            </div>
           </div>
-
           <!-- WRS Card Body -->
           <div class="wrs-card-body">
             <div class="wrs-meta-grid">
@@ -208,7 +185,6 @@
                   <span class="wrs-meta-value"><%= address %></span>
                 </div>
               </div>
-
               <% if wrs.flat_number.present? %>
                 <div class="wrs-meta-item">
                   <i class="fas fa-home"></i>
@@ -218,7 +194,6 @@
                   </div>
                 </div>
               <% end %>
-
               <% if wrs.reference_number.present? %>
                 <div class="wrs-meta-item">
                   <i class="fas fa-tag"></i>
@@ -228,7 +203,6 @@
                   </div>
                 </div>
               <% end %>
-
               <div class="wrs-meta-item">
                 <i class="fas fa-window-maximize"></i>
                 <div class="wrs-meta-content">
@@ -237,7 +211,6 @@
                 </div>
               </div>
             </div>
-
             <div class="wrs-price-section">
               <div class="wrs-price-label"><%= I18n.t('wrs_grid.price') %></div>
               <div class="wrs-price <%= 'wrs-price-empty' if !price || price == 0 %>">
@@ -245,7 +218,6 @@
               </div>
             </div>
           </div>
-
           <!-- WRS Card Footer -->
           <div class="wrs-card-footer">
             <div class="wrs-dates">
@@ -285,7 +257,6 @@
     </div>
   <% end %>
 </div>
-
 <script>
   (function() {
     // Search functionality

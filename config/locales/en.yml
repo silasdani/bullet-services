@@ -75,6 +75,8 @@ en:
     new_wrs: "New WRS"
     details: "Details"
     view_more_flats: "View %{count} more"
+    view_all_flats: "View All"
+    hide_flats: "Hide"
   
   wrs_grid:
     title: "WRS Overview"

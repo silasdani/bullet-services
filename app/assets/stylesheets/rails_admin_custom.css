@@ -1378,6 +1378,29 @@
   gap: 8px;
 }
 
+.view-all-flats-btn {
+  padding: 40px 24px;
+  text-align: center;
+  color: #9ca3af;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.view-all-flats-btn:hover {
+  opacity: 0.8;
+}
+
+.view-all-flats-btn i {
+  font-size: 32px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.view-all-flats-btn p {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
 .flats-title i {
   color: #9ca3af;
   font-size: 0.75rem;
