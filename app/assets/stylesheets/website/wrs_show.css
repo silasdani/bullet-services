@@ -194,3 +194,27 @@ body {
     opacity: 1;
   }
 }
+
+/* ============================================
+   Accordion Images - Responsive Sizing
+   ============================================ */
+.accordion-image {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  border-radius: 0.5rem;
+}
+
+/* Mobile: max-width constraint */
+.accordion-image {
+  max-width: 100%;
+}
+
+/* Desktop: max-height constraint (md breakpoint and up) */
+@media (min-width: 768px) {
+  .accordion-image {
+    max-width: none;
+    max-height: 400px;
+    width: auto;
+  }
+}
