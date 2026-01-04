@@ -1,36 +1,63 @@
-<footer class="bg-gray-900 text-white py-12">
-  <div class="container mx-auto px-6">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-      <!-- Pages -->
-      <div>
-        <h3 class="font-semibold mb-4">Pages</h3>
-        <ul class="space-y-2">
-          <li><%= link_to "Home", root_path, class: "text-gray-400 hover:text-white transition" %></li>
-          <li><%= link_to "About", about_path, class: "text-gray-400 hover:text-white transition" %></li>
-          <li><%= link_to "Terms and Conditions", terms_path, class: "text-gray-400 hover:text-white transition" %></li>
-        </ul>
+<footer class="bg-black text-white">
+  <div class="container mx-auto px-6 py-16">
+    <!-- Main Footer Content -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
+      <!-- Company Info -->
+      <div class="lg:col-span-1">
+        <%= link_to root_path, class: "block mb-6" do %>
+          <%= image_tag "bll-logo_white.svg", alt: "Bullet Services", class: "h-8" %>
+        <% end %>
+        <p class="text-gray-400 text-sm leading-relaxed">
+          We build exteriors. Restoring London's architectural heritage with passion and excellence since 2020.
+        </p>
       </div>
-
-      <!-- Contact -->
+      <!-- Quick Links -->
       <div>
-        <h3 class="font-semibold mb-4">Contact</h3>
-        <ul class="space-y-2">
+        <h3 class="font-semibold mb-6 text-white uppercase tracking-wider text-sm">Quick Links</h3>
+        <ul class="space-y-4">
           <li>
-            <a href="mailto:office@bulletservices.co.uk" class="text-gray-400 hover:text-white transition">
-              EMAIL: office@bulletservices.co.uk
-            </a>
+            <%= link_to "Home", root_path, class: "text-gray-400 hover:text-white transition-colors duration-200 block" %>
           </li>
           <li>
-            <%= link_to "User Portal", "/users/sign_in", class: "text-gray-400 hover:text-white transition" %>
+            <%= link_to "About", about_path, class: "text-gray-400 hover:text-white transition-colors duration-200 block" %>
+          </li>
+          <li>
+            <%= link_to "Contact", "mailto:office@bulletservices.co.uk", class: "text-gray-400 hover:text-white transition-colors duration-200 block" %>
+          </li>
+        </ul>
+      </div>
+      <!-- Legal -->
+      <div>
+        <h3 class="font-semibold mb-6 text-white uppercase tracking-wider text-sm">Legal</h3>
+        <ul class="space-y-4">
+          <li>
+            <%= link_to "Terms and Conditions", terms_path, class: "text-gray-400 hover:text-white transition-colors duration-200 block" %>
+          </li>
+          <li>
+            <%= link_to "User Portal", "/users/sign_in", class: "text-gray-400 hover:text-white transition-colors duration-200 block" %>
+          </li>
+        </ul>
+      </div>
+      <!-- Contact Info -->
+      <div>
+        <h3 class="font-semibold mb-6 text-white uppercase tracking-wider text-sm">Get in Touch</h3>
+        <ul class="space-y-4">
+          <li>
+            <a href="mailto:office@bulletservices.co.uk" class="text-gray-400 hover:text-white transition-colors duration-200 flex items-start group">
+              <span class="material-symbols-outlined text-lg mr-3 mt-0.5 group-hover:text-white">email</span>
+              <span class="flex-1">office@bulletservices.co.uk</span>
+            </a>
           </li>
         </ul>
       </div>
     </div>
-
-    <div class="border-t border-gray-800 pt-8 text-center">
-      <p class="text-gray-400 text-sm">
-        Copyright © <%= Date.current.year %> Bullet Services Ltd. All rights reserved.
-      </p>
+    <!-- Bottom Bar -->
+    <div class="border-t border-gray-800 pt-8">
+      <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+        <p class="text-gray-500 text-sm">
+          © <%= Date.current.year %> Bullet Services Ltd. All rights reserved.
+        </p>
+      </div>
     </div>
   </div>
 </footer>
