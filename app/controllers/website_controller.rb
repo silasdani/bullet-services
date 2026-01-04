@@ -17,6 +17,10 @@ class WebsiteController < ApplicationController
     # About page
   end
 
+  def terms
+    # Terms and Conditions page
+  end
+
   def wrs_show
     load_wrs
     return unless @wrs

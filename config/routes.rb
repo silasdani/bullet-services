@@ -3,6 +3,7 @@ Rails.application.routes.draw do
 
   # Public website pages
   get "/about", to: "website#about", as: :about
+  get "/terms", to: "website#terms", as: :terms
   post "/contact", to: "website#contact_submit", as: :contact_submit
   get "/wrs/:slug", to: "website#wrs_show", as: :wrs_show
   post "/wrs/:slug/decision", to: "website#wrs_decision", as: :wrs_decision
