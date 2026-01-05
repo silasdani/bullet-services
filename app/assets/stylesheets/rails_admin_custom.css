@@ -8,10 +8,6 @@
   background-color: #f5f7fa;
 }
 
-* {
-  border: 1px solid red !important;
-}
-
 #sidescroll {
   border: 1px solid lightgray;
   border-radius: 8px;
