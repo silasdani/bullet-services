@@ -3,6 +3,16 @@
 /* ============================================
    Typography - Aileron Font
    ============================================ */
+
+.rails_admin {
+  background-color: #f5f7fa;
+}
+
+#sidescroll {
+  border: 1px solid lightgray;
+  border-radius: 8px;
+}
+
 .rails_admin,
 .rails_admin * {
   font-family: 'Aileron', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;

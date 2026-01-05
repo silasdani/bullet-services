@@ -34,6 +34,9 @@ RailsAdmin.config do |config|
 
   config.current_user_method(&:current_user)
 
+  # Set pagination to 10 items per page
+  config.default_items_per_page = 10
+
   config.actions do
     dashboard do
       controller do
