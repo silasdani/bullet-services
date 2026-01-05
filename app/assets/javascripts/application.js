@@ -14,6 +14,8 @@
 //= require mobile_menu
 // Load Rails Admin mobile sidebar (only runs on Rails Admin pages)
 //= require rails_admin_mobile_sidebar
+// Load Rails Admin mobile table enhancements (only runs on Rails Admin pages)
+//= require rails_admin_mobile_tables
 // Load auto-dismiss alerts
 //= require alerts
 //= require_self

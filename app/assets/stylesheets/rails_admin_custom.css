@@ -8,6 +8,10 @@
   background-color: #f5f7fa;
 }
 
+* {
+  border: 1px solid red !important;
+}
+
 #sidescroll {
   border: 1px solid lightgray;
   border-radius: 8px;
@@ -875,43 +879,463 @@
 }
 
 /* ============================================
-   Responsive Adjustments
+   Mobile Responsive Optimizations
    ============================================ */
+
+/* Mobile-First: Table Horizontal Scrolling (Fallback) */
+.rails_admin .table-responsive {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  -ms-overflow-style: -ms-autohiding-scrollbar;
+}
+
+.rails_admin .table-responsive::-webkit-scrollbar {
+  height: 8px;
+}
+
+.rails_admin .table-responsive::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.rails_admin .table-responsive::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.rails_admin .table-responsive::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Mobile: Stacked Table Layout (Card View) */
 @media (max-width: 768px) {
+
+  /* Navigation & Layout */
   .rails_admin .sidebar {
     position: fixed;
     z-index: 1000;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
   }
 
-  .rails_admin .card-header {
-    font-size: 0.6875rem;
+  .rails_admin .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .rails_admin .content {
+    padding: 12px;
+    width: 100%;
+  }
+
+  .rails_admin header {
+    margin-bottom: 16px;
   }
 
   .rails_admin header h1 {
     font-size: 1.5rem;
+    margin-bottom: 12px;
   }
 
-  .rails_admin .btn {
-    padding: 8px 16px;
-    font-size: 0.75rem;
+  /* Tables: Transform to Card Layout */
+  .rails_admin .table-responsive,
+  .rails_admin .table-wrapper {
+    display: block;
+    overflow-x: visible;
   }
 
-  .rails_admin .content {
+  .rails_admin .table,
+  .rails_admin .table thead,
+  .rails_admin .table tbody,
+  .rails_admin .table th,
+  .rails_admin .table td,
+  .rails_admin .table tr {
+    display: block;
+    width: 100%;
+  }
+
+  .rails_admin .table thead {
+    display: none;
+  }
+
+  .rails_admin .table tbody tr {
+    display: block;
+    margin-bottom: 16px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
     padding: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+  }
+
+  .rails_admin .table tbody tr:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+    background: #ffffff;
+  }
+
+  .rails_admin .table tbody td {
+    display: flex;
+    padding: 12px 0;
+    border: none;
+    border-bottom: 1px solid #f3f4f6;
+    align-items: flex-start;
+    justify-content: space-between;
+    text-align: left;
+  }
+
+  .rails_admin .table tbody td:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .rails_admin .table tbody td:before {
+    content: attr(data-label);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.75rem;
+    color: #6b7280;
+    min-width: 120px;
+    padding-right: 12px;
+    flex-shrink: 0;
+  }
+
+  .rails_admin .table tbody td > * {
+    flex: 1;
+    text-align: right;
+    min-width: 0;
+    word-break: break-word;
+  }
+
+  /* Override for action columns - stack buttons vertically */
+  .rails_admin .table tbody td .btn,
+  .rails_admin .table tbody td .btn-group,
+  .rails_admin .table tbody td .dropdown {
+    width: 100%;
+    margin-top: 8px;
+  }
+
+  .rails_admin .table tbody td .btn-group .btn {
+    width: 100%;
+    margin: 2px 0;
+  }
+
+  /* Cards */
+  .rails_admin .card {
+    margin-bottom: 16px;
+  }
+
+  .rails_admin .card-header {
+    font-size: 0.75rem;
+    padding: 12px 16px;
+  }
+
+  .rails_admin .card-body {
+    padding: 16px;
+    font-size: 0.9375rem;
+  }
+
+  /* Buttons - Touch-Friendly (44x44px minimum) */
+  .rails_admin .btn {
+    padding: 12px 20px;
+    font-size: 0.875rem;
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .rails_admin .btn-sm {
+    padding: 10px 16px;
+    font-size: 0.8125rem;
+    min-height: 40px;
+  }
+
+  .rails_admin .content-header .btn {
+    width: 100%;
+    margin: 4px 0;
+  }
+
+  .rails_admin .content-header .btn + .btn {
+    margin-left: 0;
+  }
+
+  /* Forms - Mobile Optimized */
+  .rails_admin .form-control,
+  .rails_admin .form-select {
+    font-size: 16px;
+    /* Prevents iOS zoom on focus */
+    padding: 12px 16px;
+    min-height: 44px;
+  }
+
+  .rails_admin .form-label {
+    font-size: 0.8125rem;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .rails_admin .form-group {
+    margin-bottom: 24px;
+  }
+
+  .rails_admin .form-check {
+    padding: 12px 0;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+
+  .rails_admin .form-check-input {
+    width: 20px;
+    height: 20px;
+    margin-right: 12px;
+    flex-shrink: 0;
+  }
+
+  .rails_admin .form-check-label {
+    font-size: 0.9375rem;
+  }
+
+  /* Show View - Stack Layout */
+  .rails_admin .show .control-group {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .rails_admin .show .control-label {
+    width: 100%;
+    margin-bottom: 8px;
+    padding-right: 0;
+    font-size: 0.8125rem;
+  }
+
+  .rails_admin .show .controls {
+    width: 100%;
+    margin-left: 0;
+    font-size: 0.9375rem;
+  }
+
+  /* Edit View - Full Width Fields */
+  .rails_admin .form-horizontal .form-group {
+    flex-direction: column;
+  }
+
+  .rails_admin .form-horizontal .control-label {
+    width: 100%;
+    margin-bottom: 8px;
+  }
+
+  .rails_admin .form-horizontal .controls {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  /* Modals - Full Screen on Small Devices */
+  .rails_admin .modal-dialog {
+    margin: 0;
+    max-width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .rails_admin .modal-content {
+    height: 100%;
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
   }
 
   .rails_admin .modal-body {
     padding: 20px;
+    overflow-y: auto;
+    flex: 1;
   }
 
   .rails_admin .modal-footer {
-    padding: 12px 20px;
+    padding: 16px 20px;
     flex-direction: column;
+    gap: 8px;
+    border-top: 1px solid #e5e7eb;
   }
 
   .rails_admin .modal-footer .btn {
     width: 100%;
-    margin: 4px 0;
+    margin: 0;
+  }
+
+  /* Dropdowns - Touch-Friendly */
+  .rails_admin .dropdown-toggle {
+    min-height: 44px;
+    padding: 10px 16px;
+  }
+
+  .rails_admin .dropdown-menu {
+    min-width: 200px;
+    font-size: 0.9375rem;
+  }
+
+  .rails_admin .dropdown-item {
+    padding: 12px 16px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+
+  /* Pagination - Stacked on Very Small Screens */
+  .rails_admin .pagination {
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: center;
+  }
+
+  .rails_admin .page-link {
+    padding: 10px 14px;
+    min-height: 44px;
+    min-width: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Breadcrumbs - Horizontal Scroll if Needed */
+  .rails_admin .breadcrumb {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    padding: 8px 0;
+  }
+
+  .rails_admin .breadcrumb-item {
+    white-space: nowrap;
+  }
+
+  /* Tabs - Scrollable on Mobile */
+  .rails_admin .nav-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    -ms-overflow-style: -ms-autohiding-scrollbar;
+    scrollbar-width: none;
+  }
+
+  .rails_admin .nav-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .rails_admin .nav-tabs .nav-link {
+    white-space: nowrap;
+    padding: 12px 20px;
+    min-height: 44px;
+  }
+
+  /* Alerts */
+  .rails_admin .alert {
+    padding: 16px;
+    font-size: 0.9375rem;
+  }
+
+  /* Action Bar */
+  .rails_admin .content-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .rails_admin .content-header > * {
+    width: 100%;
+  }
+
+  /* Filters & Search */
+  .rails_admin .filter-form,
+  .rails_admin .search-form {
+    flex-direction: column;
+  }
+
+  .rails_admin .filter-form .form-group,
+  .rails_admin .search-form .form-group {
+    width: 100%;
+    margin-bottom: 16px;
+  }
+
+  /* Table Actions Column - Full Width Buttons */
+  .rails_admin .table tbody td .btn-group {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .rails_admin .table tbody td .btn-group .btn {
+    width: 100%;
+    margin: 2px 0;
+  }
+}
+
+/* Very Small Screens (320px - 480px) */
+@media (max-width: 480px) {
+  .rails_admin .content {
+    padding: 8px;
+  }
+
+  .rails_admin header h1 {
+    font-size: 1.25rem;
+  }
+
+  .rails_admin .card-body {
+    padding: 12px;
+  }
+
+  .rails_admin .btn {
+    font-size: 0.8125rem;
+    padding: 10px 16px;
+  }
+
+  .rails_admin .table tbody tr {
+    padding: 12px;
+  }
+
+  .rails_admin .table tbody td {
+    flex-direction: column;
+    padding: 8px 0;
+  }
+
+  .rails_admin .table tbody td:before {
+    width: 100%;
+    margin-bottom: 4px;
+    padding-right: 0;
+  }
+
+  .rails_admin .table tbody td > * {
+    text-align: left;
+    width: 100%;
+  }
+
+  .rails_admin .modal-body {
+    padding: 16px;
+  }
+}
+
+/* Tablet Landscape (769px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .rails_admin .content {
+    padding: 20px;
+  }
+
+  .rails_admin .table {
+    font-size: 0.9375rem;
+  }
+
+  .rails_admin .table thead th,
+  .rails_admin .table tbody td {
+    padding: 10px;
   }
 }
 
