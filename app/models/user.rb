@@ -12,7 +12,7 @@ class User < ApplicationRecord
 
   validates :role, presence: true
 
-  enum :role, client: 0, surveyor: 1, admin: 2, super_admin: 3
+  enum :role, client: 0, contractor: 1, admin: 2, surveyor: 3
 
   has_many :window_schedule_repairs, dependent: :restrict_with_error
   has_many :windows, through: :window_schedule_repairs
@@ -23,19 +23,19 @@ class User < ApplicationRecord
 
   # Role helper methods - optimized to use enum values directly
   def admin?
-    role.in?(%w[admin super_admin])
+    role.in?(%w[admin])
+  end
+
+  def contractor?
+    role == 'contractor'
   end
 
   def surveyor?
     role == 'surveyor'
   end
 
-  def super_admin?
-    role == 'super_admin'
-  end
-
   def webflow_access?
-    admin? || surveyor?
+    admin?
   end
 
   # Deprecated: Use admin? instead
@@ -44,15 +44,11 @@ class User < ApplicationRecord
     admin?
   end
 
-  # Deprecated: Use surveyor? instead
+  # Deprecated: Use contractor? instead
   def is_employee?
-    surveyor?
+    contractor?
   end
 
-  # Deprecated: Use super_admin? instead
-  def is_super_admin?
-    super_admin?
-  end
   # rubocop:enable Naming/PredicatePrefix
 
   def token_validation_response

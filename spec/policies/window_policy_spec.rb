@@ -5,7 +5,7 @@ require 'rails_helper'
 RSpec.describe WindowPolicy, type: :policy do
   let(:user) { create(:user) }
   let(:admin_user) { create(:user, :admin) }
-  let(:surveyor_user) { create(:user, :surveyor) }
+  let(:contractor_user) { create(:user, :contractor) }
   let(:other_user) { create(:user) }
 
   let(:window_schedule_repair) { create(:window_schedule_repair, user: user) }
@@ -13,7 +13,7 @@ RSpec.describe WindowPolicy, type: :policy do
 
   let(:policy) { described_class.new(user, window) }
   let(:admin_policy) { described_class.new(admin_user, window) }
-  let(:surveyor_policy) { described_class.new(surveyor_user, window) }
+  let(:contractor_policy) { described_class.new(contractor_user, window) }
   let(:other_policy) { described_class.new(other_user, window) }
 
   describe 'permissions' do
@@ -26,8 +26,8 @@ RSpec.describe WindowPolicy, type: :policy do
         expect(admin_policy.show?).to be true
       end
 
-      it 'allows surveyor to view any window' do
-        expect(surveyor_policy.show?).to be true
+      it 'allows contractor to view any window' do
+        expect(contractor_policy.show?).to be true
       end
 
       it 'does not allow other users to view windows' do
@@ -50,8 +50,8 @@ RSpec.describe WindowPolicy, type: :policy do
         expect(admin_policy.update?).to be true
       end
 
-      it 'allows surveyor to update any window' do
-        expect(surveyor_policy.update?).to be true
+      it 'allows contractor to update any window' do
+        expect(contractor_policy.update?).to be true
       end
 
       it 'does not allow other users to update windows' do
@@ -68,8 +68,8 @@ RSpec.describe WindowPolicy, type: :policy do
         expect(admin_policy.destroy?).to be true
       end
 
-      it 'does not allow surveyor to destroy windows' do
-        expect(surveyor_policy.destroy?).to be false
+      it 'does not allow contractor to destroy windows' do
+        expect(contractor_policy.destroy?).to be false
       end
 
       it 'does not allow other users to destroy windows' do
@@ -82,7 +82,7 @@ RSpec.describe WindowPolicy, type: :policy do
     let(:scope) { Window.all }
     let(:policy_scope) { described_class::Scope.new(user, scope) }
     let(:admin_policy_scope) { described_class::Scope.new(admin_user, scope) }
-    let(:surveyor_policy_scope) { described_class::Scope.new(surveyor_user, scope) }
+    let(:contractor_policy_scope) { described_class::Scope.new(contractor_user, scope) }
 
     it 'returns user\'s windows for regular user' do
       # Create additional windows for other users
@@ -99,13 +99,13 @@ RSpec.describe WindowPolicy, type: :policy do
       expect(resolved_scope).to include(window)
     end
 
-    it 'returns surveyor\'s own windows' do
-      # Create a window for the surveyor
-      surveyor_wrs = create(:window_schedule_repair, user: surveyor_user)
-      surveyor_window = create(:window, window_schedule_repair: surveyor_wrs)
+    it 'returns contractor\'s own windows' do
+      # Create a window for the contractor
+      contractor_wrs = create(:window_schedule_repair, user: contractor_user)
+      contractor_window = create(:window, window_schedule_repair: contractor_wrs)
 
-      resolved_scope = surveyor_policy_scope.resolve
-      expect(resolved_scope).to include(surveyor_window)
+      resolved_scope = contractor_policy_scope.resolve
+      expect(resolved_scope).to include(contractor_window)
       expect(resolved_scope).not_to include(window) # Should not include other user's windows
     end
   end

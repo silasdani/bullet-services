@@ -1,0 +1,32 @@
+<% content_for :title, "Services - Bullet Services" %>
+
+<%= render NavigationComponent.new(current_path: request.path) %>
+
+<!-- Services Hero Section -->
+<section class="py-20 bg-white relative">
+  <div class="container mx-auto px-6 max-w-4xl">
+    <h1 class="text-5xl md:text-6xl font-light mb-8 text-gray-800">
+      Services.
+    </h1>
+    <h2 class="text-3xl md:text-4xl font-light mb-12 text-gray-700">
+      # what we do.
+    </h2>
+  </div>
+</section>
+
+<!-- Services Content Section -->
+<section class="py-12 bg-gray-50">
+  <div class="container mx-auto px-6 max-w-4xl">
+    <div class="prose prose-lg max-w-none text-gray-700 space-y-6">
+      <p class="text-lg leading-relaxed">
+        At Bullet Services, we specialize in exterior building restoration and construction services. Our comprehensive range of services is designed to restore and enhance London's architectural heritage while meeting the highest standards of quality and craftsmanship.
+      </p>
+
+      <p class="text-lg leading-relaxed">
+        From window restoration and repair to complete exterior renovations, we bring decades of expertise and a passion for excellence to every project. Our team is equipped to handle projects of all scales, ensuring that each building receives the care and attention it deserves.
+      </p>
+    </div>
+  </div>
+</section>
+
+<%= render FooterComponent.new %>

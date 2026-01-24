@@ -12,12 +12,12 @@ FactoryBot.define do
       role { :admin }
     end
 
-    trait :surveyor do
-      role { :surveyor }
+    trait :contractor do
+      role { :contractor }
     end
 
-    trait :super_admin do
-      role { :super_admin }
+    trait :surveyor do
+      role { :surveyor }
     end
   end
 end

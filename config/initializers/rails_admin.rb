@@ -148,11 +148,11 @@ RailsAdmin.config do |config|
           role_class = case role
           when 'client'
             'badge bg-primary'
-          when 'surveyor'
+          when 'contractor'
             'badge bg-success'
           when 'admin'
             'badge bg-warning text-dark'
-          when 'super_admin'
+          when 'surveyor'
             'badge bg-danger'
           else
             'badge bg-secondary'
@@ -161,12 +161,12 @@ RailsAdmin.config do |config|
           role_label = case role
           when 'client'
             'Client'
-          when 'surveyor'
-            'Surveyor'
+          when 'contractor'
+            'Contractor'
           when 'admin'
             'Admin'
-          when 'super_admin'
-            'Super Admin'
+          when 'surveyor'
+            'Surveyor'
           else
             role.titleize
           end
@@ -188,11 +188,11 @@ RailsAdmin.config do |config|
           role_class = case role
           when 'client'
             'badge bg-primary'
-          when 'surveyor'
+          when 'contractor'
             'badge bg-success'
           when 'admin'
             'badge bg-warning text-dark'
-          when 'super_admin'
+          when 'surveyor'
             'badge bg-danger'
           else
             'badge bg-secondary'
@@ -201,12 +201,12 @@ RailsAdmin.config do |config|
           role_label = case role
           when 'client'
             'Client'
-          when 'surveyor'
-            'Surveyor'
+          when 'contractor'
+            'Contractor'
           when 'admin'
             'Admin'
-          when 'super_admin'
-            'Super Admin'
+          when 'surveyor'
+            'Surveyor'
           else
             role.titleize
           end

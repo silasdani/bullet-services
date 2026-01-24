@@ -26,7 +26,7 @@ class WindowScheduleRepair < ApplicationRecord
     case user.role
     when 'admin'
       all
-    when 'surveyor', 'client'
+    when 'contractor', 'client'
       where(user: user)
     end
   }

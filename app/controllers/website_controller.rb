@@ -17,6 +17,10 @@ class WebsiteController < ApplicationController
     # About page
   end
 
+  def services
+    # Services page
+  end
+
   def terms
     # Terms and Conditions page
   end
