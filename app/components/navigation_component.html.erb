@@ -4,27 +4,24 @@
     <!-- Gradient overlay from top to bottom (black) - only on home page -->
     <div class="absolute inset-0 bg-gradient-to-b from-black/80 to-transparent pointer-events-none"></div>
   <% end %>
-
   <div class="relative flex items-center justify-between w-full">
     <!-- Logo on the left -->
     <div class="flex items-center">
-      <%= link_to root_path, class: "flex items-center z-10 relative" do %>
-        <%= image_tag "bll-logo_white.svg", alt: "Bullet Services", class: "h-8" %>
+      <%= link_to root_path, class: "flex items-center z-10 relative ml-20" do %>
+        <%= image_tag "bll-logo_white.svg", alt: "Bullet Services", class: "h-10" %>
       <% end %>
     </div>
-
     <!-- Desktop Navigation links on the right (hidden on mobile) -->
     <div class="hidden lg:flex items-center space-x-8 relative z-10">
       <%= link_to "HOME", root_path, class: "text-white hover:text-gray-200 transition-colors uppercase tracking-wider text-lg font-light #{active_class(root_path)}" %>
       <%= link_to "ABOUT", about_path, class: "text-white hover:text-gray-200 transition-colors uppercase tracking-wider text-lg font-light #{active_class(about_path)}" %>
       <%= link_to "CONTACT", "mailto:office@bulletservices.co.uk", class: "text-white hover:text-gray-200 transition-colors uppercase tracking-wider text-lg font-light" %>
     </div>
-
     <!-- Mobile Menu Button (visible on mobile only) - Animated Hamburger -->
-    <button 
-      data-mobile-menu-button 
-      class="mobile-menu-button lg:hidden relative z-10" 
-      aria-label="Toggle navigation menu" 
+    <button
+      data-mobile-menu-button
+      class="mobile-menu-button lg:hidden relative z-10"
+      aria-label="Toggle navigation menu"
       aria-expanded="false"
       aria-controls="mobile-menu-panel"
     >
@@ -33,10 +30,8 @@
       <span></span>
     </button>
   </div>
-
   <!-- Mobile Menu Backdrop -->
   <div data-mobile-menu-backdrop class="mobile-menu-backdrop"></div>
-
   <!-- Mobile Menu Panel -->
   <aside 
     id="mobile-menu-panel"

@@ -2,6 +2,7 @@
 
 .static-text {
   display: inline-block;
+  margin-right: 200px;
 }
 
 .typewriter-container {
@@ -9,12 +10,14 @@
   min-width: 400px; /* Enough width for longest word (exteriors.) to prevent layout shift */
   text-align: center;
   position: relative;
+  margin-left: 200px;
 }
 
 .typewriter-text {
   position: relative;
   display: inline-block;
-  text-align: center;
+  text-align: right;
+  font-weight: bold;
 }
 
 .typewriter-text::after {
