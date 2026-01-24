@@ -20,7 +20,7 @@ users = [
     password: 'password123',
     password_confirmation: 'password123',
     name: 'John Smith',
-    role: :employee,
+    role: :surveyor,
     webflow_access: false
   },
   {
@@ -28,7 +28,7 @@ users = [
     password: 'password123',
     password_confirmation: 'password123',
     name: 'Sarah Johnson',
-    role: :employee,
+    role: :surveyor,
     webflow_access: false
   },
   {
@@ -221,7 +221,7 @@ puts "Tools: #{Tool.count}"
 
 puts "\n=== Sample Data ==="
 puts 'Admin user: admin@bullet.com / password123'
-puts 'Employee users: employee1@bullet.com, employee2@bullet.com / password123'
+puts 'Surveyor users: employee1@bullet.com, employee2@bullet.com / password123'
 puts 'Client users: client1@example.com, client2@example.com, client3@example.com / password123'
 
 puts "\n=== Recent WSRs ==="

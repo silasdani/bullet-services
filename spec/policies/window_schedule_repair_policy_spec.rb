@@ -5,14 +5,14 @@ require 'rails_helper'
 RSpec.describe WindowScheduleRepairPolicy, type: :policy do
   let(:user) { create(:user) }
   let(:admin_user) { create(:user, :admin) }
-  let(:employee_user) { create(:user, :employee) }
+  let(:surveyor_user) { create(:user, :surveyor) }
   let(:other_user) { create(:user) }
 
   let(:window_schedule_repair) { create(:window_schedule_repair, user: user) }
 
   let(:policy) { described_class.new(user, window_schedule_repair) }
   let(:admin_policy) { described_class.new(admin_user, window_schedule_repair) }
-  let(:employee_policy) { described_class.new(employee_user, window_schedule_repair) }
+  let(:surveyor_policy) { described_class.new(surveyor_user, window_schedule_repair) }
   let(:other_policy) { described_class.new(other_user, window_schedule_repair) }
 
   describe 'permissions' do
@@ -31,8 +31,8 @@ RSpec.describe WindowScheduleRepairPolicy, type: :policy do
         expect(admin_policy.show?).to be true
       end
 
-      it 'allows employee to view any WRS' do
-        expect(employee_policy.show?).to be true
+      it 'allows surveyor to view any WRS' do
+        expect(surveyor_policy.show?).to be true
       end
 
       it 'does not allow other users to view WRS' do
@@ -55,8 +55,8 @@ RSpec.describe WindowScheduleRepairPolicy, type: :policy do
         expect(admin_policy.update?).to be true
       end
 
-      it 'allows employee to update any WRS' do
-        expect(employee_policy.update?).to be true
+      it 'allows surveyor to update any WRS' do
+        expect(surveyor_policy.update?).to be true
       end
 
       it 'does not allow other users to update WRS' do
@@ -73,8 +73,8 @@ RSpec.describe WindowScheduleRepairPolicy, type: :policy do
         expect(admin_policy.destroy?).to be true
       end
 
-      it 'does not allow employee to destroy WRS' do
-        expect(employee_policy.destroy?).to be false
+      it 'does not allow surveyor to destroy WRS' do
+        expect(surveyor_policy.destroy?).to be false
       end
 
       it 'does not allow other users to destroy WRS' do
@@ -91,8 +91,8 @@ RSpec.describe WindowScheduleRepairPolicy, type: :policy do
         expect(admin_policy.restore?).to be true
       end
 
-      it 'does not allow employee to restore WRS' do
-        expect(employee_policy.restore?).to be false
+      it 'does not allow surveyor to restore WRS' do
+        expect(surveyor_policy.restore?).to be false
       end
 
       it 'does not allow other users to restore WRS' do
@@ -104,7 +104,7 @@ RSpec.describe WindowScheduleRepairPolicy, type: :policy do
       describe '#send_to_webflow?' do
         it 'allows users with webflow access' do
           expect(admin_policy.send_to_webflow?).to be true
-          expect(employee_policy.send_to_webflow?).to be true
+          expect(surveyor_policy.send_to_webflow?).to be true
         end
 
         it 'does not allow users without webflow access' do
@@ -115,7 +115,7 @@ RSpec.describe WindowScheduleRepairPolicy, type: :policy do
       describe '#publish_to_webflow?' do
         it 'allows users with webflow access' do
           expect(admin_policy.publish_to_webflow?).to be true
-          expect(employee_policy.publish_to_webflow?).to be true
+          expect(surveyor_policy.publish_to_webflow?).to be true
         end
 
         it 'does not allow users without webflow access' do
@@ -126,7 +126,7 @@ RSpec.describe WindowScheduleRepairPolicy, type: :policy do
       describe '#unpublish_from_webflow?' do
         it 'allows users with webflow access' do
           expect(admin_policy.unpublish_from_webflow?).to be true
-          expect(employee_policy.unpublish_from_webflow?).to be true
+          expect(surveyor_policy.unpublish_from_webflow?).to be true
         end
 
         it 'does not allow users without webflow access' do
@@ -140,7 +140,7 @@ RSpec.describe WindowScheduleRepairPolicy, type: :policy do
     let(:scope) { WindowScheduleRepair.all }
     let(:policy_scope) { described_class::Scope.new(user, scope) }
     let(:admin_policy_scope) { described_class::Scope.new(admin_user, scope) }
-    let(:employee_policy_scope) { described_class::Scope.new(employee_user, scope) }
+    let(:surveyor_policy_scope) { described_class::Scope.new(surveyor_user, scope) }
 
     it 'returns user\'s WRS for regular user' do
       # Create additional WRS for other users
@@ -156,12 +156,12 @@ RSpec.describe WindowScheduleRepairPolicy, type: :policy do
       expect(resolved_scope).to include(window_schedule_repair)
     end
 
-    it 'returns employee\'s own WRS' do
-      # Create a WRS for the employee
-      employee_wrs = create(:window_schedule_repair, user: employee_user)
+    it 'returns surveyor\'s own WRS' do
+      # Create a WRS for the surveyor
+      surveyor_wrs = create(:window_schedule_repair, user: surveyor_user)
 
-      resolved_scope = employee_policy_scope.resolve
-      expect(resolved_scope).to include(employee_wrs)
+      resolved_scope = surveyor_policy_scope.resolve
+      expect(resolved_scope).to include(surveyor_wrs)
       expect(resolved_scope).not_to include(window_schedule_repair) # Should not include other user's WRS
     end
   end

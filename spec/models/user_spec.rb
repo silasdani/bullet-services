@@ -31,7 +31,7 @@ RSpec.describe User, type: :model do
     it 'has role enum with correct values' do
       expect(User.roles).to eq({
                                  'client' => 0,
-                                 'employee' => 1,
+                                 'surveyor' => 1,
                                  'admin' => 2,
                                  'super_admin' => 3
                                })
@@ -53,15 +53,19 @@ RSpec.describe User, type: :model do
       end
     end
 
-    context 'when user is employee' do
-      let(:employee_user) { create(:user, :employee) }
+    context 'when user is surveyor' do
+      let(:surveyor_user) { create(:user, :surveyor) }
 
-      it 'returns true for is_employee?' do
-        expect(employee_user.is_employee?).to be true
+      it 'returns true for is_employee? (deprecated alias)' do
+        expect(surveyor_user.is_employee?).to be true
+      end
+
+      it 'returns true for surveyor?' do
+        expect(surveyor_user.surveyor?).to be true
       end
 
       it 'returns true for webflow_access' do
-        expect(employee_user.webflow_access).to be true
+        expect(surveyor_user.webflow_access).to be true
       end
     end
 

@@ -215,6 +215,7 @@
   font-size: 0.6875rem;
   padding: 4px 8px;
   border-radius: 4px;
+  min-width: 100px;
 }
 
 .rails_admin .badge.bg-success {

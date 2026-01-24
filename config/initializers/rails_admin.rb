@@ -141,7 +141,39 @@ RailsAdmin.config do |config|
       field :id
       field :email
       field :name
-      field :role
+      field :role do
+        pretty_value do
+          user = bindings[:object]
+          role = user.role
+          role_class = case role
+          when 'client'
+            'badge bg-primary'
+          when 'surveyor'
+            'badge bg-success'
+          when 'admin'
+            'badge bg-warning text-dark'
+          when 'super_admin'
+            'badge bg-danger'
+          else
+            'badge bg-secondary'
+          end
+
+          role_label = case role
+          when 'client'
+            'Client'
+          when 'surveyor'
+            'Surveyor'
+          when 'admin'
+            'Admin'
+          when 'super_admin'
+            'Super Admin'
+          else
+            role.titleize
+          end
+
+          bindings[:view].content_tag(:span, role_label, class: role_class)
+        end
+      end
       field :created_at
     end
 
@@ -149,7 +181,39 @@ RailsAdmin.config do |config|
       field :id
       field :email
       field :name
-      field :role
+      field :role do
+        pretty_value do
+          user = bindings[:object]
+          role = user.role
+          role_class = case role
+          when 'client'
+            'badge bg-primary'
+          when 'surveyor'
+            'badge bg-success'
+          when 'admin'
+            'badge bg-warning text-dark'
+          when 'super_admin'
+            'badge bg-danger'
+          else
+            'badge bg-secondary'
+          end
+
+          role_label = case role
+          when 'client'
+            'Client'
+          when 'surveyor'
+            'Surveyor'
+          when 'admin'
+            'Admin'
+          when 'super_admin'
+            'Super Admin'
+          else
+            role.titleize
+          end
+
+          bindings[:view].content_tag(:span, role_label, class: role_class)
+        end
+      end
       field :created_at
       field :updated_at
     end
@@ -179,7 +243,38 @@ RailsAdmin.config do |config|
       end
       field :address
       field :flat_number
-      field :status
+      field :status do
+        pretty_value do
+          wrs = bindings[:object]
+          badges = []
+
+          # Priority: archived > draft > status
+          if wrs.is_archived
+            badges << bindings[:view].content_tag(:span, 'Archived', class: 'badge bg-dark')
+          elsif wrs.is_draft
+            badges << bindings[:view].content_tag(:span, 'Draft', class: 'badge bg-secondary')
+          else
+            status = wrs.status || 'pending'
+            status_class = case status
+            when 'pending'
+              'badge bg-warning text-dark'
+            when 'approved'
+              'badge bg-success'
+            when 'rejected'
+              'badge bg-danger'
+            when 'completed'
+              'badge bg-info'
+            else
+              'badge bg-secondary'
+            end
+
+            status_label = status.titleize
+            badges << bindings[:view].content_tag(:span, status_label, class: status_class)
+          end
+
+          badges.join.html_safe
+        end
+      end
       field :grand_total
       field :user
       field :created_at
@@ -197,7 +292,38 @@ RailsAdmin.config do |config|
       field :address
       field :flat_number
       field :details
-      field :status
+      field :status do
+        pretty_value do
+          wrs = bindings[:object]
+          badges = []
+
+          # Priority: archived > draft > status
+          if wrs.is_archived
+            badges << bindings[:view].content_tag(:span, 'Archived', class: 'badge bg-dark')
+          elsif wrs.is_draft
+            badges << bindings[:view].content_tag(:span, 'Draft', class: 'badge bg-secondary')
+          else
+            status = wrs.status || 'pending'
+            status_class = case status
+            when 'pending'
+              'badge bg-warning text-dark'
+            when 'approved'
+              'badge bg-success'
+            when 'rejected'
+              'badge bg-danger'
+            when 'completed'
+              'badge bg-info'
+            else
+              'badge bg-secondary'
+            end
+
+            status_label = status.titleize
+            badges << bindings[:view].content_tag(:span, status_label, class: status_class)
+          end
+
+          badges.join.html_safe
+        end
+      end
       field :user
       field :subtotal do
         formatted_value do
@@ -426,23 +552,10 @@ RailsAdmin.config do |config|
         end
       end
 
-      # Amount
-      field :total_amount do
-        label 'Amount'
-        pretty_value do
-          invoice = bindings[:object]
-          amount = invoice.total_amount
-          if amount && amount > 0
-            bindings[:view].content_tag(:span, "£#{amount.round(2)}", class: 'fw-semibold')
-          else
-            bindings[:view].content_tag(:span, '-', class: 'text-muted')
-          end
-        end
-      end
 
       # VAT Included Amount (for filtering and sorting, hidden from list display)
       field :included_vat_amount do
-        label 'VAT Included Amount'
+        label 'VAT incl (£)'
         # hide
         filterable true
         sortable true
@@ -1152,8 +1265,28 @@ RailsAdmin.config do |config|
                     bindings[:view].rails_admin.show_path(model_name: 'window_schedule_repair', id: wrs.id),
                     style: 'text-decoration: none; color: #000000; font-weight: 500;'
                   ) +
-                  bindings[:view].content_tag(:div, style: 'margin-top: 5px; font-size: 0.875rem; color: #6b7280;') do
-                    "Flat: #{wrs.flat_number || 'N/A'} | Status: #{wrs.status || 'pending'}"
+                  bindings[:view].content_tag(:div, style: 'margin-top: 5px; font-size: 0.875rem;') do
+                    status_badge = if wrs.is_archived
+                      bindings[:view].content_tag(:span, 'Archived', class: 'badge bg-dark')
+                    elsif wrs.is_draft
+                      bindings[:view].content_tag(:span, 'Draft', class: 'badge bg-secondary')
+                    else
+                      status = wrs.status || 'pending'
+                      status_class = case status
+                      when 'pending'
+                        'badge bg-warning text-dark'
+                      when 'approved'
+                        'badge bg-success'
+                      when 'rejected'
+                        'badge bg-danger'
+                      when 'completed'
+                        'badge bg-info'
+                      else
+                        'badge bg-secondary'
+                      end
+                      bindings[:view].content_tag(:span, status.titleize, class: status_class)
+                    end
+                    "Flat: #{wrs.flat_number || 'N/A'} | Status: ".html_safe + status_badge
                   end
                 end
               end.join.html_safe

@@ -12,7 +12,7 @@ class User < ApplicationRecord
 
   validates :role, presence: true
 
-  enum :role, client: 0, employee: 1, admin: 2, super_admin: 3
+  enum :role, client: 0, surveyor: 1, admin: 2, super_admin: 3
 
   has_many :window_schedule_repairs, dependent: :restrict_with_error
   has_many :windows, through: :window_schedule_repairs
@@ -26,8 +26,8 @@ class User < ApplicationRecord
     role.in?(%w[admin super_admin])
   end
 
-  def employee?
-    role == 'employee'
+  def surveyor?
+    role == 'surveyor'
   end
 
   def super_admin?
@@ -35,7 +35,7 @@ class User < ApplicationRecord
   end
 
   def webflow_access?
-    admin? || employee?
+    admin? || surveyor?
   end
 
   # Deprecated: Use admin? instead
@@ -44,9 +44,9 @@ class User < ApplicationRecord
     admin?
   end
 
-  # Deprecated: Use employee? instead
+  # Deprecated: Use surveyor? instead
   def is_employee?
-    employee?
+    surveyor?
   end
 
   # Deprecated: Use super_admin? instead
