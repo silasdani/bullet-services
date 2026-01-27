@@ -7,6 +7,25 @@ class WindowScheduleRepairSerializer < ActiveModel::Serializer
              :deleted_at, :deleted?, :active?, :last_published, :is_draft, :is_archived,
              :published?, :draft?, :archived?, :webflow_item_id
 
+  # Hide prices for contractors
+  def total_vat_included_price
+    return nil if scope&.contractor?
+
+    object.total_vat_included_price
+  end
+
+  def total_vat_excluded_price
+    return nil if scope&.contractor?
+
+    object.total_vat_excluded_price
+  end
+
+  def grand_total
+    return nil if scope&.contractor?
+
+    object.grand_total
+  end
+
   belongs_to :user
   belongs_to :building
   has_many :windows, serializer: WindowSerializer

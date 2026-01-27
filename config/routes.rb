@@ -54,8 +54,11 @@ Rails.application.routes.draw do
           post :restore
           post :publish_to_webflow
           post :unpublish_from_webflow
+          post :check_in
+          post :check_out
         end
         resources :windows, only: [ :index, :create ]
+        resources :ongoing_works, only: [ :index, :create ]
       end
 
       resources :windows, only: [ :show, :update, :destroy ]
@@ -72,6 +75,11 @@ Rails.application.routes.draw do
       resources :users do
         collection do
           get :me
+          post :register_fcm_token
+        end
+        member do
+          post :block
+          post :unblock
         end
       end
 
@@ -87,6 +95,23 @@ Rails.application.routes.draw do
       resources :buildings do
         member do
           get :window_schedule_repairs
+        end
+      end
+
+      resources :check_ins, only: [ :index, :show ]
+      resources :ongoing_works, only: [ :show, :update, :destroy ]
+      resources :timesheets, only: [ :index ] do
+        collection do
+          get :export
+        end
+      end
+      resources :notifications, only: [ :index, :show ] do
+        member do
+          post :mark_read
+          post :mark_unread
+        end
+        collection do
+          post :mark_all_read
         end
       end
     end

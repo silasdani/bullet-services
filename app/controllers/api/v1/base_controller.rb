@@ -10,6 +10,7 @@ module Api
 
       before_action :set_request_format
       before_action :authenticate_user!
+      before_action :check_user_blocked
       before_action :set_pagination_params
 
       rescue_from StandardError, with: :handle_internal_error
@@ -79,6 +80,15 @@ module Api
           has_next_page: collection.next_page.present?,
           has_prev_page: collection.prev_page.present?
         }
+      end
+
+      def check_user_blocked
+        return unless current_user&.blocked?
+
+        render_error(
+          message: 'Your account has been blocked. Please contact an administrator.',
+          status: :forbidden
+        )
       end
     end
   end

@@ -24,7 +24,7 @@ module Api
         authorize @window_schedule_repair
 
         render_success(
-          data: WindowScheduleRepairSerializer.new(@window_schedule_repair).serializable_hash
+          data: WindowScheduleRepairSerializer.new(@window_schedule_repair, scope: current_user).serializable_hash
         )
       end
 
@@ -40,7 +40,7 @@ module Api
 
         if result[:success]
           render_success(
-            data: WindowScheduleRepairSerializer.new(result[:wrs]).serializable_hash,
+            data: WindowScheduleRepairSerializer.new(result[:wrs], scope: current_user).serializable_hash,
             message: 'WRS created successfully',
             status: :created
           )
@@ -64,7 +64,7 @@ module Api
 
         if result[:success]
           render_success(
-            data: WindowScheduleRepairSerializer.new(result[:wrs]).serializable_hash,
+            data: WindowScheduleRepairSerializer.new(result[:wrs], scope: current_user).serializable_hash,
             message: 'WRS updated successfully'
           )
         else
@@ -99,7 +99,7 @@ module Api
         @window_schedule_repair.restore!
 
         render_success(
-          data: WindowScheduleRepairSerializer.new(@window_schedule_repair).serializable_hash,
+          data: WindowScheduleRepairSerializer.new(@window_schedule_repair, scope: current_user).serializable_hash,
           message: 'WRS restored successfully'
         )
       end
@@ -115,7 +115,7 @@ module Api
 
       def serialize_wrs_collection(collection)
         collection.map do |wrs|
-          WindowScheduleRepairSerializer.new(wrs).serializable_hash
+          WindowScheduleRepairSerializer.new(wrs, scope: current_user).serializable_hash
         end
       end
 

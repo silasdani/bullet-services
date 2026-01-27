@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_12_28_210516) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_26_232721) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -55,6 +55,22 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_28_210516) do
     t.index ["deleted_at"], name: "index_buildings_on_deleted_at"
     t.index ["name"], name: "index_buildings_on_name"
     t.index ["street", "city", "zipcode"], name: "index_buildings_on_address_fields"
+  end
+
+  create_table "check_ins", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "window_schedule_repair_id", null: false
+    t.integer "action", null: false
+    t.decimal "latitude", precision: 10, scale: 7
+    t.decimal "longitude", precision: 10, scale: 7
+    t.string "address"
+    t.datetime "timestamp", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["timestamp"], name: "index_check_ins_on_timestamp"
+    t.index ["user_id", "window_schedule_repair_id", "action"], name: "idx_on_user_id_window_schedule_repair_id_action_697816377c"
+    t.index ["user_id"], name: "index_check_ins_on_user_id"
+    t.index ["window_schedule_repair_id"], name: "index_check_ins_on_window_schedule_repair_id"
   end
 
   create_table "freshbooks_clients", force: :cascade do |t|
@@ -153,6 +169,36 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_28_210516) do
     t.index ["window_schedule_repair_id"], name: "index_invoices_on_window_schedule_repair_id"
   end
 
+  create_table "notifications", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "window_schedule_repair_id"
+    t.integer "notification_type", null: false
+    t.string "title", null: false
+    t.text "message"
+    t.boolean "read", default: false, null: false
+    t.jsonb "metadata"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "read_at"
+    t.index ["created_at"], name: "index_notifications_on_created_at"
+    t.index ["read_at"], name: "index_notifications_on_read_at"
+    t.index ["user_id", "read"], name: "index_notifications_on_user_id_and_read"
+    t.index ["user_id"], name: "index_notifications_on_user_id"
+    t.index ["window_schedule_repair_id"], name: "index_notifications_on_window_schedule_repair_id"
+  end
+
+  create_table "ongoing_works", force: :cascade do |t|
+    t.bigint "window_schedule_repair_id", null: false
+    t.bigint "user_id", null: false
+    t.text "description"
+    t.datetime "work_date", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_ongoing_works_on_user_id"
+    t.index ["window_schedule_repair_id", "work_date"], name: "index_ongoing_works_on_window_schedule_repair_id_and_work_date"
+    t.index ["window_schedule_repair_id"], name: "index_ongoing_works_on_window_schedule_repair_id"
+  end
+
   create_table "tools", force: :cascade do |t|
     t.string "name"
     t.integer "price"
@@ -184,9 +230,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_28_210516) do
     t.integer "role", default: 0, null: false
     t.boolean "webflow_access", default: false
     t.datetime "deleted_at"
+    t.boolean "blocked", default: false, null: false
+    t.string "fcm_token"
+    t.index ["blocked"], name: "index_users_on_blocked"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["deleted_at"], name: "index_users_on_deleted_at"
     t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["fcm_token"], name: "index_users_on_fcm_token", where: "(fcm_token IS NOT NULL)"
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
     t.index ["uid", "provider"], name: "index_users_on_uid_and_provider", unique: true
   end
@@ -238,6 +288,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_12_28_210516) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "check_ins", "users"
+  add_foreign_key "check_ins", "window_schedule_repairs"
+  add_foreign_key "notifications", "users"
+  add_foreign_key "notifications", "window_schedule_repairs"
+  add_foreign_key "ongoing_works", "users"
+  add_foreign_key "ongoing_works", "window_schedule_repairs"
   add_foreign_key "tools", "windows"
   add_foreign_key "window_schedule_repairs", "buildings"
   add_foreign_key "window_schedule_repairs", "users"

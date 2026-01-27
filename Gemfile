@@ -82,6 +82,7 @@ gem 'sprockets-rails'
 gem 'uglifier'
 
 gem 'csv'
+gem 'googleauth' # Google authentication library for service accounts (FCM)
 gem 'mailersend-ruby'
 gem 'ruby-progressbar'
 

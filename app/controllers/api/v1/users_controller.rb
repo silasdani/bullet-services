@@ -43,6 +43,24 @@ module Api
         head :no_content
       end
 
+      # POST /api/v1/users/:id/block
+      def block
+        @user = User.find(params[:id])
+        authorize @user, :block?
+
+        @user.block!
+        render json: { message: 'User blocked successfully', user: @user }, status: :ok
+      end
+
+      # POST /api/v1/users/:id/unblock
+      def unblock
+        @user = User.find(params[:id])
+        authorize @user, :unblock?
+
+        @user.unblock!
+        render json: { message: 'User unblocked successfully', user: @user }, status: :ok
+      end
+
       def me
         Rails.logger.info "Current user: #{current_user.inspect}"
         Rails.logger.info "User authenticated: #{user_signed_in?}"
@@ -54,6 +72,32 @@ module Api
         end
       end
 
+      # POST /api/v1/users/register_fcm_token
+      def register_fcm_token
+        authorize User, :update?
+
+        fcm_token = params[:fcm_token]
+
+        unless fcm_token.present?
+          return render_error(
+            message: 'FCM token is required',
+            status: :unprocessable_entity
+          )
+        end
+
+        if current_user.update(fcm_token: fcm_token)
+          render_success(
+            data: { fcm_token_registered: true },
+            message: 'FCM token registered successfully'
+          )
+        else
+          render_error(
+            message: 'Failed to register FCM token',
+            details: current_user.errors.full_messages
+          )
+        end
+      end
+
       private
 
       def set_user
@@ -62,7 +106,8 @@ module Api
 
       def user_params
         if params[:user].present?
-          permitted = params.require(:user).permit(:email, :name, :nickname, :password, :password_confirmation)
+          permitted = params.require(:user).permit(:email, :name, :nickname, :password, :password_confirmation,
+                                                   :fcm_token)
           # Only allow admins to update role
           permitted[:role] = params[:user][:role] if current_user&.admin? && params[:user][:role].present?
           permitted
