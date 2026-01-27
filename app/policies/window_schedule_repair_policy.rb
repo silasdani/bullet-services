@@ -6,7 +6,10 @@ class WindowScheduleRepairPolicy < ApplicationPolicy
   end
 
   def show?
-    user.present?
+    return false unless user.present?
+    # Contractors cannot see draft WRSes
+    return false if user.contractor? && record.draft?
+    true
   end
 
   def create?
@@ -39,8 +42,13 @@ class WindowScheduleRepairPolicy < ApplicationPolicy
 
   class Scope < Scope
     def resolve
-      # Allow all users to see all WRS
-      scope.all
+      # Contractors cannot see draft WRSes
+      if user.contractor?
+        scope.where(is_draft: false)
+      else
+        # Admins, clients, and surveyors can see all WRS
+        scope.all
+      end
     end
   end
 end

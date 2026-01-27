@@ -111,6 +111,9 @@ module Api
                                   .includes(:user, :windows, windows: %i[tools image_attachment])
                                   .order(created_at: :desc)
 
+        # Contractors cannot see draft WRSes
+        wrs_collection = wrs_collection.where(is_draft: false) if current_user.contractor?
+
         paginated_collection = wrs_collection.page(@page).per(@per_page)
         serialized_data = paginated_collection.map do |wrs|
           WindowScheduleRepairSerializer.new(wrs).serializable_hash
