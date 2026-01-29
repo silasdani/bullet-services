@@ -2,6 +2,7 @@
 
 class BuildingSerializer < ActiveModel::Serializer
   attributes :id, :name, :street, :city, :country, :zipcode,
+             :latitude, :longitude,
              :created_at, :updated_at, :deleted_at
 
   # Address string representation
