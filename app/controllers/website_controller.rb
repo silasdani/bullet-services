@@ -4,10 +4,10 @@ class WebsiteController < ApplicationController
   # Public website pages - skip authorization
   # CSRF protection: Use protect_from_forgery with :null_session for API-like endpoints
   # or ensure proper CSRF token handling in forms
-  protect_from_forgery with: :exception, except: [:contact_submit]
+  protect_from_forgery with: :exception, except: %i[contact_submit wrs_decision]
 
-  # For contact_submit, we'll verify the request comes from our form
   before_action :verify_contact_form_request, only: [:contact_submit]
+  before_action :verify_wrs_decision_request, only: [:wrs_decision]
 
   def home
     # Homepage
@@ -120,5 +120,23 @@ class WebsiteController < ApplicationController
     redirect_to root_path(anchor: 'contact'),
                 alert: 'Security verification failed. Please try again.',
                 status: :forbidden
+  end
+
+  def verify_wrs_decision_request
+    # Verify the request is a POST and has required parameters
+    # For public forms accessed via email links, session may not persist
+    # so we're more lenient but still validate the request structure
+    return if request.get? || request.head?
+
+    # Basic validation: ensure we have the required form parameters
+    unless params[:wrs_decision_form].present?
+      Rails.logger.warn "WRS decision request missing form parameters from #{request.remote_ip}"
+      redirect_to wrs_show_path(slug: params[:slug]),
+                  alert: 'Invalid request. Please try again.',
+                  status: :bad_request
+      return
+    end
+
+    nil if verified_request?
   end
 end

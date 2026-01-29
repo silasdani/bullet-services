@@ -8,7 +8,7 @@ module Api
 
       # GET /api/v1/window_schedule_repairs/:window_schedule_repair_id/ongoing_works
       def index
-        authorize @window_schedule_repair
+        authorize @window_schedule_repair, :show?
 
         ongoing_works = OngoingWork.where(window_schedule_repair: @window_schedule_repair)
                                    .includes(:user)
@@ -24,7 +24,7 @@ module Api
 
       # GET /api/v1/ongoing_works/:id
       def show
-        authorize @ongoing_work.window_schedule_repair
+        authorize @ongoing_work.window_schedule_repair, :show?
 
         render_success(
           data: serialize_ongoing_work(@ongoing_work)
@@ -34,7 +34,7 @@ module Api
       # POST /api/v1/window_schedule_repairs/:window_schedule_repair_id/ongoing_works
       def create
         authorize OngoingWork, :create?
-        authorize @window_schedule_repair
+        authorize @window_schedule_repair, :show?
 
         ongoing_work = build_ongoing_work
 
@@ -49,10 +49,12 @@ module Api
 
       # PATCH /api/v1/ongoing_works/:id
       def update
-        authorize @ongoing_work.window_schedule_repair
+        authorize @ongoing_work
+
+        # Attach images before update so validation can check them
+        attach_images(@ongoing_work) if params[:images].present?
 
         if update_ongoing_work
-          attach_images(@ongoing_work) if params[:images].present?
           render_update_success
         else
           render_update_error
@@ -61,7 +63,7 @@ module Api
 
       # DELETE /api/v1/ongoing_works/:id
       def destroy
-        authorize @ongoing_work.window_schedule_repair
+        authorize @ongoing_work
         @ongoing_work.destroy
 
         render_success(
@@ -107,12 +109,18 @@ module Api
       end
 
       def attach_images(ongoing_work)
-        Array(params[:images]).each do |image|
-          ongoing_work.images.attach(image)
-        end
+        images_array = if params[:images].is_a?(Hash) || params[:images].is_a?(ActionController::Parameters)
+                         params[:images].values
+                       else
+                         Array(params[:images])
+                       end
+        ongoing_work.images.attach(images_array) if images_array.any?
       end
 
       def create_work_update_notification(ongoing_work)
+        # Contractors should not send work update notifications
+        return if current_user.contractor?
+
         Notifications::CreateService.new(
           user: @window_schedule_repair.user,
           window_schedule_repair: @window_schedule_repair,
@@ -148,10 +156,13 @@ module Api
       end
 
       def update_ongoing_work
-        @ongoing_work.update(
-          description: params[:description],
-          work_date: params[:work_date]
-        )
+        update_params = {}
+        update_params[:description] = params[:description] if params[:description].present?
+        update_params[:work_date] = params[:work_date] if params[:work_date].present?
+
+        return true if update_params.empty?
+
+        @ongoing_work.update(update_params)
       end
 
       def render_update_success

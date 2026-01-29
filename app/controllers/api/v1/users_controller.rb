@@ -74,7 +74,7 @@ module Api
 
       # POST /api/v1/users/register_fcm_token
       def register_fcm_token
-        authorize User, :update?
+        authorize current_user, :update?
 
         fcm_token = params[:fcm_token]
 
