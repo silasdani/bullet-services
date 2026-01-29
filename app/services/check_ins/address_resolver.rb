@@ -3,7 +3,7 @@
 module CheckIns
   module AddressResolver
     def resolve_address
-      return address if address.present?
+      # Always geocode user's location from coordinates
       return nil unless coordinates_present?
 
       geocoding_service = call_geocoding_service

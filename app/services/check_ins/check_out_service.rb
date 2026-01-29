@@ -14,13 +14,22 @@ module CheckIns
     attr_accessor :check_out
 
     def call
-      return self if validate_check_in.failure?
-      return self if validate_photos_uploaded.failure?
-      return self if validate_timestamps.failure?
-      return self if create_check_out.failure?
+      ActiveRecord::Base.transaction do
+        return self if validate_check_in.failure?
+        return self if validate_photos_uploaded.failure?
+        return self if validate_timestamps.failure?
+        return self if create_check_out.failure?
 
-      create_notification
+        create_notification
+        self
+      end
+    rescue ActiveRecord::RecordInvalid => e
+      add_errors(e.record.errors.full_messages)
       self
+    end
+
+    def hours_worked
+      calculate_hours_worked
     end
 
     private
@@ -31,7 +40,18 @@ module CheckIns
     end
 
     def validate_photos_uploaded
-      add_error('Cannot check out. Please upload work photos first.') unless photos_uploaded?
+      unless photos_uploaded?
+        add_error('Cannot check out. Please upload work photos first.')
+        add_error('At least one photo is required to document completed work.')
+        return self
+      end
+
+      # Additional validation: ensure photos are from today
+      unless photos_from_today?
+        add_error('Photos must be uploaded today to check out.')
+        return self
+      end
+
       self
     end
 
@@ -40,10 +60,33 @@ module CheckIns
     end
 
     def photos_uploaded?
-      OngoingWork.where(
-        window_schedule_repair: window_schedule_repair,
-        user: user
-      ).where('work_date >= ?', check_in_record.timestamp.to_date).exists?
+      return false unless check_in_record
+
+      check_in_date = check_in_record.timestamp.to_date
+
+      OngoingWork
+        .where(
+          window_schedule_repair: window_schedule_repair,
+          user: user
+        )
+        .where('work_date >= ?', check_in_date)
+        .joins(:images_attachments)
+        .where('active_storage_attachments.created_at >= ?', check_in_date.beginning_of_day)
+        .exists?
+    end
+
+    def photos_from_today?
+      return false unless check_in_record
+
+      OngoingWork
+        .where(
+          window_schedule_repair: window_schedule_repair,
+          user: user
+        )
+        .where('work_date >= ?', check_in_record.timestamp.to_date)
+        .joins(:images_attachments)
+        .where('active_storage_attachments.created_at >= ?', Date.current.beginning_of_day)
+        .exists?
     end
 
     def create_check_out
@@ -82,14 +125,23 @@ module CheckIns
 
     def create_notification
       hours_worked = calculate_hours_worked
-      Notifications::CreateService.new(
-        user: window_schedule_repair.user,
-        window_schedule_repair: window_schedule_repair,
-        notification_type: :check_out,
-        title: 'Check-out Notification',
-        message: build_check_out_message(hours_worked),
-        metadata: build_check_out_metadata(hours_worked)
-      ).call
+      if user.contractor?
+        Notifications::AdminFcmNotificationService.new(
+          window_schedule_repair: window_schedule_repair,
+          notification_type: :check_out,
+          title: 'Contractor Check-out',
+          message: build_check_out_message(hours_worked),
+          metadata: build_check_out_metadata(hours_worked)
+        ).call
+      else
+        Notifications::AdminNotificationService.new(
+          window_schedule_repair: window_schedule_repair,
+          notification_type: :check_out,
+          title: 'Contractor Check-out',
+          message: build_check_out_message(hours_worked),
+          metadata: build_check_out_metadata(hours_worked)
+        ).call
+      end
     end
 
     def build_check_out_message(hours_worked)
