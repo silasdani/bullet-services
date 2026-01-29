@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_26_232721) do
+ActiveRecord::Schema[8.0].define(version: 2026_01_28_200000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -42,6 +42,18 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_26_232721) do
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
+  create_table "building_assignments", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "building_id", null: false
+    t.bigint "assigned_by_user_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["assigned_by_user_id"], name: "index_building_assignments_on_assigned_by_user_id"
+    t.index ["building_id"], name: "index_building_assignments_on_building_id"
+    t.index ["user_id", "building_id"], name: "index_building_assignments_on_user_id_and_building_id", unique: true
+    t.index ["user_id"], name: "index_building_assignments_on_user_id"
+  end
+
   create_table "buildings", force: :cascade do |t|
     t.string "name"
     t.string "street"
@@ -51,8 +63,11 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_26_232721) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.datetime "deleted_at"
+    t.decimal "latitude", precision: 10, scale: 7
+    t.decimal "longitude", precision: 10, scale: 7
     t.index "lower(TRIM(BOTH FROM street)), lower(TRIM(BOTH FROM city)), lower(TRIM(BOTH FROM COALESCE(zipcode, ''::character varying)))", name: "index_buildings_on_unique_address", unique: true, where: "(deleted_at IS NULL)"
     t.index ["deleted_at"], name: "index_buildings_on_deleted_at"
+    t.index ["latitude", "longitude"], name: "index_buildings_on_latitude_and_longitude"
     t.index ["name"], name: "index_buildings_on_name"
     t.index ["street", "city", "zipcode"], name: "index_buildings_on_address_fields"
   end
@@ -67,6 +82,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_26_232721) do
     t.datetime "timestamp", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "lock_version", default: 0, null: false
     t.index ["timestamp"], name: "index_check_ins_on_timestamp"
     t.index ["user_id", "window_schedule_repair_id", "action"], name: "idx_on_user_id_window_schedule_repair_id_action_697816377c"
     t.index ["user_id"], name: "index_check_ins_on_user_id"
@@ -288,6 +304,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_26_232721) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "building_assignments", "buildings"
+  add_foreign_key "building_assignments", "users"
+  add_foreign_key "building_assignments", "users", column: "assigned_by_user_id"
   add_foreign_key "check_ins", "users"
   add_foreign_key "check_ins", "window_schedule_repairs"
   add_foreign_key "notifications", "users"

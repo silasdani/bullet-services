@@ -20,7 +20,7 @@ RailsAdmin.config do |config|
   config.asset_source = :sprockets
 
   # Only include User and WindowScheduleRepair models (Window and Tool are nested)
-  config.included_models = ['User', 'WindowScheduleRepair', 'Window', 'Tool', 'Invoice', 'Building']
+  config.included_models = ['User', 'WindowScheduleRepair', 'Window', 'Tool', 'Invoice', 'Building', 'OngoingWork']
 
   # Authenticate: ensure user is logged in via Devise session
   config.authenticate_with do
@@ -1323,6 +1323,185 @@ RailsAdmin.config do |config|
       field :city
       field :zipcode
       field :country
+    end
+  end
+
+  # Configure OngoingWork model
+  config.model 'OngoingWork' do
+    label 'Ongoing Work'
+    navigation_label 'Management'
+    weight 4
+
+    # Optimize queries by eager loading associations
+    scope { OngoingWork.includes(:window_schedule_repair, :user).order(work_date: :desc, created_at: :desc) }
+
+    list do
+      field :id
+      field :window_schedule_repair do
+        label 'WRS'
+        pretty_value do
+          wrs = bindings[:object].window_schedule_repair
+          if wrs
+            bindings[:view].link_to(
+              "#{wrs.name} (#{wrs.reference_number})",
+              bindings[:view].rails_admin.show_path(model_name: 'window_schedule_repair', id: wrs.id)
+            )
+          else
+            '-'
+          end
+        end
+      end
+      field :user do
+        pretty_value do
+          user = bindings[:object].user
+          if user
+            user.name || user.email
+          else
+            '-'
+          end
+        end
+      end
+      field :description do
+        pretty_value do
+          if value.present?
+            value.length > 50 ? "#{value[0..50]}..." : value
+          else
+            bindings[:view].content_tag(:span, 'No description', class: 'text-muted')
+          end
+        end
+      end
+      field :work_date do
+        formatted_value do
+          value ? value.strftime('%d %b %Y') : '-'
+        end
+      end
+      field :images_count do
+        label 'Images'
+        pretty_value do
+          count = bindings[:object].images.count
+          if count > 0
+            bindings[:view].content_tag(:span, count.to_s, class: 'badge bg-info')
+          else
+            bindings[:view].content_tag(:span, '0', class: 'badge bg-secondary')
+          end
+        end
+      end
+      field :created_at do
+        formatted_value do
+          value ? value.strftime('%d %b %Y %H:%M') : '-'
+        end
+      end
+    end
+
+    show do
+      field :id
+      field :window_schedule_repair do
+        label 'WRS'
+        pretty_value do
+          wrs = bindings[:object].window_schedule_repair
+          if wrs
+            bindings[:view].link_to(
+              "#{wrs.name} (#{wrs.reference_number})",
+              bindings[:view].rails_admin.show_path(model_name: 'window_schedule_repair', id: wrs.id)
+            )
+          else
+            '-'
+          end
+        end
+      end
+      field :user do
+        pretty_value do
+          user = bindings[:object].user
+          if user
+            "#{user.name || user.email} (#{user.role})"
+          else
+            '-'
+          end
+        end
+      end
+      field :description do
+        pretty_value do
+          if value.present?
+            bindings[:view].content_tag(:div, value, style: 'white-space: pre-wrap; word-wrap: break-word;')
+          else
+            bindings[:view].content_tag(:span, 'No description', class: 'text-muted')
+          end
+        end
+      end
+      field :work_date do
+        formatted_value do
+          value ? value.strftime('%d %b %Y %H:%M') : '-'
+        end
+      end
+      field :images do
+        pretty_value do
+          ongoing_work = bindings[:object]
+          if ongoing_work.images.attached?
+            html = ActiveSupport::SafeBuffer.new
+            html << bindings[:view].content_tag(:div, class: 'images-gallery', style: 'display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px;') do
+              ongoing_work.images.map do |image|
+                image_url = image.url
+                bindings[:view].content_tag(:div, style: 'position: relative;') do
+                  bindings[:view].link_to(image_url, target: '_blank') do
+                    bindings[:view].tag(:img,
+                      src: image_url,
+                      style: 'max-width: 300px; max-height: 300px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;',
+                      alt: image.filename.to_s
+                    )
+                  end +
+                  bindings[:view].content_tag(:div, style: 'margin-top: 5px; font-size: 0.875rem; color: #666;') do
+                    image.filename.to_s
+                  end
+                end
+              end.join.html_safe
+            end
+            html
+          else
+            bindings[:view].content_tag(:span, 'No images attached', class: 'text-muted')
+          end
+        end
+      end
+      field :created_at
+      field :updated_at
+    end
+
+    edit do
+      field :window_schedule_repair do
+        label 'WRS'
+      end
+      field :user
+      field :description
+      field :work_date
+      field :images do
+        label 'Images'
+        help 'Upload images for this ongoing work'
+      end
+    end
+
+    create do
+      field :window_schedule_repair do
+        label 'WRS'
+      end
+      field :user
+      field :description
+      field :work_date
+      field :images do
+        label 'Images'
+        help 'Upload images for this ongoing work'
+      end
+    end
+
+    update do
+      field :window_schedule_repair do
+        label 'WRS'
+      end
+      field :user
+      field :description
+      field :work_date
+      field :images do
+        label 'Images'
+        help 'Upload images for this ongoing work'
+      end
     end
   end
 

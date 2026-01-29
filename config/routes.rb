@@ -95,10 +95,16 @@ Rails.application.routes.draw do
       resources :buildings do
         member do
           get :window_schedule_repairs
+          post :assign
+          post :unassign
         end
       end
 
-      resources :check_ins, only: [ :index, :show ]
+      resources :check_ins, only: [ :index, :show ] do
+        collection do
+          get :active
+        end
+      end
       resources :ongoing_works, only: [ :show, :update, :destroy ]
       resources :timesheets, only: [ :index ] do
         collection do
@@ -114,6 +120,8 @@ Rails.application.routes.draw do
           post :mark_all_read
         end
       end
+
+      resource :dashboard, only: [ :show ]
     end
   end
 end
