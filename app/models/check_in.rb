@@ -4,7 +4,7 @@ class CheckIn < ApplicationRecord
   belongs_to :user
   belongs_to :window_schedule_repair
 
-  enum action: { check_in: 0, check_out: 1 }
+  enum :action, check_in: 0, check_out: 1
 
   validates :action, presence: true
   validates :timestamp, presence: true
@@ -17,10 +17,22 @@ class CheckIn < ApplicationRecord
   scope :check_outs, -> { where(action: :check_out) }
   scope :recent, -> { order(timestamp: :desc) }
 
-  # Find active check-ins (check-in without corresponding check-out)
-  scope :active_for, lambda { |user, wrs|
-    check_ins
-      .where(user: user, window_schedule_repair: wrs)
-      .where.not(id: check_outs.where(user: user, window_schedule_repair: wrs).select(:id))
+  # Active = check-in row with no later check-out for same (user, wrs).
+  scope :active_for, lambda { |user, wrs = nil|
+    base = check_ins.where(user: user)
+    base = base.where(window_schedule_repair: wrs) if wrs.present?
+
+    base.where(
+      <<~SQL.squish,
+        NOT EXISTS (
+          SELECT 1 FROM check_ins AS ci2
+          WHERE ci2.user_id = check_ins.user_id
+          AND ci2.window_schedule_repair_id = check_ins.window_schedule_repair_id
+          AND ci2.action = ?
+          AND ci2.id > check_ins.id
+        )
+      SQL
+      actions['check_out']
+    )
   }
 end

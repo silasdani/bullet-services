@@ -2,8 +2,11 @@
 
 class Building < ApplicationRecord
   include SoftDeletable
+  include Geocodable
 
   has_many :window_schedule_repairs, dependent: :restrict_with_error
+  has_many :building_assignments, dependent: :destroy
+  has_many :assigned_users, through: :building_assignments, source: :user
 
   validates :name, presence: true
   validates :street, presence: true
@@ -38,9 +41,33 @@ class Building < ApplicationRecord
     parts.join(', ')
   end
 
+  # Distance calculation method
+  def distance_to(latitude, longitude)
+    return nil unless self.latitude && self.longitude
+
+    Location::DistanceCalculator.distance_in_meters(
+      self.latitude,
+      self.longitude,
+      latitude,
+      longitude
+    )
+  end
+
+  def within_radius?(latitude, longitude, radius_meters = 15)
+    return false unless self.latitude && self.longitude
+
+    Location::DistanceCalculator.within_radius?(
+      self.latitude,
+      self.longitude,
+      latitude,
+      longitude,
+      radius_meters
+    )
+  end
+
   # Ransack configuration for filtering
   def self.ransackable_attributes(_auth_object = nil)
-    %w[name street city country zipcode created_at updated_at deleted_at]
+    %w[name street city country zipcode created_at updated_at deleted_at latitude longitude]
   end
 
   def self.ransackable_associations(_auth_object = nil)
