@@ -9,6 +9,10 @@ class CheckInPolicy < ApplicationPolicy
     user.present? && (user.admin? || record.user == user)
   end
 
+  def active?
+    user.present?
+  end
+
   def check_in?
     user.present? && user.contractor?
   end
