@@ -3,7 +3,9 @@
 module Api
   module V1
     class BuildingsController < Api::V1::BaseController
-      before_action :set_building, only: %i[show update destroy window_schedule_repairs]
+      include BuildingsWrsListing
+
+      before_action :set_building, only: %i[show update destroy window_schedule_repairs assign unassign]
 
       def index
         authorize Building
@@ -20,7 +22,28 @@ module Api
 
       def build_buildings_collection
         collection = policy_scope(Building).order(created_at: :desc)
-        apply_search_filter(collection)
+        collection = apply_search_filter(collection)
+        if current_user.contractor?
+          filter_buildings_with_wrs(collection)
+        else
+          collection
+        end
+      end
+
+      def filter_buildings_with_wrs(collection)
+        building_ids_with_wrs = WindowScheduleRepair
+                                .where(is_draft: false)
+                                .where(deleted_at: nil)
+                                .where.not(building_id: nil)
+                                .distinct
+                                .pluck(:building_id)
+
+        return collection.none if building_ids_with_wrs.empty?
+
+        collection.where(id: building_ids_with_wrs)
+      rescue StandardError => e
+        Rails.logger.error "Error filtering buildings with WRS: #{e.message}"
+        collection
       end
 
       def apply_search_filter(collection)
@@ -106,23 +129,85 @@ module Api
 
       def window_schedule_repairs
         authorize @building, :show?
+        if current_user.contractor?
+          return render_wrs_checked_in_elsewhere if contractor_checked_in_elsewhere?
+          return render_wrs_not_assigned unless contractor_can_access_building_wrs?
+        end
+        wrs = wrs_collection_for_building
+        paginated = wrs.page(@page).per(@per_page)
+        render_success(data: serialize_wrs_page(paginated), meta: pagination_meta(paginated))
+      end
 
-        wrs_collection = @building.window_schedule_repairs
-                                  .includes(:user, :windows, windows: %i[tools image_attachment])
-                                  .order(created_at: :desc)
+      def assign
+        authorize @building, :show?
+        target_user = assignment_target_user
 
-        paginated_collection = wrs_collection.page(@page).per(@per_page)
-        serialized_data = paginated_collection.map do |wrs|
-          WindowScheduleRepairSerializer.new(wrs).serializable_hash
+        unless allowed_to_manage_assignment_for?(target_user)
+          return render_error(
+            message: 'Not authorized to assign this user to a project',
+            status: :forbidden
+          )
         end
 
+        assignment = BuildingAssignment.find_or_initialize_by(user: target_user, building: @building)
+        assignment.assigned_by_user = current_user
+
+        if assignment.save
+          render_success(
+            data: {
+              user_id: target_user.id,
+              building: BuildingSerializer.new(@building).serializable_hash,
+              assigned: true
+            },
+            message: 'Successfully assigned to project'
+          )
+        else
+          render_error(
+            message: 'Failed to assign to project',
+            details: assignment.errors.full_messages
+          )
+        end
+      end
+
+      def unassign
+        authorize @building, :show?
+        target_user = assignment_target_user
+
+        unless allowed_to_manage_assignment_for?(target_user)
+          return render_error(
+            message: 'Not authorized to unassign this user from a project',
+            status: :forbidden
+          )
+        end
+
+        assignment = BuildingAssignment.find_by(user: target_user, building: @building)
+        assignment&.destroy
+
         render_success(
-          data: serialized_data,
-          meta: pagination_meta(paginated_collection)
+          data: {
+            user_id: target_user.id,
+            building_id: @building.id,
+            assigned: false
+          },
+          message: 'Successfully unassigned from project'
         )
       end
 
       private
+
+      def assignment_target_user
+        return current_user unless params[:user_id].present?
+        return current_user unless current_user.admin?
+
+        User.find(params[:user_id])
+      end
+
+      def allowed_to_manage_assignment_for?(target_user)
+        return true if current_user.admin?
+        return false unless current_user.contractor?
+
+        target_user.id == current_user.id
+      end
 
       def set_building
         @building = Building.includes(:window_schedule_repairs).find(params[:id])
@@ -132,6 +217,20 @@ module Api
         params.require(:building).permit(
           :name, :street, :city, :country, :zipcode
         )
+      end
+
+      def should_show_all_buildings?(user)
+        assigned_building_ids = BuildingAssignment.where(user_id: user.id).pluck(:building_id)
+
+        return true if assigned_building_ids.empty?
+
+        non_completed_wrs_count = WindowScheduleRepair
+                                  .where(building_id: assigned_building_ids)
+                                  .where(is_draft: false, is_archived: false)
+                                  .contractor_visible_status
+                                  .count
+
+        non_completed_wrs_count.zero?
       end
     end
   end

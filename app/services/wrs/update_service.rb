@@ -7,12 +7,15 @@ module Wrs
 
     def call
       result = with_error_handling do
-        with_transaction do
-          return nil unless update_wrs?
+        transaction_result = with_transaction do
+          next nil unless update_wrs?
 
           update_associated_windows
           calculate_totals
         end
+
+        # If transaction failed (returned nil), return nil from the block
+        next nil if transaction_result.nil?
 
         # trigger_webflow_sync if success?  # Disabled - manual sync only via API
         success_result

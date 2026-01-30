@@ -27,6 +27,14 @@ class UserPolicy < ApplicationPolicy
     user.present?
   end
 
+  def block?
+    user.is_admin?
+  end
+
+  def unblock?
+    user.is_admin?
+  end
+
   class Scope < Scope
     def resolve
       if user.is_admin?

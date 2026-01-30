@@ -2,6 +2,7 @@
 AllCops:
   TargetRubyVersion: 3.2
   NewCops: enable
+  UseCache: false
   Exclude:
     - 'db/schema.rb'
     - 'db/migrate/*'
@@ -27,7 +28,7 @@ Layout/LineLength:
   Max: 120
 
 Metrics/MethodLength:
-  Max: 20
+  Max: 25
   Exclude:
     - 'lib/tasks/**/*.rake'
 

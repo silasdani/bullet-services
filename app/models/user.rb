@@ -14,10 +14,15 @@ class User < ApplicationRecord
 
   enum :role, client: 0, contractor: 1, admin: 2, surveyor: 3
 
+  has_many :building_assignments, dependent: :destroy
+  has_many :assigned_buildings, through: :building_assignments, source: :building
   has_many :window_schedule_repairs, dependent: :restrict_with_error
   has_many :windows, through: :window_schedule_repairs
+  has_many :check_ins, dependent: :destroy
+  has_many :ongoing_works, dependent: :destroy
+  has_many :notifications, dependent: :destroy
 
-  after_initialize :set_default_role, if: :new_record?
+  before_validation :set_default_role, on: :create
   after_create :set_confirmed
   before_save :sync_uid_with_email
 
@@ -58,18 +63,27 @@ class User < ApplicationRecord
   def set_confirmed
     self.confirmed_at = Time.current
     save(validate: false)
-  rescue StandardError => e
-    Rails.logger.error("Failed to set confirmed_at for user #{id}: #{e.message}")
+  end
+
+  def blocked?
+    blocked == true
+  end
+
+  def block!
+    update!(blocked: true)
+  end
+
+  def unblock!
+    update!(blocked: false)
   end
 
   private
 
   def set_default_role
-    self.role ||= :client
+    self.role = :contractor if role.nil? || role == 'client' || role.zero?
   end
 
   def sync_uid_with_email
-    # For email-based authentication, UID should match the email
     return unless email.present? && (uid.blank? || uid != email)
 
     self.uid = email

@@ -35,3 +35,6 @@
 /config/credentials/production.key
 
 /config/credentials/test.key
+
+# Firebase service account (sensitive)
+/config/firebase-service-account.json

@@ -12,6 +12,9 @@ class WindowScheduleRepair < ApplicationRecord
   has_many :windows, dependent: :destroy
   has_many :tools, through: :windows
   has_many :invoices, dependent: :nullify
+  has_many :check_ins, dependent: :destroy
+  has_many :ongoing_works, dependent: :destroy
+  has_many :notifications, dependent: :destroy
   has_many_attached :images
 
   accepts_nested_attributes_for :windows, allow_destroy: true, reject_if: :all_blank
@@ -36,6 +39,9 @@ class WindowScheduleRepair < ApplicationRecord
   scope :draft, -> { where(is_draft: true) }
   scope :archived, -> { where(is_archived: true) }
 
+  # WRS visible to contractors: pending, approved, rejected (excludes completed).
+  scope :contractor_visible_status, -> { where(status: statuses.values_at(:pending, :approved, :rejected)) }
+
   # Return first S3 image URL if mirrored, otherwise fallback to Webflow URL stored
   def main_image_url
     if images.attached? && images.first.present?
@@ -50,11 +56,11 @@ class WindowScheduleRepair < ApplicationRecord
 
   # Webflow status methods
   def published?
-    !is_draft && !is_archived && webflow_item_id.present?
+    !is_draft && !is_archived && (webflow_item_id.present? || last_published.present?)
   end
 
   def draft?
-    is_draft || webflow_item_id.blank?
+    is_draft || (webflow_item_id.blank? && last_published.blank?)
   end
 
   def archived?
@@ -68,6 +74,7 @@ class WindowScheduleRepair < ApplicationRecord
       last_published: Time.current
     )
   end
+  alias publish! mark_as_published!
 
   def mark_as_draft!
     update!(
@@ -83,19 +90,6 @@ class WindowScheduleRepair < ApplicationRecord
       is_draft: false,
       last_published: nil
     )
-  end
-
-  def status_color
-    case status
-    when 'approved'
-      '#00FF00' # Green for approved
-    when 'rejected'
-      '#FF0000' # Red for rejected
-    when 'completed'
-      '#0000FF' # Blue for completed
-    else
-      '#FFA500' # Default orange for pending
-    end
   end
 
   # Override WebflowSyncable method to include draft logic

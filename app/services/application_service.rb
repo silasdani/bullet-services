@@ -53,11 +53,10 @@ class ApplicationService
 
   def with_error_handling
     yield
-    self
   rescue StandardError => e
     log_error("Unexpected error: #{e.message}")
     add_error(e.message)
-    self
+    nil
   end
 
   def with_transaction(&)

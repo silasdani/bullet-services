@@ -4,28 +4,44 @@ module Api
   module V1
     class WindowScheduleRepairsController < Api::V1::BaseController
       include WebflowPublishing
+      include WrsCheckInCheckOut
 
       before_action :set_window_schedule_repair,
-                    only: %i[show update restore publish_to_webflow unpublish_from_webflow send_to_webflow]
+                    only: %i[show update restore publish_to_webflow unpublish_from_webflow send_to_webflow check_in
+                             check_out]
 
       def index
         authorize WindowScheduleRepair
 
-        paginated_collection = build_wrs_collection.page(@page).per(@per_page)
-        serialized_data = serialize_wrs_collection(paginated_collection)
+        begin
+          collection = build_wrs_collection
 
-        render_success(
-          data: serialized_data,
-          meta: pagination_meta(paginated_collection)
-        )
+          paginated_collection = collection.page(@page).per(@per_page)
+          serialized_data = serialize_wrs_collection(paginated_collection)
+
+          render_success(
+            data: serialized_data,
+            meta: pagination_meta(paginated_collection)
+          )
+        rescue StandardError => e
+          Rails.logger.error "Error in WRS index action: #{e.message}"
+          Rails.logger.error e.backtrace.first(10).join("\n")
+          render_error(message: 'Failed to load WRS list', status: :internal_server_error)
+        end
       end
 
       def show
+        return unless @window_schedule_repair
+
         authorize @window_schedule_repair
 
         render_success(
-          data: WindowScheduleRepairSerializer.new(@window_schedule_repair).serializable_hash
+          data: WindowScheduleRepairSerializer.new(@window_schedule_repair, scope: current_user).serializable_hash
         )
+      rescue StandardError => e
+        Rails.logger.error "Error in WRS show action: #{e.message}"
+        Rails.logger.error e.backtrace.first(10).join("\n")
+        render_error(message: 'Failed to load WRS details', status: :internal_server_error)
       end
 
       def create
@@ -40,7 +56,7 @@ module Api
 
         if result[:success]
           render_success(
-            data: WindowScheduleRepairSerializer.new(result[:wrs]).serializable_hash,
+            data: WindowScheduleRepairSerializer.new(result[:wrs], scope: current_user).serializable_hash,
             message: 'WRS created successfully',
             status: :created
           )
@@ -64,7 +80,7 @@ module Api
 
         if result[:success]
           render_success(
-            data: WindowScheduleRepairSerializer.new(result[:wrs]).serializable_hash,
+            data: WindowScheduleRepairSerializer.new(result[:wrs], scope: current_user).serializable_hash,
             message: 'WRS updated successfully'
           )
         else
@@ -99,38 +115,82 @@ module Api
         @window_schedule_repair.restore!
 
         render_success(
-          data: WindowScheduleRepairSerializer.new(@window_schedule_repair).serializable_hash,
+          data: WindowScheduleRepairSerializer.new(@window_schedule_repair, scope: current_user).serializable_hash,
           message: 'WRS restored successfully'
         )
+      end
+
+      def check_in
+        authorize @window_schedule_repair, :show?
+        authorize CheckIn, :check_in?
+        service = build_check_in_service
+        service.call
+        if service.success?
+          render_check_in_success(service)
+        else
+          render_error(message: 'Failed to check in',
+                       details: service.errors)
+        end
+      end
+
+      def check_out
+        authorize @window_schedule_repair, :show?
+        authorize CheckIn, :check_out?
+        service = build_check_out_service
+        service.call
+        if service.success?
+          render_check_out_success(service)
+        else
+          render_error(message: 'Failed to check out',
+                       details: service.errors)
+        end
       end
 
       private
 
       def build_wrs_collection
+        # Policy scope is applied first to ensure contractors only see published WRS
         collection = policy_scope(WindowScheduleRepair)
                      .includes(:user, :building, :windows, windows: %i[tools image_attachment])
+                     .order(created_at: :desc)
+
+        # Apply Ransack filters if present (but policy scope restrictions remain)
         collection = collection.ransack(params[:q]).result if params[:q].present?
+
         collection
       end
 
       def serialize_wrs_collection(collection)
         collection.map do |wrs|
-          WindowScheduleRepairSerializer.new(wrs).serializable_hash
+          WindowScheduleRepairSerializer.new(wrs, scope: current_user).serializable_hash
+        rescue StandardError => e
+          Rails.logger.error "Error serializing WRS #{wrs.id}: #{e.message}"
+          Rails.logger.error e.backtrace.first(5).join("\n")
+          # Return minimal data instead of failing completely
+          {
+            id: wrs.id,
+            name: wrs.name,
+            error: 'Failed to load full details'
+          }
         end
       end
 
       def set_window_schedule_repair
-        # For restore action, we need to find deleted records too
-        if action_name == 'restore'
-          @window_schedule_repair = WindowScheduleRepair.with_deleted
-                                                        .includes(:user, :building, :windows,
-                                                                  windows: %i[tools image_attachment])
-                                                        .find(params[:id])
-        else
-          @window_schedule_repair = WindowScheduleRepair.includes(:user, :building, :windows,
-                                                                  windows: %i[tools image_attachment])
-                                                        .find(params[:id])
-        end
+        @window_schedule_repair = find_wrs_for_action
+        nil
+      rescue ActiveRecord::RecordNotFound
+        render_error(message: 'WRS not found', status: :not_found)
+        nil
+      rescue StandardError => e
+        Rails.logger.error "Error loading WRS: #{e.message}"
+        Rails.logger.error e.backtrace.first(10).join("\n")
+        render_error(message: 'Failed to load WRS', status: :internal_server_error)
+        nil
+      end
+
+      def find_wrs_for_action
+        base = action_name == 'restore' ? WindowScheduleRepair.with_deleted : WindowScheduleRepair
+        base.includes(:user, :building, :windows, windows: %i[tools image_attachment]).find(params[:id])
       end
 
       def window_schedule_repair_params
