@@ -17,6 +17,21 @@ class WebsiteController < ApplicationController
     # About page
   end
 
+<<<<<<< Updated upstream
+=======
+  def services
+    # Services page
+  end
+
+  def terms
+    # Site-wide Terms and Conditions (footer, general use)
+  end
+
+  def wrs_terms
+    # WRS-specific contract terms (accept/decline repairs)
+  end
+
+>>>>>>> Stashed changes
   def wrs_show
     load_wrs
     return unless @wrs
