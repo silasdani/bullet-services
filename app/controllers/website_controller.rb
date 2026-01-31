@@ -17,8 +17,6 @@ class WebsiteController < ApplicationController
     # About page
   end
 
-<<<<<<< Updated upstream
-=======
   def services
     # Services page
   end
@@ -31,7 +29,6 @@ class WebsiteController < ApplicationController
     # WRS-specific contract terms (accept/decline repairs)
   end
 
->>>>>>> Stashed changes
   def wrs_show
     load_wrs
     return unless @wrs
