@@ -1,10 +1,6 @@
-# production:
-#   periodic_cleanup:
-#     class: CleanSoftDeletedRecordsJob
-#     queue: background
-#     args: [ 1000, { batch_size: 500 } ]
-#     schedule: every hour
-#   periodic_command:
-#     command: "SoftDeletedRecord.due.delete_all"
-#     priority: 2
-#     schedule: at 5am every day
+# Recurring jobs (used when ACTIVE_JOB_ADAPTER=solid_queue).
+# Permanently deletes users who were soft-deleted 30+ days ago.
+production:
+  cleanup_deleted_users:
+    class: CleanupDeletedUsersJob
+    schedule: "0 2 * * *"  # 2am daily (cron: min hour day month dow)

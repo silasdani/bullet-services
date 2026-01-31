@@ -77,6 +77,13 @@ class User < ApplicationRecord
     update!(blocked: false)
   end
 
+  # Users soft-deleted at least this long ago are eligible for permanent deletion
+  PERMANENT_DELETION_GRACE_DAYS = 30
+
+  scope :pending_permanent_deletion, lambda {
+    deleted.where('deleted_at < ?', PERMANENT_DELETION_GRACE_DAYS.days.ago)
+  }
+
   private
 
   def set_default_role
