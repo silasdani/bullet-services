@@ -409,12 +409,7 @@
                       <%= f.check_box :accept_terms, class: "mt-0.5 w-4 h-4 text-[var(--color-accent-action)] border-[var(--color-border-divider)] rounded focus:ring-[var(--color-accent-action)] cursor-pointer" %>
                       <span>
                         I have read and accept the
-                        <a href="https://www.bulletservices.co.uk/terms-and-conditions"
-                   target="_blank"
-                   rel="noopener"
-                   class="font-semibold text-[var(--color-accent-action)] underline hover:no-underline">
-                          Terms and Conditions
-                        </a>
+                        <%= link_to "Terms and Conditions", wrs_terms_path, target: "_blank", rel: "noopener", class: "font-semibold text-[var(--color-accent-action)] underline hover:no-underline" %>
                       </span>
                     </label>
                   </div>

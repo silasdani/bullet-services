@@ -22,7 +22,11 @@ class WebsiteController < ApplicationController
   end
 
   def terms
-    # Terms and Conditions page
+    # Site-wide Terms and Conditions (footer, general use)
+  end
+
+  def wrs_terms
+    # WRS-specific contract terms (accept/decline repairs)
   end
 
   def wrs_show

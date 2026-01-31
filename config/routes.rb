@@ -5,6 +5,7 @@ Rails.application.routes.draw do
   get "/about", to: "website#about", as: :about
   get "/services", to: "website#services", as: :services
   get "/terms", to: "website#terms", as: :terms
+  get "/terms/wrs", to: "website#wrs_terms", as: :wrs_terms
   post "/contact", to: "website#contact_submit", as: :contact_submit
   get "/wrs/:slug", to: "website#wrs_show", as: :wrs_show
   post "/wrs/:slug/decision", to: "website#wrs_decision", as: :wrs_decision
