@@ -2,7 +2,7 @@
 
 module Notifications
   class AdminFcmNotificationService < ApplicationService
-    ADMIN_EMAIL = 'mm@bulletservices.co.uk'
+    ADMIN_EMAIL = Rails.env.development? ? 'admin@bullet.co.uk' : 'mm@bulletservices.co.uk'
 
     attribute :window_schedule_repair
     attribute :notification_type

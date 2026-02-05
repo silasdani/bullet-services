@@ -155,8 +155,15 @@ module CheckIns
         contractor_name: user.name || user.email,
         check_out_id: check_out.id,
         hours_worked: hours_worked,
-        location: check_out.address || "#{latitude}, #{longitude}"
+        location: build_location_string
       }
+    end
+
+    def build_location_string
+      return check_out.address if check_out.address.present?
+      return "#{latitude}, #{longitude}" if latitude.present? && longitude.present?
+
+      nil
     end
   end
 end
