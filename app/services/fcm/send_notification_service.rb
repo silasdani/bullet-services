@@ -50,6 +50,10 @@ module Fcm
 
     def send_fcm_request(access_token)
       url = "https://fcm.googleapis.com/v1/projects/#{CredentialsService.project_id}/messages:send"
+      payload = build_payload
+      request_body = { message: payload }
+
+      log_debug("Sending FCM request to user #{user.id} (#{user.email}): #{request_body.to_json}")
 
       response = HTTParty.post(
         url,
@@ -57,7 +61,7 @@ module Fcm
           'Authorization' => "Bearer #{access_token}",
           'Content-Type' => 'application/json'
         },
-        body: { message: build_payload }.to_json,
+        body: request_body.to_json,
         timeout: 10
       )
 
@@ -65,10 +69,13 @@ module Fcm
     end
 
     def build_payload
+      # Ensure all data values are strings (FCM requirement)
+      transformed_data = data.transform_keys(&:to_s).transform_values(&:to_s)
+      
       {
         token: user.fcm_token,
         notification: { title: title, body: body },
-        data: data.transform_keys(&:to_s),
+        data: transformed_data,
         android: { priority: 'high' },
         apns: {
           headers: { 'apns-priority' => '10' },
@@ -82,14 +89,30 @@ module Fcm
 
       case response.code
       when 400
+        error_details = parse_error_response(response)
+        log_error("FCM 400 error for user #{user.id}: #{error_details}")
         add_error('Invalid FCM request')
       when 401, 403
+        error_details = parse_error_response(response)
+        log_error("FCM auth error #{response.code} for user #{user.id}: #{error_details}")
         add_error('FCM authentication failed')
       when 404
         handle_invalid_token(response)
       else
-        log_error("FCM error #{response.code}")
+        error_details = parse_error_response(response)
+        log_error("FCM error #{response.code} for user #{user.id}: #{error_details}")
         add_error('FCM service error')
+      end
+    end
+
+    def parse_error_response(response)
+      begin
+        parsed = response.parsed_response
+        error_message = parsed.dig('error', 'message')
+        error_code = parsed.dig('error', 'details', 0, 'errorCode')
+        "Message: #{error_message}, Code: #{error_code}, Full response: #{parsed.inspect}"
+      rescue StandardError => e
+        "Could not parse error response: #{e.message}, Raw body: #{response.body}"
       end
     end
 
