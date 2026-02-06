@@ -105,14 +105,17 @@ module CheckIns
 
     def create_notification
       if user.contractor?
-        Notifications::AdminFcmNotificationService.new(
+        log_info("Creating check-in notification for contractor: #{user.email}")
+        result = Notifications::AdminFcmNotificationService.new(
           window_schedule_repair: window_schedule_repair,
           notification_type: :check_in,
           title: 'Contractor Check-in',
           message: build_check_in_message,
           metadata: build_check_in_metadata
         ).call
+        log_error("Failed to send check-in notification: #{result.errors.join(', ')}") if result.failure?
       else
+        log_info("Creating check-in notification for non-contractor: #{user.email}")
         Notifications::AdminNotificationService.new(
           window_schedule_repair: window_schedule_repair,
           notification_type: :check_in,
@@ -121,6 +124,10 @@ module CheckIns
           metadata: build_check_in_metadata
         ).call
       end
+    rescue StandardError => e
+      log_error("Exception creating check-in notification: #{e.message}")
+      log_error(e.backtrace.join("\n")) if e.backtrace
+      # Don't fail the check-in if notification fails
     end
 
     def build_check_in_message

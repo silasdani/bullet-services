@@ -13,18 +13,26 @@ module Notifications
     attribute :notification_type
     attribute :title
     attribute :message
-    attribute :metadata
+    attribute :metadata, default: -> { {} }
 
     def call
       return self if validate_attributes.failure?
 
       admins = find_admins
-      return self if admins.empty?
+      if admins.empty?
+        log_warn("No admins found with emails: #{ADMIN_EMAILS.join(', ')}")
+        return self
+      end
 
+      log_info("Found #{admins.count} admin(s) to notify")
       admins.each do |admin|
-        next unless admin.fcm_token.present?
-
-        send_fcm_notification(admin)
+        if admin.fcm_token.present?
+          log_info("Sending FCM notification to admin: #{admin.email}")
+          result = send_fcm_notification(admin)
+          log_error("Failed to send FCM notification to #{admin.email}: #{result.errors.join(', ')}") if result.failure?
+        else
+          log_warn("Admin #{admin.email} has no FCM token, skipping notification")
+        end
       end
       self
     end
@@ -49,6 +57,11 @@ module Notifications
         body: message || title,
         data: build_push_data
       ).call
+    rescue StandardError => e
+      log_error("Exception sending FCM notification to #{admin.email}: #{e.message}")
+      log_error(e.backtrace.join("\n")) if e.backtrace
+      add_error("Failed to send notification to #{admin.email}")
+      self
     end
 
     def build_push_data
@@ -57,7 +70,7 @@ module Notifications
       }
 
       data[:window_schedule_repair_id] = window_schedule_repair.id.to_s if window_schedule_repair
-      data.merge(metadata.transform_keys(&:to_s))
+      data.merge((metadata || {}).transform_keys(&:to_s))
     end
   end
 end
