@@ -2,7 +2,12 @@
 
 module Notifications
   class AdminFcmNotificationService < ApplicationService
-    ADMIN_EMAIL = Rails.env.development? ? 'admin@bullet.co.uk' : 'mm@bulletservices.co.uk'
+    ADMIN_EMAILS = if Rails.env.development?
+                     ['admin@bullet.co.uk']
+                   else
+                     ['mm@bulletservices.co.uk',
+                      'danielsilas32@gmail.com']
+                   end
 
     attribute :window_schedule_repair
     attribute :notification_type
@@ -13,11 +18,14 @@ module Notifications
     def call
       return self if validate_attributes.failure?
 
-      admin = find_admin
-      return self unless admin
-      return self unless admin.fcm_token.present?
+      admins = find_admins
+      return self if admins.empty?
 
-      send_fcm_notification(admin)
+      admins.each do |admin|
+        next unless admin.fcm_token.present?
+
+        send_fcm_notification(admin)
+      end
       self
     end
 
@@ -30,8 +38,8 @@ module Notifications
       self
     end
 
-    def find_admin
-      User.find_by(email: ADMIN_EMAIL)
+    def find_admins
+      User.where(email: ADMIN_EMAILS)
     end
 
     def send_fcm_notification(admin)
