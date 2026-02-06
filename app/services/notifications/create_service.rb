@@ -66,7 +66,7 @@ module Notifications
       }
 
       data[:window_schedule_repair_id] = window_schedule_repair.id.to_s if window_schedule_repair
-      data.merge(metadata.transform_keys(&:to_s))
+      data.merge(metadata.transform_keys(&:to_s).transform_values(&:to_s))
     end
   end
 end
