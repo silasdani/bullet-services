@@ -12,17 +12,17 @@ class Avo::Fields::InvoiceStatusBadgeField::ShowComponent < Avo::Fields::ShowCom
   end
 
   def badge_class
-    return 'bg-gray-100 text-gray-800' unless invoice
+    return 'bg-gray-500 text-white' unless invoice
 
     case status.downcase
     when 'paid'
-      'bg-green-100 text-green-800'
+      'bg-emerald-500 text-white'
     when 'sent', 'viewed'
-      'bg-blue-100 text-blue-800'
+      'bg-blue-500 text-white'
     when 'voided'
-      'bg-red-100 text-red-800'
+      'bg-red-500 text-white'
     else
-      'bg-gray-100 text-gray-800' # draft and unknown
+      'bg-gray-500 text-white' # draft and unknown
     end
   end
 end

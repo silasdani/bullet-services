@@ -12,7 +12,7 @@ module Avo
       def fields
         field :id, as: :id, link_to_resource: true
         field :name, as: :select, options: lambda {
-          Tool.common_tool_names.index_by(&:itself)
+          ::Tool.common_tool_names.index_by(&:itself)
         }, required: true, filterable: true, html: {
           data: {
             controller: 'tool-price'

@@ -13,7 +13,7 @@ module Avo
         field :id, as: :id, link_to_resource: true
         field :user, as: :belongs_to, required: true, filterable: true
         field :window_schedule_repair, as: :belongs_to, required: true, filterable: true
-        field :action, as: :select, enum: CheckIn.actions, required: true, filterable: true
+        field :action, as: :select, enum: ::CheckIn.actions, required: true, filterable: true
         field :timestamp, as: :date_time, required: true, sortable: true, filterable: true
         field :address, as: :text, hide_on: [:index]
         field :latitude, as: :number, hide_on: [:index]

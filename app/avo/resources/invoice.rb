@@ -19,7 +19,7 @@ module Avo
         field :id, as: :id, link_to_resource: true
         field :name, as: :text, required: true, filterable: true
         field :slug, as: :text, readonly: true, hide_on: [:index]
-        field :status_badge, as: :invoice_status_badge_field, only_on: %i[index show], name: 'Status'
+        field :status_badge, as: :invoice_status_badge, only_on: %i[index show], name: 'Status'
         field :final_status, as: :select,
                              options: STATUS_OPTIONS, required: true, filterable: true, hide_on: %i[index show]
         field :status, as: :select,
