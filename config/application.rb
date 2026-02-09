@@ -21,8 +21,10 @@ module BulletServices
     # Please, add to the `ignore` list any other `lib` subdirectories that do
     # not contain `.rb` files, or that should not be reloaded or eager loaded.
     # Common ones are `templates`, `generators`, or `middleware`, for example.
-    # rails_admin is ignored because it contains explicitly required files
-    config.autoload_lib(ignore: %w[assets tasks rails_admin])
+    # rails_admin is ignored because it contains explicitly required files.
+    # avo is ignored because lib/avo contains stub files (cards_stub, dashboards_stub) that are
+    # required explicitly above and do not define the constants Zeitwerk would expect from their paths.
+    config.autoload_lib(ignore: %w[assets tasks rails_admin avo])
     config.action_mailer.deliver_later_queue_name = "mailers"
 
     # Set global default URL options for all environments
