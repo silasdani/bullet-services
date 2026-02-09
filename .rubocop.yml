@@ -52,3 +52,6 @@ Style/StringLiterals:
 
 Style/FrozenStringLiteralComment:
   Enabled: true
+
+Style/ClassAndModuleChildren:
+  Enabled: false
