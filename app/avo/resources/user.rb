@@ -14,7 +14,7 @@ module Avo
         field :name, as: :text, filterable: true
         field :email, as: :text, required: true, filterable: true
         field :role_badge, as: :role_badge_field, only_on: %i[index show], name: 'Role'
-        field :role, as: :select, enum: User.roles, required: true, filterable: true, hide_on: %i[index show]
+        field :role, as: :select, enum: ::User.roles, required: true, filterable: true, hide_on: %i[index show]
         field :blocked, as: :boolean, filterable: true
         field :image, as: :file, is_image: true, hide_on: [:index]
         field :fcm_token, as: :text, hide_on: %i[index show]
