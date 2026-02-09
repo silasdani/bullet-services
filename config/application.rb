@@ -3,6 +3,9 @@ require "rails/all"
 
 Bundler.require(*Rails.groups)
 
+# Define Avo::Cards::MetricCard when Avo Pro (dashboards) is not installed
+require File.expand_path("../lib/avo/cards_stub", __dir__)
+
 module BulletServices
   class Application < Rails::Application
     # Configure allowed hosts from environment variables

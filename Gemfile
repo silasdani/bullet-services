@@ -89,3 +89,4 @@ gem 'ruby-progressbar'
 # Error tracking with Better Stack (Sentry-compatible)
 gem 'sentry-rails'
 gem 'sentry-ruby'
+gem 'stackprof' # Profiler used by Sentry
