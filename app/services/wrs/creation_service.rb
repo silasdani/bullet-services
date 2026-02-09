@@ -67,7 +67,9 @@ module Wrs
     end
 
     def attach_window_image(window, image)
-      window.image.attach(image) if image.present?
+      return unless image.present?
+
+      window.images.attach(image)
     end
 
     def save_window(window)

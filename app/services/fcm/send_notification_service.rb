@@ -71,7 +71,7 @@ module Fcm
     def build_payload
       # Ensure all data values are strings (FCM requirement)
       transformed_data = data.transform_keys(&:to_s).transform_values(&:to_s)
-      
+
       {
         token: user.fcm_token,
         notification: { title: title, body: body },
@@ -84,6 +84,7 @@ module Fcm
       }
     end
 
+    # rubocop:disable Metrics/AbcSize
     def handle_response(response)
       return log_info("FCM sent to user #{user.id}") if response.success?
 
@@ -104,16 +105,15 @@ module Fcm
         add_error('FCM service error')
       end
     end
+    # rubocop:enable Metrics/AbcSize
 
     def parse_error_response(response)
-      begin
-        parsed = response.parsed_response
-        error_message = parsed.dig('error', 'message')
-        error_code = parsed.dig('error', 'details', 0, 'errorCode')
-        "Message: #{error_message}, Code: #{error_code}, Full response: #{parsed.inspect}"
-      rescue StandardError => e
-        "Could not parse error response: #{e.message}, Raw body: #{response.body}"
-      end
+      parsed = response.parsed_response
+      error_message = parsed.dig('error', 'message')
+      error_code = parsed.dig('error', 'details', 0, 'errorCode')
+      "Message: #{error_message}, Code: #{error_code}, Full response: #{parsed.inspect}"
+    rescue StandardError => e
+      "Could not parse error response: #{e.message}, Raw body: #{response.body}"
     end
 
     def handle_invalid_token(response)

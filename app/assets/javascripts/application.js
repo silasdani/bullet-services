@@ -18,6 +18,10 @@
 //= require rails_admin_mobile_tables
 // Load auto-dismiss alerts
 //= require alerts
+// Load tool price controller for Avo
+//= require tool_price_controller
+// Load theme toggle controller for Avo dark mode
+//= require theme_toggle_controller
 //= require_self
 
 // Modern ES6+ code can be added below

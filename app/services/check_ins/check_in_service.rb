@@ -103,6 +103,7 @@ module CheckIns
       self
     end
 
+    # rubocop:disable Metrics/AbcSize
     def create_notification
       if user.contractor?
         log_info("Creating check-in notification for contractor: #{user.email}")
@@ -129,6 +130,7 @@ module CheckIns
       log_error(e.backtrace.join("\n")) if e.backtrace
       # Don't fail the check-in if notification fails
     end
+    # rubocop:enable Metrics/AbcSize
 
     def build_check_in_message
       "#{user.name || user.email} checked in at #{window_schedule_repair.name}"

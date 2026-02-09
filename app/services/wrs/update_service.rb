@@ -83,7 +83,9 @@ module Wrs
     end
 
     def attach_window_image_if_provided(window, image)
-      window.image.attach(image) if image.present?
+      return unless image.present?
+
+      window.images.attach(image)
     end
 
     def update_window_fields?(window, window_attrs)

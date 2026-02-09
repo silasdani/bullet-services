@@ -1,0 +1,32 @@
+/* Shared admin theme: .dark on html driven by avo-theme (localStorage). Used by admin login + Avo. */
+html.dark {
+  --admin-bg: #121212;
+  --admin-surface: #1E1E1E;
+  --admin-surface-alt: #18181B;
+  --admin-surface-hover: #27272A;
+  --admin-border: #2A2A2A;
+  --admin-border-strong: #27272A;
+  --admin-text: #E5E7EB;
+  --admin-text-muted: #9CA3AF;
+  --admin-input-bg: #1E1E1E;
+  --admin-input-border: #333333;
+  --admin-link: #60A5FA;
+  --admin-link-hover: #93C5FD;
+  --admin-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+html:not(.dark) {
+  --admin-bg: #F9FAFB;
+  --admin-surface: #FFFFFF;
+  --admin-surface-alt: #F9FAFB;
+  --admin-surface-hover: #F3F4F6;
+  --admin-border: #E5E7EB;
+  --admin-border-strong: #E5E7EB;
+  --admin-text: #111827;
+  --admin-text-muted: #6B7280;
+  --admin-input-bg: #FFFFFF;
+  --admin-input-border: #D1D5DB;
+  --admin-link: #2563EB;
+  --admin-link-hover: #1D4ED8;
+  --admin-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+}

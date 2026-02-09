@@ -1,0 +1,26 @@
+# frozen_string_literal: true
+
+module Avo
+  module Resources
+    class CheckIn < Avo::BaseResource
+      self.title = :id
+      self.includes = %i[user window_schedule_repair]
+      self.search = {
+        query: -> { query.ransack(id_eq: params[:q], address_cont: params[:q], m: 'or').result(distinct: false) }
+      }
+
+      def fields
+        field :id, as: :id, link_to_resource: true
+        field :user, as: :belongs_to, required: true, filterable: true
+        field :window_schedule_repair, as: :belongs_to, required: true, filterable: true
+        field :action, as: :select, enum: CheckIn.actions, required: true, filterable: true
+        field :timestamp, as: :date_time, required: true, sortable: true, filterable: true
+        field :address, as: :text, hide_on: [:index]
+        field :latitude, as: :number, hide_on: [:index]
+        field :longitude, as: :number, hide_on: [:index]
+        field :created_at, as: :date_time, readonly: true, sortable: true
+        field :updated_at, as: :date_time, readonly: true, sortable: true
+      end
+    end
+  end
+end

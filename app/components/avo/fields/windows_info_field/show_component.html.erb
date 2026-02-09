@@ -1,0 +1,71 @@
+<% ongoing_work = @resource&.record %>
+<% if ongoing_work %>
+<% wrs = ongoing_work.window_schedule_repair %>
+<% windows = wrs&.windows&.order(:created_at) || [] %>
+
+<% if windows.any? %>
+  <div class="mb-4 p-3 bg-blue-50 border-l-4 border-blue-500 rounded">
+    <div class="font-semibold text-gray-800 mb-2">Windows in this WRS:</div>
+    <% windows.each_with_index do |window, index| %>
+      <div class="ml-4 mb-1 text-sm text-gray-700">
+        Window <%= index + 1 %>: <%= window.location %>
+      </div>
+    <% end %>
+  </div>
+<% end %>
+
+<% if ongoing_work.images.attached? %>
+  <div class="space-y-4">
+    <% ongoing_work.images.each_with_index do |image, index| %>
+      <% blob = image.blob %>
+      <% metadata = blob.metadata.is_a?(Hash) ? blob.metadata : {} %>
+      <% window_id = metadata['window_id'] %>
+      
+      <% window_info = if windows.any?
+        if window_id.present?
+          window = windows.find { |w| w.id.to_s == window_id.to_s }
+          if window
+            window_number = windows.index(window) + 1
+            "Window #{window_number}: #{window.location}"
+          end
+        else
+          filename_match = image.filename.to_s.match(/window[_-]?(\d+)/i)
+          if filename_match
+            window_num = filename_match[1].to_i
+            window = windows[window_num - 1] if window_num > 0 && window_num <= windows.length
+            if window
+              "Window #{window_num}: #{window.location}"
+            end
+          end
+        end
+      end %>
+      
+      <div class="border-2 border-gray-200 rounded-lg p-2 bg-white">
+        <a href="<%= image.url %>" target="_blank" rel="noopener" class="block">
+          <img src="<%= image.url %>" 
+               alt="<%= image.filename %>" 
+               class="max-w-xs max-h-xs border border-gray-300 rounded cursor-pointer shadow-sm hover:shadow-md transition-shadow" />
+        </a>
+        <div class="mt-2 p-2 bg-gray-50 rounded">
+          <% if window_info %>
+            <div class="font-semibold text-blue-600 text-sm mb-1">
+              <%= window_info %>
+            </div>
+          <% else %>
+            <div class="font-semibold text-gray-500 text-sm mb-1 italic">
+              Window: Not specified
+            </div>
+          <% end %>
+          <div class="text-xs text-gray-500 break-all">
+            <%= image.filename %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% else %>
+  <span class="text-gray-400 italic">No images attached</span>
+<% end %>
+<% else %>
+  <span class="text-gray-400 italic">No record</span>
+<% end %>

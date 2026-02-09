@@ -10,9 +10,6 @@ Rails.application.routes.draw do
   get "/wrs/:slug", to: "website#wrs_show", as: :wrs_show
   post "/wrs/:slug/decision", to: "website#wrs_decision", as: :wrs_decision
 
-  # Admin panel (authentication handled in RailsAdmin initializer)
-  mount RailsAdmin::Engine => "/admin", as: "rails_admin"
-
   # HTML Devise routes for admin/superadmin browser login (keep default helpers like new_user_session_path)
   devise_for :users, controllers: {
     sessions: "users/sessions",
@@ -20,6 +17,12 @@ Rails.application.routes.draw do
     confirmations: "users/confirmations",
     unlocks: "users/unlocks"
   }
+
+  # Admin panel - Avo (mounted after Devise routes to ensure route helpers are available)
+  # Custom dashboard route must be before the mount so /avo/dashboard is handled by the app
+  get "#{Avo.configuration.root_path}/dashboard", to: "avo/dashboard#index", as: :avo_dashboard
+
+  mount Avo::Engine, at: Avo.configuration.root_path
 
   # Redirect accidental GETs on token auth sign-in to Devise HTML sign-in
   devise_scope :user do

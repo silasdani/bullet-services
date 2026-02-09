@@ -1,0 +1,9 @@
+<% ongoing_work = @resource&.record %>
+<% count = ongoing_work&.images&.count || 0 %>
+<% if count > 0 %>
+  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+    <%= count %> <%= 'image'.pluralize(count) %>
+  </span>
+<% else %>
+  <span class="text-gray-400 italic text-sm">No images</span>
+<% end %>

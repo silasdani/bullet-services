@@ -1,21 +1,20 @@
 # frozen_string_literal: true
 
-# Ignore this file from Zeitwerk autoloading since it's explicitly required
-# and doesn't follow Zeitwerk naming conventions
-Rails.autoloaders.main.ignore(Rails.root.join('lib/rails_admin/invoice_lifecycle.rb'))
-Rails.autoloaders.main.ignore(Rails.root.join('lib/rails_admin/invoice_actions.rb'))
-Rails.autoloaders.main.ignore(Rails.root.join('lib/rails_admin/buildings_grid_action.rb'))
-Rails.autoloaders.main.ignore(Rails.root.join('lib/rails_admin/wrs_grid_action.rb'))
-Rails.autoloaders.main.ignore(Rails.root.join('lib/rails_admin/custom_dashboard_action.rb'))
+# Rails Admin disabled - migrating to Avo
+# Rails.autoloaders.main.ignore(Rails.root.join('lib/rails_admin/invoice_lifecycle.rb'))
+# Rails.autoloaders.main.ignore(Rails.root.join('lib/rails_admin/invoice_actions.rb'))
+# Rails.autoloaders.main.ignore(Rails.root.join('lib/rails_admin/buildings_grid_action.rb'))
+# Rails.autoloaders.main.ignore(Rails.root.join('lib/rails_admin/wrs_grid_action.rb'))
+# Rails.autoloaders.main.ignore(Rails.root.join('lib/rails_admin/custom_dashboard_action.rb'))
 
-# Load custom Rails Admin actions and lifecycle rules
-require Rails.root.join('lib/rails_admin/invoice_lifecycle')
-require Rails.root.join('lib/rails_admin/invoice_actions')
-require Rails.root.join('lib/rails_admin/buildings_grid_action')
-require Rails.root.join('lib/rails_admin/wrs_grid_action')
-require Rails.root.join('lib/rails_admin/custom_dashboard_action')
+# require Rails.root.join('lib/rails_admin/invoice_lifecycle')
+# require Rails.root.join('lib/rails_admin/invoice_actions')
+# require Rails.root.join('lib/rails_admin/buildings_grid_action')
+# require Rails.root.join('lib/rails_admin/wrs_grid_action')
+# require Rails.root.join('lib/rails_admin/custom_dashboard_action')
 
-RailsAdmin.config do |config|
+# RailsAdmin.config do |config|
+if false
   # Explicitly set asset_source for RailsAdmin 3.x to silence warnings
   config.asset_source = :sprockets
 
@@ -1332,137 +1331,399 @@ RailsAdmin.config do |config|
     navigation_label 'Management'
     weight 4
 
-    # Optimize queries by eager loading associations
-    scope { OngoingWork.includes(:window_schedule_repair, :user).order(work_date: :desc, created_at: :desc) }
+    scope { OngoingWork.includes(window_schedule_repair: :building, user: []).order(work_date: :desc, created_at: :desc) }
 
     list do
+      filters [:work_date, :window_schedule_repair, :user, :created_at]
+
+      sort_by :work_date
+      sort_by :created_at
+      sort_by :window_schedule_repair_id
       field :id
+
+      field :work_date do
+        label 'Date'
+        formatted_value do
+          if value
+            days_ago = (Date.current - value.to_date).to_i
+            date_str = value.strftime('%d %b %Y')
+            if days_ago == 0
+              bindings[:view].content_tag(:span, "#{date_str} (Today)", style: 'color: #28a745; font-weight: 500;')
+            elsif days_ago == 1
+              bindings[:view].content_tag(:span, "#{date_str} (Yesterday)", style: 'color: #ffc107;')
+            elsif days_ago <= 7
+              bindings[:view].content_tag(:span, "#{date_str} (#{days_ago}d ago)", style: 'color: #17a2b8;')
+            else
+              date_str
+            end
+          else
+            '-'
+          end
+        end
+      end
+
       field :window_schedule_repair do
         label 'WRS'
         pretty_value do
           wrs = bindings[:object].window_schedule_repair
           if wrs
-            bindings[:view].link_to(
+            building = wrs.building
+            building_info = building ? "#{building.name}, #{building.city}" : ''
+            status_badge = case wrs.status
+            when 'approved'
+              bindings[:view].content_tag(:span, 'Approved', class: 'badge bg-success', style: 'font-size: 0.7rem; margin-left: 5px;')
+            when 'pending'
+              bindings[:view].content_tag(:span, 'Pending', class: 'badge bg-warning', style: 'font-size: 0.7rem; margin-left: 5px;')
+            when 'completed'
+              bindings[:view].content_tag(:span, 'Completed', class: 'badge bg-info', style: 'font-size: 0.7rem; margin-left: 5px;')
+            when 'rejected'
+              bindings[:view].content_tag(:span, 'Rejected', class: 'badge bg-danger', style: 'font-size: 0.7rem; margin-left: 5px;')
+            else
+              ''
+            end
+
+            html = ActiveSupport::SafeBuffer.new
+            html << bindings[:view].link_to(
               "#{wrs.name} (#{wrs.reference_number})",
-              bindings[:view].rails_admin.show_path(model_name: 'window_schedule_repair', id: wrs.id)
+              bindings[:view].rails_admin.show_path(model_name: 'window_schedule_repair', id: wrs.id),
+              style: 'font-weight: 500;'
             )
+            html << status_badge if status_badge.present?
+            html << bindings[:view].content_tag(:div, building_info, style: 'font-size: 0.85rem; color: #666; margin-top: 2px;') if building_info.present?
+            html
           else
             '-'
           end
         end
       end
+
       field :user do
+        label 'Contractor'
         pretty_value do
           user = bindings[:object].user
           if user
-            user.name || user.email
+            role_badge = if user.contractor?
+              bindings[:view].content_tag(:span, 'Contractor', class: 'badge bg-primary', style: 'font-size: 0.7rem; margin-left: 5px;')
+            else
+              ''
+            end
+
+            html = ActiveSupport::SafeBuffer.new
+            html << (user.name || user.email)
+            html << role_badge if role_badge.present?
+            html
           else
             '-'
           end
         end
       end
+
       field :description do
         pretty_value do
           if value.present?
-            value.length > 50 ? "#{value[0..50]}..." : value
+            truncated = value.length > 80 ? "#{value[0..80]}..." : value
+            bindings[:view].content_tag(:div, truncated, style: 'max-width: 300px; word-wrap: break-word;')
           else
-            bindings[:view].content_tag(:span, 'No description', class: 'text-muted')
+            bindings[:view].content_tag(:span, 'No description', class: 'text-muted', style: 'font-style: italic;')
           end
         end
       end
-      field :work_date do
-        formatted_value do
-          value ? value.strftime('%d %b %Y') : '-'
-        end
-      end
-      field :images_count do
+
+      field :images do
         label 'Images'
         pretty_value do
-          count = bindings[:object].images.count
+          ongoing_work = bindings[:object]
+          count = ongoing_work.images.count
           if count > 0
-            bindings[:view].content_tag(:span, count.to_s, class: 'badge bg-info')
+            bindings[:view].content_tag(:span, "#{count} #{'image'.pluralize(count)}", class: 'badge bg-info', style: 'cursor: pointer;')
           else
-            bindings[:view].content_tag(:span, '0', class: 'badge bg-secondary')
+            bindings[:view].content_tag(:span, 'No images', class: 'badge bg-secondary')
           end
         end
       end
-      field :created_at do
+
+      field :active_check_in do
+        label 'Status'
         formatted_value do
-          value ? value.strftime('%d %b %Y %H:%M') : '-'
+          ongoing_work = bindings[:object]
+          wrs = ongoing_work.window_schedule_repair
+          user = ongoing_work.user
+
+          if wrs && user
+            active_check_in = CheckIn.active_for(user, wrs).first
+            if active_check_in
+              time_ago = ActionController::Base.helpers.time_ago_in_words(active_check_in.timestamp)
+              bindings[:view].content_tag(:span, "Checked in #{time_ago}", class: 'badge bg-success', style: 'font-size: 0.75rem;')
+            else
+              bindings[:view].content_tag(:span, 'Not checked in', class: 'badge bg-secondary', style: 'font-size: 0.75rem;')
+            end
+          else
+            '-'
+          end
+        end
+      end
+
+      field :created_at do
+        label 'Created'
+        formatted_value do
+          if value
+            time_ago = ActionController::Base.helpers.time_ago_in_words(value)
+            "#{value.strftime('%d %b %Y %H:%M')} (#{time_ago})"
+          else
+            '-'
+          end
         end
       end
     end
 
     show do
       field :id
+
+      field :work_date do
+        label 'Work Date'
+        formatted_value do
+          if value
+            days_ago = (Date.current - value.to_date).to_i
+            date_str = value.strftime('%A, %d %B %Y')
+            time_info = if days_ago == 0
+              bindings[:view].content_tag(:span, ' (Today)', style: 'color: #28a745; font-weight: 500;')
+            elsif days_ago == 1
+              bindings[:view].content_tag(:span, ' (Yesterday)', style: 'color: #ffc107;')
+            elsif days_ago <= 7
+              bindings[:view].content_tag(:span, " (#{days_ago} days ago)", style: 'color: #17a2b8;')
+            else
+              ''
+            end
+            html = ActiveSupport::SafeBuffer.new
+            html << date_str
+            html << time_info if time_info.present?
+            html
+          else
+            '-'
+          end
+        end
+      end
+
       field :window_schedule_repair do
-        label 'WRS'
+        label 'Window Schedule Repair'
         pretty_value do
           wrs = bindings[:object].window_schedule_repair
           if wrs
-            bindings[:view].link_to(
-              "#{wrs.name} (#{wrs.reference_number})",
-              bindings[:view].rails_admin.show_path(model_name: 'window_schedule_repair', id: wrs.id)
-            )
+            building = wrs.building
+            html = ActiveSupport::SafeBuffer.new
+
+            html << bindings[:view].content_tag(:div, style: 'margin-bottom: 10px;') do
+              bindings[:view].link_to(
+                "#{wrs.name} (#{wrs.reference_number})",
+                bindings[:view].rails_admin.show_path(model_name: 'window_schedule_repair', id: wrs.id),
+                style: 'font-size: 1.1rem; font-weight: 600; text-decoration: none;'
+              )
+            end
+
+            if building
+              html << bindings[:view].content_tag(:div, style: 'margin-bottom: 5px;') do
+                bindings[:view].link_to(
+                  "#{building.name}, #{building.city}",
+                  bindings[:view].rails_admin.show_path(model_name: 'building', id: building.id),
+                  style: 'color: #666; text-decoration: none;'
+                )
+              end
+            end
+
+            status_badge = case wrs.status
+            when 'approved'
+              bindings[:view].content_tag(:span, 'Approved', class: 'badge bg-success')
+            when 'pending'
+              bindings[:view].content_tag(:span, 'Pending', class: 'badge bg-warning')
+            when 'completed'
+              bindings[:view].content_tag(:span, 'Completed', class: 'badge bg-info')
+            when 'rejected'
+              bindings[:view].content_tag(:span, 'Rejected', class: 'badge bg-danger')
+            else
+              ''
+            end
+            html << status_badge if status_badge.present?
+
+            html
           else
             '-'
           end
         end
       end
+
       field :user do
+        label 'Contractor'
         pretty_value do
           user = bindings[:object].user
           if user
-            "#{user.name || user.email} (#{user.role})"
+            html = ActiveSupport::SafeBuffer.new
+            html << bindings[:view].content_tag(:div, style: 'margin-bottom: 5px;') do
+              bindings[:view].content_tag(:strong, user.name || user.email)
+            end
+            html << bindings[:view].content_tag(:div, style: 'color: #666; font-size: 0.9rem;') do
+              "Email: #{user.email}"
+            end
+            html << bindings[:view].content_tag(:div, style: 'margin-top: 5px;') do
+              bindings[:view].content_tag(:span, user.role.humanize, class: 'badge bg-primary')
+            end
+            html
           else
             '-'
           end
         end
       end
-      field :description do
-        pretty_value do
-          if value.present?
-            bindings[:view].content_tag(:div, value, style: 'white-space: pre-wrap; word-wrap: break-word;')
+
+      field :check_in_status do
+        label 'Check-in Status'
+        formatted_value do
+          ongoing_work = bindings[:object]
+          wrs = ongoing_work.window_schedule_repair
+          user = ongoing_work.user
+
+          if wrs && user
+            active_check_in = CheckIn.active_for(user, wrs).first
+            if active_check_in
+              time_ago = ActionController::Base.helpers.time_ago_in_words(active_check_in.timestamp)
+              html = ActiveSupport::SafeBuffer.new
+              html << bindings[:view].content_tag(:span, 'Currently Checked In', class: 'badge bg-success', style: 'font-size: 0.9rem; margin-bottom: 5px; display: inline-block;')
+              html << bindings[:view].content_tag(:div, style: 'margin-top: 5px; color: #666;') do
+                "Checked in #{time_ago} (#{active_check_in.timestamp.strftime('%d %b %Y at %H:%M')})"
+              end
+              if active_check_in.address.present?
+                html << bindings[:view].content_tag(:div, style: 'margin-top: 5px; color: #666; font-size: 0.9rem;') do
+                  "Location: #{active_check_in.address}"
+                end
+              end
+              html
+            else
+              bindings[:view].content_tag(:span, 'Not Currently Checked In', class: 'badge bg-secondary')
+            end
           else
-            bindings[:view].content_tag(:span, 'No description', class: 'text-muted')
+            '-'
           end
         end
       end
-      field :work_date do
-        formatted_value do
-          value ? value.strftime('%d %b %Y %H:%M') : '-'
+
+      field :description do
+        pretty_value do
+          if value.present?
+            bindings[:view].content_tag(:div, value, style: 'word-wrap: break-word; padding: 10px; background-color: #f8f9fa; border-radius: 4px; border-left: 3px solid #007bff;')
+          else
+            bindings[:view].content_tag(:span, 'No description provided', class: 'text-muted', style: 'font-style: italic;')
+          end
         end
       end
+
       field :images do
         pretty_value do
           ongoing_work = bindings[:object]
+          wrs = ongoing_work.window_schedule_repair
+
           if ongoing_work.images.attached?
+            windows = wrs&.windows&.order(:created_at) || []
+
             html = ActiveSupport::SafeBuffer.new
+            html << bindings[:view].content_tag(:div, style: 'margin-bottom: 15px;') do
+              bindings[:view].content_tag(:strong, "#{ongoing_work.images.count} #{'image'.pluralize(ongoing_work.images.count)} attached")
+            end
+
+            if windows.any?
+              html << bindings[:view].content_tag(:div, style: 'margin-bottom: 15px; padding: 10px; background-color: #f8f9fa; border-radius: 4px; border-left: 3px solid #007bff;') do
+                html_content = bindings[:view].content_tag(:div, style: 'font-weight: 600; margin-bottom: 8px; color: #333;') do
+                  'Windows in this WRS:'
+                end
+                windows.each_with_index do |window, index|
+                  window_number = index + 1
+                  html_content << bindings[:view].content_tag(:div, style: 'margin-left: 10px; margin-bottom: 5px; font-size: 0.9rem;') do
+                    "Window #{window_number}: #{window.location}"
+                  end
+                end
+                html_content
+              end
+            end
+
             html << bindings[:view].content_tag(:div, class: 'images-gallery', style: 'display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px;') do
-              ongoing_work.images.map do |image|
+              ongoing_work.images.map.with_index do |image, index|
                 image_url = image.url
-                bindings[:view].content_tag(:div, style: 'position: relative;') do
-                  bindings[:view].link_to(image_url, target: '_blank') do
+                blob = image.blob
+                metadata = blob.metadata.is_a?(Hash) ? blob.metadata : {}
+                window_id = metadata['window_id']
+
+                window_info = if windows.any?
+                  if window_id.present?
+                    window = windows.find { |w| w.id.to_s == window_id.to_s }
+                    if window
+                      window_number = windows.index(window) + 1
+                      "Window #{window_number}: #{window.location}"
+                    end
+                  else
+                    filename_match = image.filename.to_s.match(/window[_-]?(\d+)/i)
+                    if filename_match
+                      window_num = filename_match[1].to_i
+                      window = windows[window_num - 1] if window_num > 0 && window_num <= windows.length
+                      if window
+                        "Window #{window_num}: #{window.location}"
+                      end
+                    end
+                  end
+                end
+
+                bindings[:view].content_tag(:div, style: 'position: relative; border: 2px solid #e0e0e0; border-radius: 6px; padding: 8px; background-color: #fff;') do
+                  bindings[:view].link_to(image_url, target: '_blank', rel: 'noopener') do
                     bindings[:view].tag(:img,
                       src: image_url,
-                      style: 'max-width: 300px; max-height: 300px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;',
+                      style: 'max-width: 300px; max-height: 300px; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: block;',
                       alt: image.filename.to_s
                     )
                   end +
-                  bindings[:view].content_tag(:div, style: 'margin-top: 5px; font-size: 0.875rem; color: #666;') do
-                    image.filename.to_s
+                  bindings[:view].content_tag(:div, style: 'margin-top: 8px; padding: 5px; background-color: #f8f9fa; border-radius: 3px;') do
+                    window_label = if window_info
+                      bindings[:view].content_tag(:div, style: 'font-weight: 600; color: #007bff; margin-bottom: 3px; font-size: 0.85rem;') do
+                        window_info
+                      end
+                    else
+                      bindings[:view].content_tag(:div, style: 'font-weight: 600; color: #666; margin-bottom: 3px; font-size: 0.85rem; font-style: italic;') do
+                        'Window: Not specified'
+                      end
+                    end
+
+                    filename_div = bindings[:view].content_tag(:div, style: 'font-size: 0.75rem; color: #999; word-break: break-all;') do
+                      image.filename.to_s
+                    end
+
+                    window_label + filename_div
                   end
                 end
               end.join.html_safe
             end
             html
           else
-            bindings[:view].content_tag(:span, 'No images attached', class: 'text-muted')
+            bindings[:view].content_tag(:span, 'No images attached', class: 'text-muted', style: 'font-style: italic;')
           end
         end
       end
-      field :created_at
-      field :updated_at
+
+      field :created_at do
+        formatted_value do
+          if value
+            time_ago = ActionController::Base.helpers.time_ago_in_words(value)
+            "#{value.strftime('%A, %d %B %Y at %H:%M')} (#{time_ago})"
+          else
+            '-'
+          end
+        end
+      end
+
+      field :updated_at do
+        formatted_value do
+          if value
+            time_ago = ActionController::Base.helpers.time_ago_in_words(value)
+            "#{value.strftime('%A, %d %B %Y at %H:%M')} (#{time_ago})"
+          else
+            '-'
+          end
+        end
+      end
     end
 
     edit do
@@ -1504,5 +1765,4 @@ RailsAdmin.config do |config|
       end
     end
   end
-
 end

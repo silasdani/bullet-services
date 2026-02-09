@@ -18,7 +18,7 @@ class ApplicationService
   end
 
   def success?
-    errors.empty?
+    (@errors || []).empty?
   end
 
   def failure?
@@ -26,11 +26,13 @@ class ApplicationService
   end
 
   def add_error(message)
-    errors << message
+    @errors ||= []
+    @errors << message
   end
 
   def add_errors(error_messages)
-    errors.concat(Array(error_messages))
+    @errors ||= []
+    @errors.concat(Array(error_messages))
   end
 
   def log_info(message)

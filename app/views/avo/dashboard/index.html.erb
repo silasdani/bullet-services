@@ -1,0 +1,45 @@
+<div class="flex flex-col space-y-8">
+  <%= render Avo::PanelComponent.new(name: "Dashboard", description: "Overview of users, WRS, and invoices") do |c| %>
+    <% c.with_body do %>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
+        <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm">
+          <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Users</p>
+          <p class="mt-1 text-2xl font-semibold text-gray-900 dark:text-white"><%= @metrics[:users_count] %></p>
+          <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Total number of users</p>
+        </div>
+        <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm">
+          <p class="text-sm font-medium text-gray-500 dark:text-gray-400">WRS</p>
+          <p class="mt-1 text-2xl font-semibold text-gray-900 dark:text-white"><%= @metrics[:wrs_count] %></p>
+          <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Window Schedule Repairs</p>
+        </div>
+        <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm">
+          <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Ongoing works</p>
+          <p class="mt-1 text-2xl font-semibold text-gray-900 dark:text-white"><%= @metrics[:ongoing_works_count] %></p>
+          <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">Active ongoing works</p>
+        </div>
+      </div>
+
+      <div class="px-6 pt-2 pb-4">
+        <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Invoices</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm">
+            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Outstanding invoices</p>
+            <p class="mt-1 text-2xl font-semibold text-gray-900 dark:text-white"><%= @metrics[:outstanding_invoices_count] %></p>
+          </div>
+          <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm">
+            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Outstanding amount</p>
+            <p class="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">£<%= number_with_delimiter(@metrics[:outstanding_amount]) %></p>
+          </div>
+          <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm">
+            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Overdue invoices</p>
+            <p class="mt-1 text-2xl font-semibold text-gray-900 dark:text-white"><%= @metrics[:overdue_invoices_count] %></p>
+          </div>
+          <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm">
+            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Overdue amount</p>
+            <p class="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">£<%= number_with_delimiter(@metrics[:overdue_amount]) %></p>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  <% end %>
+</div>

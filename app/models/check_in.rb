@@ -35,4 +35,12 @@ class CheckIn < ApplicationRecord
       actions['check_out']
     )
   }
+
+  def self.ransackable_attributes(_auth_object = nil)
+    %w[action timestamp latitude longitude address user_id window_schedule_repair_id created_at updated_at]
+  end
+
+  def self.ransackable_associations(_auth_object = nil)
+    %w[user window_schedule_repair]
+  end
 end

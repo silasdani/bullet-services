@@ -5,8 +5,10 @@ class WindowSerializer < ActiveModel::Serializer
              :location,
              :created_at,
              :updated_at,
-             :image,                # backwards-compatible field    # stored Webflow URL fallback
+             :image,                # backwards-compatible field (first image)
+             :images,               # array of all image URLs
              :effective_image_url,  # preferred URL (ActiveStorage if present, else Webflow)
+             :effective_image_urls, # array of all effective image URLs
              :image_name
 
   # Hide prices for contractors, but allow tools (needed for work descriptions)
@@ -34,9 +36,14 @@ class WindowSerializer < ActiveModel::Serializer
     end
   end
 
-  # Backwards-compatible: return the effective image URL
+  # Backwards-compatible: return the effective image URL (first image)
   def image
     safe_call { object.effective_image_url }
+  end
+
+  # Return array of all image URLs
+  def images
+    safe_call { object.image_urls }
   end
 
   def image_url
@@ -49,6 +56,10 @@ class WindowSerializer < ActiveModel::Serializer
 
   def effective_image_url
     safe_call { object.effective_image_url }
+  end
+
+  def effective_image_urls
+    safe_call { object.effective_image_urls }
   end
 
   def image_name

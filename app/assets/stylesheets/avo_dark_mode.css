@@ -1,0 +1,862 @@
+/* Avo theme – uses admin_theme_variables.css (load first). .dark on html = dark mode. */
+html {
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Header logo: light theme = colored logo, dark theme = white logo */
+.logo-placeholder .avo-logo-light {
+  display: block;
+}
+.logo-placeholder .avo-logo-dark {
+  display: none;
+}
+html.dark .logo-placeholder .avo-logo-light {
+  display: none;
+}
+html.dark .logo-placeholder .avo-logo-dark {
+  display: block;
+}
+
+.avo-theme-toggle-wrap {
+  margin-left: auto;
+}
+
+.dark .bg-application {
+  background-color: var(--admin-bg);
+}
+
+.dark body {
+  background-color: var(--admin-bg);
+  color: var(--admin-text);
+}
+
+.dark .bg-sidebar {
+  background-color: var(--admin-surface-alt) !important;
+  border-color: var(--admin-border-strong) !important;
+}
+
+.dark .bg-white,
+.dark .bg-gray-100 {
+  background-color: var(--admin-surface) !important;
+}
+
+.dark .bg-gray-50 {
+  background-color: var(--admin-bg) !important;
+}
+
+.dark .bg-gray-200 {
+  background-color: var(--admin-border) !important;
+}
+
+.dark .border-gray-200 {
+  border-color: var(--admin-border) !important;
+}
+
+.dark .border-gray-300 {
+  border-color: var(--admin-input-border) !important;
+}
+
+.dark .text-gray-900 {
+  color: #FFFFFF;
+}
+
+.dark .text-gray-800 {
+  color: var(--admin-text);
+}
+
+.dark .text-gray-700 {
+  color: var(--admin-text);
+}
+
+.dark .text-gray-600,
+.dark .text-gray-500 {
+  color: var(--admin-text-muted);
+}
+
+.dark input[type="text"],
+.dark input[type="email"],
+.dark input[type="password"],
+.dark input[type="number"],
+.dark input[type="search"],
+.dark input[type="tel"],
+.dark input[type="url"],
+.dark textarea,
+.dark select,
+.dark input[type="search"],
+.dark [type="search"],
+.dark .search-input,
+.dark [class*="search"] input,
+.dark .form-input,
+.dark .form-control,
+.dark .input,
+.dark .field-input,
+.dark [class*="input"],
+.dark [class*="field"] input,
+.dark [class*="form"] input,
+.dark .aa-Input {
+  background-color: var(--admin-input-bg) !important;
+  border-color: var(--admin-input-border) !important;
+  color: var(--admin-text) !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder,
+.dark .aa-Input::placeholder {
+  color: var(--admin-text-muted) !important;
+}
+
+.dark input:hover,
+.dark textarea:hover,
+.dark select:hover,
+.dark input[type="search"]:hover,
+.dark .form-input:hover,
+.dark .form-control:hover,
+.dark .input:hover {
+  background-color: var(--admin-surface-hover) !important;
+  border-color: #404040 !important;
+}
+
+.dark input:focus,
+.dark textarea:focus,
+.dark select:focus,
+.dark input[type="search"]:focus,
+.dark .form-input:focus,
+.dark .form-control:focus,
+.dark .input:focus,
+.dark .aa-Input:focus {
+  background-color: var(--admin-input-bg) !important;
+  border-color: #3B82F6 !important;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.dark input:disabled,
+.dark textarea:disabled,
+.dark select:disabled {
+  background-color: var(--admin-input-bg) !important;
+  border-color: var(--admin-border) !important;
+  color: var(--admin-text-muted) !important;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dark table {
+  color: var(--admin-text) !important;
+  background-color: var(--admin-surface) !important;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.dark thead,
+.dark thead th,
+.dark th {
+  background-color: var(--admin-surface-hover) !important;
+  color: #FFFFFF !important;
+  font-weight: 600 !important;
+  border-bottom: 2px solid #404040 !important;
+  text-align: left !important;
+  border-radius: 0 !important;
+}
+.dark th .rounded,
+.dark th .rounded-lg,
+.dark th input[type="checkbox"] {
+  border-radius: 0 !important;
+}
+
+.dark tbody,
+.dark tbody td,
+.dark td,
+.dark tbody tr,
+.dark tr {
+  background-color: var(--admin-surface) !important;
+  color: var(--admin-text) !important;
+  border-color: var(--admin-border) !important;
+}
+.dark tbody td,
+.dark td {
+  border-bottom: 1px solid var(--admin-border) !important;
+  vertical-align: middle !important;
+}
+.dark tbody tr,
+.dark tr {
+  transition: background-color 0.15s ease !important;
+}
+
+.dark tbody tr:hover,
+.dark tr:hover,
+.dark tbody tr:hover td,
+.dark tr:hover td {
+  background-color: var(--admin-surface-hover) !important;
+  color: #FFFFFF !important;
+}
+
+.dark tbody td a,
+.dark td a {
+  color: var(--admin-link) !important;
+}
+.dark tbody td a:hover,
+.dark td a:hover {
+  color: var(--admin-link-hover) !important;
+}
+
+.dark table[border],
+.dark table.bordered,
+.dark table[border] th,
+.dark table.bordered th,
+.dark table[border] td,
+.dark table.bordered td {
+  border: 1px solid var(--admin-border) !important;
+}
+
+.dark tbody tr:nth-child(even),
+.dark tr:nth-child(even) {
+  background-color: var(--admin-surface) !important;
+}
+.dark tbody tr:nth-child(odd),
+.dark tr:nth-child(odd) {
+  background-color: var(--admin-surface-alt) !important;
+}
+
+.dark .table-responsive,
+.dark [class*="table-responsive"],
+.dark [class*="table-wrapper"] {
+  background-color: transparent !important;
+}
+
+.dark [class*="table"],
+.dark [class*="Table"],
+.dark [data-table],
+.dark [role="table"] {
+  color: var(--admin-text) !important;
+}
+.dark [class*="table"] th,
+.dark [class*="Table"] th {
+  color: #FFFFFF !important;
+  background-color: var(--admin-surface-hover) !important;
+}
+.dark [class*="table"] td,
+.dark [class*="Table"] td {
+  color: var(--admin-text) !important;
+  background-color: var(--admin-surface) !important;
+}
+
+.dark table p,
+.dark table span,
+.dark table div,
+.dark td p,
+.dark td span,
+.dark td div {
+  color: var(--admin-text) !important;
+}
+.dark table strong,
+.dark table b,
+.dark td strong,
+.dark td b {
+  color: #FFFFFF !important;
+  font-weight: 600;
+}
+.dark table small,
+.dark td small {
+  color: var(--admin-text-muted) !important;
+}
+.dark td .badge,
+.dark td [class*="badge"],
+.dark td [class*="label"] {
+  color: #FFFFFF !important;
+}
+.dark td:empty::before {
+  content: "\00a0";
+  color: transparent;
+}
+
+.dark a {
+  color: var(--admin-link) !important;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid transparent;
+}
+.dark a:hover {
+  color: var(--admin-link-hover) !important;
+  border-bottom-color: var(--admin-link-hover);
+}
+.dark a:focus {
+  color: var(--admin-link-hover) !important;
+  outline: 2px solid #3B82F6;
+  outline-offset: 2px;
+}
+.dark a:active {
+  color: #3B82F6 !important;
+}
+.dark a:visited {
+  color: #818CF8 !important;
+}
+.dark p a,
+.dark .content a,
+.dark [class*="content"] a {
+  color: var(--admin-link) !important;
+  border-bottom: 1px solid rgba(96, 165, 250, 0.3);
+}
+.dark p a:hover,
+.dark .content a:hover {
+  color: var(--admin-link-hover) !important;
+  border-bottom-color: var(--admin-link-hover);
+}
+.dark nav a,
+.dark .nav a,
+.dark [class*="nav"] a {
+  border-bottom: none !important;
+}
+.dark nav a:hover,
+.dark .nav a:hover {
+  border-bottom: none !important;
+}
+
+.dark .btn-primary,
+.dark .button-component.bg-primary-500,
+.dark a.button-component.bg-primary-500 {
+  background-color: #3B82F6 !important;
+  border-color: #3B82F6 !important;
+  color: #FFFFFF !important;
+  text-align: center !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+.dark .btn-primary:hover,
+.dark .button-component.bg-primary-500:hover,
+.dark a.button-component.bg-primary-500:hover {
+  background-color: #2563EB !important;
+  border-color: #2563EB !important;
+}
+.dark .btn-secondary {
+  background-color: var(--admin-surface) !important;
+  border-color: var(--admin-border) !important;
+  color: var(--admin-text) !important;
+  text-align: center !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+.dark .btn-secondary:hover {
+  background-color: var(--admin-surface-hover) !important;
+  border-color: var(--admin-input-border) !important;
+}
+.dark .button-component {
+  border-color: var(--admin-border) !important;
+  text-align: center !important;
+  justify-content: center !important;
+  align-items: center !important;
+}
+.dark .button-component:not(.bg-primary-500):not([class*="primary"]) {
+  background-color: var(--admin-surface) !important;
+  color: var(--admin-text) !important;
+}
+.dark .button-component:not(.bg-primary-500):not([class*="primary"]):hover {
+  background-color: var(--admin-surface-hover) !important;
+  border-color: var(--admin-input-border) !important;
+}
+
+.dark nav[aria-label="Pagination"],
+.dark [class*="pagination"],
+.dark [class*="Pagination"] {
+  background-color: transparent !important;
+}
+.dark nav[aria-label="Pagination"] a,
+.dark nav[aria-label="Pagination"] button,
+.dark nav[aria-label="Pagination"] span,
+.dark [class*="pagination"] a,
+.dark [class*="pagination"] button,
+.dark [class*="pagination"] span,
+.dark [class*="Pagination"] a,
+.dark [class*="Pagination"] button,
+.dark [class*="Pagination"] span,
+.dark .page-link,
+.dark .page-item a,
+.dark .page-item button {
+  background-color: var(--admin-surface) !important;
+  border-color: var(--admin-border) !important;
+  color: var(--admin-text) !important;
+}
+.dark nav[aria-label="Pagination"] a:hover,
+.dark nav[aria-label="Pagination"] button:hover,
+.dark [class*="pagination"] a:hover,
+.dark [class*="pagination"] button:hover,
+.dark [class*="Pagination"] a:hover,
+.dark [class*="Pagination"] button:hover,
+.dark .page-link:hover {
+  background-color: var(--admin-surface-hover) !important;
+  border-color: var(--admin-input-border) !important;
+  color: #FFFFFF !important;
+}
+.dark .page-item.active .page-link,
+.dark [class*="pagination"] a[aria-current="page"],
+.dark [class*="Pagination"] a[aria-current="page"] {
+  background-color: #3B82F6 !important;
+  border-color: #3B82F6 !important;
+  color: #FFFFFF !important;
+}
+
+.dark .badge {
+  color: var(--admin-text);
+  background-color: var(--admin-border);
+}
+
+.dark pre,
+.dark code {
+  background-color: var(--admin-surface);
+  color: var(--admin-text);
+  border-color: var(--admin-border);
+}
+
+.dark .modal,
+.dark .dialog,
+.dark [role="dialog"],
+.dark [class*="modal"],
+.dark [class*="dialog"] {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+}
+.dark .modal-content,
+.dark .dialog-content,
+.dark [class*="modal-content"],
+.dark [class*="dialog-content"],
+.dark .modal-body,
+.dark .dialog-body,
+.dark .modal-header,
+.dark .dialog-header,
+.dark .modal-footer,
+.dark .dialog-footer {
+  background-color: var(--admin-surface) !important;
+  border-color: var(--admin-border) !important;
+  color: var(--admin-text) !important;
+}
+.dark .modal-header,
+.dark .dialog-header {
+  border-bottom-color: var(--admin-border) !important;
+}
+.dark .modal-footer,
+.dark .dialog-footer {
+  border-top-color: var(--admin-border) !important;
+}
+.dark .modal-title,
+.dark .dialog-title {
+  color: #FFFFFF !important;
+}
+.dark .modal-close,
+.dark .dialog-close,
+.dark [class*="close"],
+.dark .btn-close {
+  color: var(--admin-text-muted) !important;
+  opacity: 0.7;
+}
+.dark .modal-close:hover,
+.dark .dialog-close:hover,
+.dark [class*="close"]:hover,
+.dark .btn-close:hover {
+  color: var(--admin-text) !important;
+  opacity: 1;
+  background-color: var(--admin-border) !important;
+}
+
+.dark .dropdown,
+.dark .dropdown-menu,
+.dark .select-menu,
+.dark [class*="dropdown"],
+.dark [class*="select-menu"],
+.dark [role="menu"],
+.dark [role="listbox"] {
+  background-color: var(--admin-surface) !important;
+  border-color: var(--admin-border) !important;
+}
+.dark .dropdown-item,
+.dark .select-option,
+.dark [role="menuitem"],
+.dark [role="option"],
+.dark [class*="dropdown-item"],
+.dark [class*="select-option"] {
+  background-color: var(--admin-surface) !important;
+  color: var(--admin-text) !important;
+}
+.dark .dropdown-item:hover,
+.dark .select-option:hover,
+.dark [role="menuitem"]:hover,
+.dark [role="option"]:hover {
+  background-color: var(--admin-surface-hover) !important;
+  color: #FFFFFF !important;
+}
+.dark .dropdown-item:active,
+.dark .select-option:active {
+  background-color: var(--admin-input-border) !important;
+}
+.dark .dropdown-item:focus {
+  background-color: var(--admin-surface-hover) !important;
+  outline: 2px solid #3B82F6;
+  outline-offset: -2px;
+}
+.dark .dropdown-divider,
+.dark .dropdown-separator {
+  border-color: var(--admin-border) !important;
+}
+.dark select option {
+  background-color: var(--admin-surface) !important;
+  color: var(--admin-text) !important;
+}
+
+.dark .tooltip,
+.dark .popover,
+.dark [role="tooltip"],
+.dark [class*="tooltip"],
+.dark [class*="popover"] {
+  background-color: var(--admin-border) !important;
+  border-color: var(--admin-input-border) !important;
+  color: var(--admin-text) !important;
+}
+
+.dark input[type="checkbox"],
+.dark input[type="radio"] {
+  background-color: var(--admin-input-bg) !important;
+  border-color: var(--admin-input-border) !important;
+}
+.dark input[type="checkbox"]:checked,
+.dark input[type="radio"]:checked {
+  background-color: #3B82F6 !important;
+  border-color: #3B82F6 !important;
+}
+.dark input[type="checkbox"]:hover,
+.dark input[type="radio"]:hover {
+  border-color: #404040 !important;
+}
+.dark input[type="checkbox"]:focus,
+.dark input[type="radio"]:focus {
+  border-color: #3B82F6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.dark input[type="file"] {
+  background-color: var(--admin-input-bg) !important;
+  border-color: var(--admin-input-border) !important;
+  color: var(--admin-text) !important;
+}
+.dark input[type="file"]:hover {
+  background-color: var(--admin-surface-hover) !important;
+  border-color: #404040 !important;
+}
+.dark input[type="file"]::file-selector-button {
+  background-color: var(--admin-border) !important;
+  border-color: var(--admin-input-border) !important;
+  color: var(--admin-text) !important;
+}
+.dark input[type="file"]::file-selector-button:hover {
+  background-color: var(--admin-input-border) !important;
+}
+
+.dark input[type="range"] {
+  background-color: var(--admin-border) !important;
+}
+.dark input[type="range"]::-webkit-slider-thumb,
+.dark input[type="range"]::-moz-range-thumb {
+  background-color: #3B82F6 !important;
+  border-color: var(--admin-border) !important;
+}
+
+.dark .autocomplete,
+.dark .search-suggestions,
+.dark [class*="autocomplete"],
+.dark [class*="suggestions"],
+.dark ul[role="listbox"] {
+  background-color: var(--admin-surface) !important;
+  border-color: var(--admin-border) !important;
+}
+.dark .autocomplete-item,
+.dark .suggestion-item,
+.dark [role="option"] {
+  background-color: var(--admin-surface) !important;
+  color: var(--admin-text) !important;
+}
+.dark .autocomplete-item:hover,
+.dark .suggestion-item:hover,
+.dark [role="option"]:hover {
+  background-color: var(--admin-surface-hover) !important;
+  color: #FFFFFF !important;
+}
+
+.dark label,
+.dark .form-label,
+.dark .field-label {
+  color: var(--admin-text) !important;
+}
+.dark .form-help,
+.dark .field-help,
+.dark .help-text {
+  color: var(--admin-text-muted) !important;
+}
+.dark .form-error,
+.dark .field-error,
+.dark .error-message {
+  color: #F87171 !important;
+  background-color: rgba(248, 113, 113, 0.1) !important;
+  border-color: rgba(248, 113, 113, 0.2) !important;
+}
+.dark .form-success,
+.dark .field-success {
+  color: #34D399 !important;
+  background-color: rgba(52, 211, 153, 0.1) !important;
+}
+
+.dark .datepicker,
+.dark .timepicker,
+.dark [class*="datepicker"],
+.dark [class*="timepicker"],
+.dark .flatpickr-calendar,
+.dark .datepicker-day,
+.dark .flatpickr-day {
+  background-color: var(--admin-surface) !important;
+  border-color: var(--admin-border) !important;
+  color: var(--admin-text) !important;
+}
+.dark .datepicker-day:hover,
+.dark .flatpickr-day:hover {
+  background-color: var(--admin-surface-hover) !important;
+}
+.dark .datepicker-day.selected,
+.dark .flatpickr-day.selected {
+  background-color: #3B82F6 !important;
+  color: #FFFFFF !important;
+}
+
+.dark .rich-text-editor,
+.dark [class*="editor"],
+.dark [contenteditable="true"] {
+  background-color: var(--admin-surface) !important;
+  border-color: var(--admin-input-border) !important;
+  color: var(--admin-text) !important;
+}
+.dark .rich-text-editor:focus,
+.dark [contenteditable="true"]:focus {
+  border-color: #3B82F6 !important;
+}
+
+.dark .tag,
+.dark .chip {
+  background-color: var(--admin-border) !important;
+  color: var(--admin-text) !important;
+  border-color: var(--admin-input-border) !important;
+}
+.dark .tag:hover,
+.dark .chip:hover {
+  background-color: var(--admin-input-border) !important;
+}
+
+.dark nav a:hover,
+.dark nav button:hover {
+  background-color: var(--admin-surface-hover) !important;
+}
+
+.dark .sidebar,
+.dark [class*="sidebar"],
+.dark [data-sidebar-target] {
+  background-color: var(--admin-surface-alt) !important;
+  border-right-color: var(--admin-border-strong) !important;
+}
+
+.dark .sidebar a,
+.dark .sidebar button,
+.dark [class*="sidebar"] a,
+.dark [class*="sidebar"] button,
+.dark [data-sidebar-target] a,
+.dark [data-sidebar-target] button,
+.dark [class*="Sidebar"] a,
+.dark [class*="sidebar-link"],
+.dark [class*="sidebar-item"],
+.dark [class*="SidebarLink"],
+.dark [class*="sidebar-link-component"] {
+  color: var(--admin-text) !important;
+  transition: all 0.2s ease !important;
+  text-decoration: none !important;
+  border-bottom: none !important;
+}
+
+.dark .sidebar a:hover,
+.dark .sidebar button:hover,
+.dark [class*="sidebar"] a:hover,
+.dark [class*="sidebar"] button:hover,
+.dark [data-sidebar-target] a:hover,
+.dark [data-sidebar-target] button:hover,
+.dark [class*="Sidebar"] a:hover,
+.dark [class*="sidebar-link"]:hover,
+.dark [class*="sidebar-item"]:hover,
+.dark [class*="SidebarLink"]:hover,
+.dark [class*="sidebar-link-component"]:hover {
+  background-color: var(--admin-surface-hover) !important;
+  color: #FFFFFF !important;
+}
+
+.dark .sidebar a.active,
+.dark .sidebar a[aria-current="page"],
+.dark [class*="sidebar"] a.active,
+.dark [class*="sidebar"] a[aria-current="page"],
+.dark [data-sidebar-target] a.active,
+.dark [data-sidebar-target] a[aria-current="page"],
+.dark [class*="Sidebar"] a.active,
+.dark [class*="sidebar-link"].active,
+.dark [class*="sidebar-item"].active,
+.dark [aria-current="page"],
+.dark [class*="SidebarLink"].active,
+.dark [class*="sidebar-link-component"].active {
+  background-color: #3B82F6 !important;
+  color: #FFFFFF !important;
+  font-weight: 500;
+}
+.dark .sidebar a.active:hover,
+.dark .sidebar a[aria-current="page"]:hover {
+  background-color: #2563EB !important;
+}
+
+.dark .sidebar svg,
+.dark .sidebar [class*="icon"],
+.dark [class*="sidebar"] svg {
+  color: #FFFFFF !important;
+}
+.dark .sidebar a:hover svg,
+.dark .sidebar a.active svg,
+.dark [class*="sidebar"] a:hover svg {
+  color: #FFFFFF !important;
+}
+
+.dark .sidebar h3,
+.dark .sidebar h4,
+.dark [class*="sidebar"] h3,
+.dark [class*="sidebar"] h4 {
+  color: var(--admin-text-muted) !important;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dark .sidebar hr,
+.dark .sidebar [class*="divider"],
+.dark [class*="sidebar"] hr {
+  border-color: var(--admin-border-strong) !important;
+}
+
+.dark .card,
+.dark .panel {
+  background-color: var(--admin-surface) !important;
+  border-color: var(--admin-border) !important;
+}
+.dark .card:hover,
+.dark .panel:hover {
+  background-color: var(--admin-surface-hover) !important;
+}
+
+.dark [data-controller="theme-toggle"] {
+  color: var(--admin-text-muted) !important;
+}
+.dark [data-controller="theme-toggle"]:hover {
+  background-color: var(--admin-border) !important;
+  color: var(--admin-text) !important;
+}
+
+.dark li:hover {
+  background-color: var(--admin-surface-hover) !important;
+}
+
+/* Algolia Autocomplete (Avo search) – full dark theme */
+.dark .aa-DetachedSearchButton {
+  background-color: var(--admin-surface) !important;
+  border-color: var(--admin-border) !important;
+  color: var(--admin-text) !important;
+}
+.dark .aa-DetachedSearchButton:hover {
+  background-color: var(--admin-surface-hover) !important;
+  border-color: var(--admin-input-border) !important;
+}
+.dark .aa-DetachedSearchButton .aa-DetachedSearchButtonPlaceholder,
+.dark .aa-DetachedSearchButton .aa-DetachedSearchButtonQuery {
+  color: var(--admin-text) !important;
+}
+.dark .aa-DetachedSearchButton .aa-DetachedSearchButtonIcon,
+.dark .aa-DetachedSearchButton svg {
+  color: var(--admin-text-muted) !important;
+}
+
+.dark .aa-DetachedContainer,
+.dark .aa-DetachedFormContainer,
+.dark .aa-Form {
+  background-color: var(--admin-surface) !important;
+  border-color: var(--admin-border) !important;
+}
+.dark .aa-InputWrapper,
+.dark .aa-InputWrapperPrefix,
+.dark .aa-InputWrapperSuffix {
+  background-color: var(--admin-input-bg) !important;
+  border-color: var(--admin-input-border) !important;
+}
+.dark .aa-Input::placeholder {
+  color: var(--admin-text-muted) !important;
+}
+.dark .aa-SubmitButton,
+.dark .aa-ClearButton {
+  background-color: transparent !important;
+  color: var(--admin-text-muted) !important;
+}
+.dark .aa-SubmitButton:hover,
+.dark .aa-ClearButton:hover {
+  color: var(--admin-text) !important;
+}
+
+.dark .aa-DetachedCancelButton {
+  background-color: var(--admin-border) !important;
+  border-color: var(--admin-border) !important;
+  color: var(--admin-text) !important;
+}
+.dark .aa-DetachedCancelButton:hover {
+  background-color: var(--admin-surface-hover) !important;
+  color: #FFFFFF !important;
+}
+
+.dark .aa-Panel,
+.dark .aa-PanelLayout,
+.dark .aa-GradientBottom {
+  background-color: var(--admin-surface) !important;
+  border-color: var(--admin-border) !important;
+}
+.dark .aa-Source {
+  border-color: var(--admin-border) !important;
+}
+.dark .aa-SourceHeader {
+  background-color: var(--admin-surface-alt) !important;
+  color: var(--admin-text-muted) !important;
+  border-color: var(--admin-border) !important;
+}
+.dark .aa-List {
+  background-color: var(--admin-surface) !important;
+}
+.dark .aa-Item {
+  background-color: var(--admin-surface) !important;
+  color: var(--admin-text) !important;
+  border-color: var(--admin-border) !important;
+}
+.dark .aa-Item:hover,
+.dark .aa-Item[aria-selected="true"] {
+  background-color: var(--admin-surface-hover) !important;
+  color: #FFFFFF !important;
+}
+.dark .aa-Item div {
+  color: inherit !important;
+}
+
+/* Sidebar / nav links that use text-black – force readable in dark */
+.dark .text-black,
+.dark a.text-black {
+  color: var(--admin-text) !important;
+}
+.dark a.block.border.rounded,
+.dark a.block.border.rounded.text-black {
+  border-color: var(--admin-border) !important;
+  background-color: transparent !important;
+}
+.dark a.block.border.rounded:hover,
+.dark a.block.border.rounded.text-black:hover {
+  background-color: var(--admin-surface-hover) !important;
+  color: #FFFFFF !important;
+  border-color: var(--admin-border) !important;
+}

@@ -3,7 +3,7 @@
 class Window < ApplicationRecord
   belongs_to :window_schedule_repair
   has_many :tools, dependent: :destroy
-  has_one_attached :image
+  has_many_attached :images
 
   accepts_nested_attributes_for :tools, allow_destroy: true, reject_if: :all_blank
 
@@ -13,31 +13,46 @@ class Window < ApplicationRecord
   end
 
   validates :location, presence: true
-  validate :image_presence, unless: :skip_image_validation, on: :update, if: :persisted?
+  validate :images_presence, unless: :skip_image_validation, on: :update, if: :persisted?
 
   # Attribute to skip image validation during creation
   attr_accessor :skip_image_validation
 
+  # Backwards compatibility: return first image
+  def image
+    images.first
+  end
+
   def image_name
-    return nil unless image.present?
+    return nil unless images.attached?
 
     window_number = window_schedule_repair.windows.order(:created_at).index(self) + 1
     "window-#{window_number}-image"
   end
 
-  # Generate public URL for the image
+  # Generate public URL for the first image (backwards compatibility)
   def image_url
-    return nil unless image.present?
+    return nil unless images.attached?
 
-    image.url
+    images.first.url
   rescue StandardError => e
     Rails.logger.error "Error generating image URL: #{e.message}"
     nil
   end
 
-  # Check if image is attached (for compatibility)
+  # Generate URLs for all images
+  def image_urls
+    return [] unless images.attached?
+
+    images.map(&:url)
+  rescue StandardError => e
+    Rails.logger.error "Error generating image URLs: #{e.message}"
+    []
+  end
+
+  # Check if any image is attached (for compatibility)
   def image_attached?
-    image.present?
+    images.attached?
   end
 
   def tools_list
@@ -64,8 +79,9 @@ class Window < ApplicationRecord
   end
 
   # Prefer S3 URL if mirrored, otherwise fall back to Webflow URL
+  # Returns first image URL for backwards compatibility
   def effective_image_url
-    if image.attached?
+    if images.attached?
       Rails.logger.debug "Window ##{id}: Using ActiveStorage image"
       image_url
     else
@@ -76,6 +92,21 @@ class Window < ApplicationRecord
   rescue StandardError => e
     Rails.logger.error "Window ##{id}: Error in effective_image_url: #{e.message}"
     nil
+  end
+
+  # Returns all effective image URLs
+  def effective_image_urls
+    urls = []
+
+    urls.concat(image_urls) if images.attached?
+
+    webflow_url = extract_webflow_url(webflow_image_url)
+    urls << webflow_url if webflow_url.present?
+
+    urls.compact.uniq
+  rescue StandardError => e
+    Rails.logger.error "Window ##{id}: Error in effective_image_urls: #{e.message}"
+    []
   end
 
   # Extract URL from webflow_image_url field
@@ -97,21 +128,29 @@ class Window < ApplicationRecord
     value
   end
 
+  def self.ransackable_attributes(_auth_object = nil)
+    %w[location window_schedule_repair_id created_at updated_at]
+  end
+
+  def self.ransackable_associations(_auth_object = nil)
+    %w[window_schedule_repair tools]
+  end
+
   private
 
-  def image_presence
+  def images_presence
     # Only validate if this is an update and we're not skipping validation
     return if skip_image_validation
     return unless persisted? # Skip on creation
 
-    # Only require image if it was previously present and now missing
-    return unless image_was_present? && !image.present?
+    # Only require images if they were previously present and now missing
+    return unless images_were_present? && !images.attached?
 
-    errors.add(:image, 'must be present')
+    errors.add(:images, 'must be present')
   end
 
-  def image_was_present?
-    # Check if image was previously present (for updates)
-    respond_to?(:image_was) && image_was.present?
+  def images_were_present?
+    # Check if images were previously present (for updates)
+    respond_to?(:images_was) && images_was.present?
   end
 end

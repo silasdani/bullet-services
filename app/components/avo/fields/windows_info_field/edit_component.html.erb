@@ -1,0 +1,45 @@
+<%= field_wrapper **field_wrapper_args do %>
+  <% ongoing_work = @resource.record %>
+  <% wrs = ongoing_work&.window_schedule_repair %>
+  <% windows = wrs&.windows&.order(:created_at) || [] %>
+
+  <% if windows.any? %>
+    <div class="mb-3 p-3 bg-blue-50 border-l-4 border-blue-500 rounded text-sm">
+      <div class="font-semibold text-gray-800 mb-2">Windows in this WRS:</div>
+      <% windows.each_with_index do |window, index| %>
+        <div class="ml-4 mb-1 text-gray-700">
+          Window <%= index + 1 %>: <%= window.location %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if ongoing_work&.images&.attached? %>
+    <div class="space-y-3 flex flex-wrap gap-3">
+      <% ongoing_work.images.each_with_index do |image, index| %>
+        <% blob = image.blob %>
+        <% metadata = blob.metadata.is_a?(Hash) ? blob.metadata : {} %>
+        <% window_id = metadata['window_id'] %>
+        <% window_info = if windows.any? && window_id.present?
+          w = windows.find { |win| win.id.to_s == window_id.to_s }
+          w ? "Window #{windows.index(w) + 1}: #{w.location}" : nil
+        end %>
+        <div class="border border-gray-200 rounded-lg p-2 bg-white max-w-[200px]">
+          <a href="<%= image.url %>" target="_blank" rel="noopener" class="block">
+            <img src="<%= image.url %>" alt="<%= image.filename %>" class="w-full h-auto rounded border border-gray-300" />
+          </a>
+          <div class="mt-1 p-1 bg-gray-50 rounded text-xs">
+            <% if window_info %>
+              <span class="font-medium text-blue-600"><%= window_info %></span>
+            <% else %>
+              <span class="text-gray-500 italic">Window: Not specified</span>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+    <p class="text-xs text-gray-500 mt-2">Use "Upload images" below to add more. Window association is stored in image metadata.</p>
+  <% else %>
+    <p class="text-gray-500 italic text-sm">No images yet. Use "Upload images" below to attach images.</p>
+  <% end %>
+<% end %>

@@ -24,10 +24,14 @@ module Users
 
     def after_sign_in_path_for(resource)
       if resource.is_admin?
-        rails_admin_path
+        '/admin'
       else
         root_path
       end
+    end
+
+    def after_sign_out_path_for(_resource_or_scope)
+      '/admin'
     end
   end
 end

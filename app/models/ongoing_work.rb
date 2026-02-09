@@ -15,6 +15,10 @@ class OngoingWork < ApplicationRecord
   scope :recent, -> { order(work_date: :desc, created_at: :desc) }
   scope :with_images, -> { joins(:images_attachments) }
 
+  def self.ransackable_attributes(_auth_object = nil)
+    %w[work_date window_schedule_repair_id user_id created_at]
+  end
+
   def image_urls
     return [] unless images.attached?
 

@@ -53,7 +53,7 @@ gem 'pundit'
 gem 'ransack'
 
 # Admin panel
-gem 'rails_admin', '~> 3.1'
+gem 'avo', '~> 3.0'
 
 group :development, :test do
   gem 'brakeman', '~> 8.0.1', require: false
