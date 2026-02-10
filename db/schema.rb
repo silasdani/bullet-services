@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_01_28_200000) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_10_214242) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -74,7 +74,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_28_200000) do
 
   create_table "check_ins", force: :cascade do |t|
     t.bigint "user_id", null: false
-    t.bigint "window_schedule_repair_id", null: false
+    t.bigint "work_order_id", null: false
     t.integer "action", null: false
     t.decimal "latitude", precision: 10, scale: 7
     t.decimal "longitude", precision: 10, scale: 7
@@ -83,10 +83,13 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_28_200000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "lock_version", default: 0, null: false
+    t.datetime "deleted_at"
+    t.index ["deleted_at"], name: "index_check_ins_on_deleted_at"
     t.index ["timestamp"], name: "index_check_ins_on_timestamp"
-    t.index ["user_id", "window_schedule_repair_id", "action"], name: "idx_on_user_id_window_schedule_repair_id_action_697816377c"
+    t.index ["user_id", "work_order_id", "action"], name: "index_check_ins_on_user_id_and_work_order_id_and_action"
     t.index ["user_id"], name: "index_check_ins_on_user_id"
-    t.index ["window_schedule_repair_id"], name: "index_check_ins_on_window_schedule_repair_id"
+    t.index ["work_order_id", "action", "timestamp"], name: "index_check_ins_on_wrs_action_timestamp"
+    t.index ["work_order_id"], name: "index_check_ins_on_work_order_id"
   end
 
   create_table "freshbooks_clients", force: :cascade do |t|
@@ -160,11 +163,8 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_28_200000) do
   create_table "invoices", force: :cascade do |t|
     t.string "name"
     t.string "slug"
-    t.string "webflow_item_id"
     t.boolean "is_archived"
     t.boolean "is_draft"
-    t.string "webflow_created_on"
-    t.string "webflow_published_on"
     t.string "freshbooks_client_id"
     t.string "job"
     t.string "wrs_link"
@@ -176,52 +176,92 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_28_200000) do
     t.string "invoice_pdf_link"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "webflow_collection_id"
-    t.string "webflow_updated_on"
     t.string "flat_address"
     t.string "generated_by"
-    t.bigint "window_schedule_repair_id"
+    t.bigint "work_order_id"
+    t.datetime "deleted_at"
+    t.index ["deleted_at"], name: "index_invoices_on_deleted_at"
     t.index ["slug"], name: "index_invoices_on_slug"
-    t.index ["window_schedule_repair_id"], name: "index_invoices_on_window_schedule_repair_id"
+    t.index ["work_order_id"], name: "index_invoices_on_work_order_id"
+    t.check_constraint "excluded_vat_amount >= 0::numeric", name: "invoices_excluded_vat_non_negative"
+    t.check_constraint "included_vat_amount >= 0::numeric", name: "invoices_included_vat_non_negative"
   end
 
   create_table "notifications", force: :cascade do |t|
     t.bigint "user_id", null: false
-    t.bigint "window_schedule_repair_id"
+    t.bigint "work_order_id"
     t.integer "notification_type", null: false
     t.string "title", null: false
     t.text "message"
-    t.boolean "read", default: false, null: false
     t.jsonb "metadata"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.datetime "read_at"
     t.index ["created_at"], name: "index_notifications_on_created_at"
     t.index ["read_at"], name: "index_notifications_on_read_at"
-    t.index ["user_id", "read"], name: "index_notifications_on_user_id_and_read"
+    t.index ["user_id", "created_at"], name: "index_notifications_on_user_unread", where: "(read_at IS NULL)"
+    t.index ["user_id", "read_at", "created_at"], name: "index_notifications_on_user_read_created"
     t.index ["user_id"], name: "index_notifications_on_user_id"
-    t.index ["window_schedule_repair_id"], name: "index_notifications_on_window_schedule_repair_id"
+    t.index ["work_order_id", "notification_type"], name: "index_notifications_on_wrs_type"
+    t.index ["work_order_id"], name: "index_notifications_on_work_order_id"
   end
 
   create_table "ongoing_works", force: :cascade do |t|
-    t.bigint "window_schedule_repair_id", null: false
+    t.bigint "work_order_id", null: false
     t.bigint "user_id", null: false
     t.text "description"
     t.datetime "work_date", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+    t.index ["deleted_at"], name: "index_ongoing_works_on_deleted_at"
     t.index ["user_id"], name: "index_ongoing_works_on_user_id"
-    t.index ["window_schedule_repair_id", "work_date"], name: "index_ongoing_works_on_window_schedule_repair_id_and_work_date"
-    t.index ["window_schedule_repair_id"], name: "index_ongoing_works_on_window_schedule_repair_id"
+    t.index ["work_order_id", "work_date", "user_id"], name: "index_ongoing_works_on_wrs_date_user"
+    t.index ["work_order_id", "work_date"], name: "index_ongoing_works_on_work_order_id_and_work_date"
+    t.index ["work_order_id"], name: "index_ongoing_works_on_work_order_id"
+  end
+
+  create_table "price_snapshots", force: :cascade do |t|
+    t.string "priceable_type", null: false
+    t.bigint "work_order_id", null: false
+    t.decimal "subtotal", precision: 10, scale: 2
+    t.decimal "vat_rate", precision: 5, scale: 4
+    t.decimal "vat_amount", precision: 10, scale: 2
+    t.decimal "total", precision: 10, scale: 2
+    t.datetime "snapshot_at", null: false
+    t.jsonb "line_items"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+    t.index ["deleted_at"], name: "index_price_snapshots_on_deleted_at"
+    t.index ["priceable_type", "work_order_id", "snapshot_at"], name: "index_price_snapshots_on_priceable_and_time"
+    t.index ["priceable_type", "work_order_id"], name: "index_price_snapshots_on_priceable"
+    t.index ["snapshot_at"], name: "index_price_snapshots_on_snapshot_at"
+  end
+
+  create_table "status_definitions", force: :cascade do |t|
+    t.string "entity_type", null: false
+    t.string "status_key", null: false
+    t.string "status_label", null: false
+    t.string "status_color", null: false
+    t.integer "display_order", default: 0
+    t.boolean "is_active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["entity_type", "is_active", "display_order"], name: "index_status_definitions_on_entity_active_order"
+    t.index ["entity_type", "status_key"], name: "index_status_definitions_on_entity_and_key", unique: true
   end
 
   create_table "tools", force: :cascade do |t|
-    t.string "name"
-    t.integer "price"
+    t.string "name", null: false
+    t.decimal "price", precision: 10, scale: 2, default: "0.0", null: false
     t.bigint "window_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+    t.index ["deleted_at"], name: "index_tools_on_deleted_at"
     t.index ["window_id"], name: "index_tools_on_window_id"
+    t.check_constraint "price >= 0::numeric", name: "tools_price_non_negative"
   end
 
   create_table "users", force: :cascade do |t|
@@ -257,49 +297,79 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_28_200000) do
     t.index ["uid", "provider"], name: "index_users_on_uid_and_provider", unique: true
   end
 
-  create_table "window_schedule_repairs", force: :cascade do |t|
-    t.string "name"
+  create_table "windows", force: :cascade do |t|
+    t.string "location", null: false
+    t.bigint "work_order_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+    t.index ["deleted_at"], name: "index_windows_on_deleted_at"
+    t.index ["work_order_id"], name: "index_windows_on_work_order_id"
+  end
+
+  create_table "work_order_decisions", force: :cascade do |t|
+    t.bigint "work_order_id", null: false
+    t.string "decision", null: false
+    t.datetime "decision_at", null: false
+    t.string "client_email"
+    t.string "client_name"
+    t.datetime "terms_accepted_at"
+    t.string "terms_version"
+    t.jsonb "decision_metadata"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+    t.index ["decision_at"], name: "index_work_order_decisions_on_decision_at"
+    t.index ["deleted_at"], name: "index_work_order_decisions_on_deleted_at"
+    t.index ["work_order_id"], name: "index_work_order_decisions_on_work_order_id", unique: true
+  end
+
+  create_table "work_orders", force: :cascade do |t|
+    t.string "name", null: false
     t.string "slug"
     t.string "flat_number"
     t.string "reference_number"
-    t.string "address"
     t.decimal "total_vat_included_price", precision: 10, scale: 2
     t.decimal "total_vat_excluded_price", precision: 10, scale: 2
     t.string "status_color"
     t.integer "status"
-    t.boolean "sitemap_on"
-    t.string "webflow_item_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
     t.text "details"
-    t.decimal "grand_total", precision: 10, scale: 2
     t.datetime "deleted_at"
-    t.datetime "last_published"
     t.boolean "is_draft", default: true, null: false
     t.boolean "is_archived", default: false, null: false
-    t.string "webflow_main_image_url"
     t.bigint "building_id", null: false
-    t.datetime "decision_at"
-    t.string "decision"
-    t.string "decision_client_email"
-    t.string "decision_client_name"
-    t.datetime "terms_accepted_at"
-    t.string "terms_version"
-    t.index ["building_id"], name: "index_window_schedule_repairs_on_building_id"
-    t.index ["deleted_at"], name: "index_window_schedule_repairs_on_deleted_at"
-    t.index ["slug"], name: "index_window_schedule_repairs_on_slug", unique: true
-    t.index ["status"], name: "index_window_schedule_repairs_on_status"
-    t.index ["user_id"], name: "index_window_schedule_repairs_on_user_id"
+    t.index ["building_id", "status", "deleted_at"], name: "index_wrs_on_building_status_deleted"
+    t.index ["building_id"], name: "index_work_orders_on_building_id"
+    t.index ["deleted_at"], name: "index_work_orders_on_deleted_at"
+    t.index ["slug"], name: "index_work_orders_on_slug", unique: true
+    t.index ["status"], name: "index_work_orders_on_status"
+    t.index ["status"], name: "index_wrs_on_status_active", where: "((deleted_at IS NULL) AND (is_draft = false))"
+    t.index ["user_id", "status", "created_at"], name: "index_wrs_on_user_status_created"
+    t.index ["user_id"], name: "index_work_orders_on_user_id"
+    t.check_constraint "total_vat_excluded_price >= 0::numeric", name: "wrs_total_vat_excluded_non_negative"
+    t.check_constraint "total_vat_included_price >= 0::numeric", name: "wrs_total_vat_included_non_negative"
   end
 
-  create_table "windows", force: :cascade do |t|
-    t.string "location"
-    t.bigint "window_schedule_repair_id", null: false
+  create_table "work_sessions", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "work_order_id", null: false
+    t.datetime "checked_in_at", null: false
+    t.datetime "checked_out_at"
+    t.decimal "latitude", precision: 10, scale: 7
+    t.decimal "longitude", precision: 10, scale: 7
+    t.string "address"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "webflow_image_url"
-    t.index ["window_schedule_repair_id"], name: "index_windows_on_window_schedule_repair_id"
+    t.datetime "deleted_at"
+    t.index ["checked_in_at"], name: "index_work_sessions_on_checked_in_at"
+    t.index ["deleted_at"], name: "index_work_sessions_on_deleted_at"
+    t.index ["user_id", "work_order_id", "checked_out_at"], name: "index_work_sessions_on_user_wrs_checked_out"
+    t.index ["user_id"], name: "index_work_sessions_on_user_id"
+    t.index ["work_order_id", "checked_in_at"], name: "index_work_sessions_on_work_order_id_and_checked_in_at"
+    t.index ["work_order_id"], name: "index_work_sessions_on_work_order_id"
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
@@ -308,13 +378,23 @@ ActiveRecord::Schema[8.0].define(version: 2026_01_28_200000) do
   add_foreign_key "building_assignments", "users"
   add_foreign_key "building_assignments", "users", column: "assigned_by_user_id"
   add_foreign_key "check_ins", "users"
-  add_foreign_key "check_ins", "window_schedule_repairs"
+  add_foreign_key "check_ins", "work_orders"
+  add_foreign_key "check_ins", "work_orders"
+  add_foreign_key "invoices", "work_orders"
   add_foreign_key "notifications", "users"
-  add_foreign_key "notifications", "window_schedule_repairs"
+  add_foreign_key "notifications", "work_orders"
+  add_foreign_key "notifications", "work_orders"
   add_foreign_key "ongoing_works", "users"
-  add_foreign_key "ongoing_works", "window_schedule_repairs"
+  add_foreign_key "ongoing_works", "work_orders"
+  add_foreign_key "ongoing_works", "work_orders"
   add_foreign_key "tools", "windows"
-  add_foreign_key "window_schedule_repairs", "buildings"
-  add_foreign_key "window_schedule_repairs", "users"
-  add_foreign_key "windows", "window_schedule_repairs"
+  add_foreign_key "windows", "work_orders"
+  add_foreign_key "windows", "work_orders"
+  add_foreign_key "work_order_decisions", "work_orders"
+  add_foreign_key "work_order_decisions", "work_orders"
+  add_foreign_key "work_orders", "buildings"
+  add_foreign_key "work_orders", "users"
+  add_foreign_key "work_sessions", "users"
+  add_foreign_key "work_sessions", "work_orders"
+  add_foreign_key "work_sessions", "work_orders"
 end

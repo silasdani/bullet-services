@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
 class Notification < ApplicationRecord
+  include SoftDeletable
+
   belongs_to :user
-  belongs_to :window_schedule_repair, optional: true
+  belongs_to :window_schedule_repair, optional: true, foreign_key: 'window_schedule_repair_id'
 
   validates :notification_type, presence: true
   validates :title, presence: true
@@ -14,6 +16,7 @@ class Notification < ApplicationRecord
   scope :recent, -> { order(created_at: :desc) }
   scope :for_user, ->(user_id) { where(user_id: user_id) }
 
+  # read boolean removed - use read_at instead
   def read?
     read_at.present?
   end
