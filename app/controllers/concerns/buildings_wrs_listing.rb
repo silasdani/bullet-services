@@ -40,7 +40,7 @@ module BuildingsWrsListing
 
   def wrs_collection_for_building
     scope = @building.window_schedule_repairs
-                     .includes(:user, :windows, windows: %i[tools image_attachment])
+                     .includes(:user, :windows, windows: [:tools, { images_attachments: :blob }])
                      .order(created_at: :desc)
     scope = scope.where(is_draft: false).contractor_visible_status if current_user.contractor?
     scope

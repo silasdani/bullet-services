@@ -151,7 +151,7 @@ module Api
       def build_wrs_collection
         # Policy scope is applied first to ensure contractors only see published WRS
         collection = policy_scope(WindowScheduleRepair)
-                     .includes(:user, :building, :windows, windows: %i[tools image_attachment])
+                     .includes(:user, :building, :windows, windows: [:tools, { images_attachments: :blob }])
                      .order(created_at: :desc)
 
         # Apply Ransack filters if present (but policy scope restrictions remain)
@@ -190,7 +190,7 @@ module Api
 
       def find_wrs_for_action
         base = action_name == 'restore' ? WindowScheduleRepair.with_deleted : WindowScheduleRepair
-        base.includes(:user, :building, :windows, windows: %i[tools image_attachment]).find(params[:id])
+        base.includes(:user, :building, :windows, windows: [:tools, { images_attachments: :blob }]).find(params[:id])
       end
 
       def window_schedule_repair_params

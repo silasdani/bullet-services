@@ -6,7 +6,7 @@ module Api
       before_action :set_window, only: %i[show update destroy]
 
       def index
-        @windows = policy_scope(Window).includes(:tools, :image_attachment)
+        @windows = policy_scope(Window).includes(:tools, images_attachments: :blob)
 
         serialized_data = @windows.map do |window|
           WindowSerializer.new(window).serializable_hash
@@ -67,7 +67,7 @@ module Api
       private
 
       def set_window
-        @window = Window.includes(:tools, :image_attachment).find(params[:id])
+        @window = Window.includes(:tools, images_attachments: :blob).find(params[:id])
       end
 
       def window_params
