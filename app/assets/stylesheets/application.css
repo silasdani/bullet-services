@@ -13,7 +13,9 @@
 /*
  *= require fonts
  *= require custom
- *= require_tree .
+ *= require hero_carousel
+ *= require typewriter
+ *= require mobile_navigation
  *= require_self
  */
 
