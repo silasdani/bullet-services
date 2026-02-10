@@ -1,20 +1,25 @@
 # frozen_string_literal: true
 
 class WindowScheduleRepair < ApplicationRecord
-  include Wrs
   include SoftDeletable
-  include WebflowSyncable
   include WrsCalculations
   include WrsGeneration
+  include StatusMetadata
+
+  # DB table has been renamed to `work_orders` (model name kept for compatibility).
+  self.table_name = 'work_orders'
 
   belongs_to :user
   belongs_to :building
-  has_many :windows, dependent: :destroy
+  has_many :windows, dependent: :destroy, foreign_key: :work_order_id
   has_many :tools, through: :windows
-  has_many :invoices, dependent: :nullify
-  has_many :check_ins, dependent: :destroy
-  has_many :ongoing_works, dependent: :destroy
-  has_many :notifications, dependent: :destroy
+  has_many :invoices, dependent: :nullify, foreign_key: :work_order_id
+  has_many :check_ins, dependent: :destroy, foreign_key: :work_order_id # Deprecated: Use work_sessions instead
+  has_many :work_sessions, dependent: :destroy, foreign_key: :work_order_id
+  has_many :ongoing_works, dependent: :destroy, foreign_key: :work_order_id
+  has_many :notifications, dependent: :destroy, foreign_key: :work_order_id
+  has_one :work_order_decision, dependent: :destroy, foreign_key: :work_order_id
+  has_many :price_snapshots, dependent: :destroy, foreign_key: :work_order_id, inverse_of: :work_order
   has_many_attached :images
 
   accepts_nested_attributes_for :windows, allow_destroy: true, reject_if: :all_blank
@@ -42,25 +47,23 @@ class WindowScheduleRepair < ApplicationRecord
   # WRS visible to contractors: pending, approved, rejected (excludes completed).
   scope :contractor_visible_status, -> { where(status: statuses.values_at(:pending, :approved, :rejected)) }
 
-  # Return first S3 image URL if mirrored, otherwise fallback to Webflow URL stored
+  # Return first S3 image URL
   def main_image_url
-    if images.attached? && images.first.present?
-      images.first.url
-    else
-      webflow_main_image_url
-    end
+    return nil unless images.attached? && images.first.present?
+
+    images.first.url
   rescue StandardError => e
     Rails.logger.error "Error generating main image URL: #{e.message}"
-    webflow_main_image_url
+    nil
   end
 
-  # Webflow status methods
+  # Publishing status methods (no longer Webflow-specific)
   def published?
-    !is_draft && !is_archived && (webflow_item_id.present? || last_published.present?)
+    !is_draft && !is_archived
   end
 
   def draft?
-    is_draft || (webflow_item_id.blank? && last_published.blank?)
+    is_draft
   end
 
   def archived?
@@ -70,8 +73,7 @@ class WindowScheduleRepair < ApplicationRecord
   def mark_as_published!
     update!(
       is_draft: false,
-      is_archived: false,
-      last_published: Time.current
+      is_archived: false
     )
   end
   alias publish! mark_as_published!
@@ -79,54 +81,52 @@ class WindowScheduleRepair < ApplicationRecord
   def mark_as_draft!
     update!(
       is_draft: true,
-      is_archived: false,
-      last_published: nil
+      is_archived: false
     )
   end
 
   def mark_as_archived!
     update!(
       is_archived: true,
-      is_draft: false,
-      last_published: nil
+      is_draft: false
     )
   end
 
-  # Override WebflowSyncable method to include draft logic
-  def should_auto_sync_to_webflow?
-    # Only sync if it's a draft or has never been synced
-    draft? && !deleted? && !skip_webflow_sync && webflow_collection_id.present?
-  end
-
-  # WebflowSyncable implementation
-  def webflow_formatted_data
-    to_webflow_formatted
-  end
-
-  def webflow_collection_id
-    ENV.fetch('WEBFLOW_WRS_COLLECTION_ID', nil)
-  end
-
-  # Backwards compatibility: return address string from building in Webflow format
-  # Format: "{building.name}, {building.street}, {building.zipcode}"
+  # Address from building (address column removed)
   def address
-    if building.present?
-      # Format: building name, street, postcode
-      parts = [building.name, building.street, building.zipcode].compact.reject(&:blank?)
-      parts.join(', ')
-    else
-      begin
-        read_attribute(:address)
-      rescue StandardError
-        nil
-      end
-    end
+    building&.full_address || building&.address_string
+  end
+
+  # Decision helpers
+  def decision
+    work_order_decision&.decision
+  end
+
+  def decision_at
+    work_order_decision&.decision_at
+  end
+
+  def approved?
+    decision == 'approved'
+  end
+
+  def rejected?
+    decision == 'rejected'
+  end
+
+  def has_decision?
+    work_order_decision.present?
+  end
+
+  # Grand total alias for backwards compatibility (removed from DB)
+  def grand_total
+    total_vat_included_price || 0
   end
 
   # Ransack configuration for filtering
   def self.ransackable_attributes(_auth_object = nil)
-    %w[name slug flat_number reference_number address details status created_at updated_at total_vat_included_price
-       total_vat_excluded_price grand_total deleted_at last_published is_draft is_archived]
+    %w[name slug flat_number reference_number details status created_at updated_at total_vat_included_price
+       total_vat_excluded_price deleted_at is_draft is_archived]
   end
 
   def self.ransackable_associations(_auth_object = nil)

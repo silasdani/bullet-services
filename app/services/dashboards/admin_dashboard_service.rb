@@ -61,33 +61,14 @@ module Dashboards
         total_users: User.count,
         total_wrs: WindowScheduleRepair.count,
         total_buildings: Building.count,
-        active_check_ins: count_active_check_ins
+        active_work_sessions: count_active_work_sessions
       }
     end
 
-    def count_active_check_ins
-      # Count all active check-ins (check-ins without corresponding check-outs)
-      # Use raw SQL to avoid enum loading issues with Rails 8
-      # action: 0 = check_in, 1 = check_out
-      # Query check-ins that don't have a corresponding check-out for the same user/WRS
-      sql = <<-SQL.squish
-        SELECT COUNT(DISTINCT ci1.id) as count
-        FROM check_ins ci1
-        WHERE ci1.action = 0
-        AND NOT EXISTS (
-          SELECT 1 FROM check_ins ci2
-          WHERE ci2.user_id = ci1.user_id
-          AND ci2.window_schedule_repair_id = ci1.window_schedule_repair_id
-          AND ci2.action = 1
-          AND ci2.id > ci1.id
-        )
-      SQL
-      result = ActiveRecord::Base.connection.execute(sql)
-      # PostgreSQL returns hash with string keys, SQLite might return array
-      count = result.is_a?(Array) ? result.first&.first : result.first&.dig('count')
-      count.to_i
+    def count_active_work_sessions
+      WorkSession.active.count
     rescue StandardError => e
-      log_error("Error counting active check-ins: #{e.message}")
+      log_error("Error counting active work sessions: #{e.message}")
       0
     end
   end

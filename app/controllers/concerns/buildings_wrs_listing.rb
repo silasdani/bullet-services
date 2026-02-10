@@ -20,8 +20,8 @@ module BuildingsWrsListing
   end
 
   def contractor_active_building_id
-    active = CheckIn.active_for(current_user, nil).includes(:window_schedule_repair).first
-    active&.window_schedule_repair&.building_id
+    active = WorkSession.active.for_user(current_user).includes(:work_order).first
+    active&.work_order&.building_id
   end
 
   def render_wrs_checked_in_elsewhere

@@ -3,18 +3,8 @@
 class WorkSession < ApplicationRecord
   include SoftDeletable
 
-  # Determine foreign key column name (handles rename migration)
-  def self.work_order_foreign_key
-    @work_order_foreign_key ||= if connection.column_exists?(:work_sessions, :work_order_id)
-                                  :work_order_id
-                                else
-                                  :window_schedule_repair_id
-                                end
-  end
-
   belongs_to :user
-  belongs_to :work_order, class_name: 'WindowScheduleRepair',
-                          foreign_key: work_order_foreign_key
+  belongs_to :work_order, class_name: 'WindowScheduleRepair', foreign_key: :work_order_id
 
   validates :checked_in_at, presence: true
   validate :checked_out_after_check_in, if: -> { checked_out_at.present? }
@@ -66,12 +56,9 @@ class WorkSession < ApplicationRecord
   def no_overlapping_sessions
     return unless user && work_order && checked_in_at
 
-    work_order_id_value = send(self.class.work_order_foreign_key)
-    return unless work_order_id_value
-
     overlapping = WorkSession
                   .where(user: user)
-                  .where(self.class.work_order_foreign_key => work_order_id_value)
+                  .where(work_order_id: work_order_id)
                   .where('checked_out_at IS NULL OR checked_out_at > ?', checked_in_at)
                   .where('checked_in_at < ?', checked_in_at)
                   .where.not(id: id || 0)

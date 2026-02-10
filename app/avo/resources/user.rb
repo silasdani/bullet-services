@@ -21,6 +21,8 @@ module Avo
         field :window_schedule_repairs, as: :has_many, hide_on: [:index]
         field :ongoing_works, as: :has_many, hide_on: [:index]
         field :check_ins, as: :has_many, hide_on: [:index]
+        field :work_sessions, as: :has_many, hide_on: [:index]
+        field :notifications, as: :has_many, hide_on: [:index]
         field :assigned_buildings, as: :has_many, through: :building_assignments, hide_on: [:index]
         field :created_at, as: :date_time, readonly: true, sortable: true, filterable: true
         field :updated_at, as: :date_time, readonly: true, sortable: true

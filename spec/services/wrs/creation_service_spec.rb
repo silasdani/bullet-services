@@ -4,26 +4,27 @@ require 'rails_helper'
 
 RSpec.describe Wrs::CreationService do
   let(:user) { create(:user) }
+  let(:building) { create(:building, street: '123 Test St', city: 'London', zipcode: 'W1', country: 'UK') }
   let(:valid_params) do
     {
       name: 'Test WRS',
-      address: '123 Test St',
+      building_id: building.id,
       flat_number: 'Apt 1',
-      windows_attributes: [
-        {
+      windows_attributes: {
+        '0' => {
           location: 'Kitchen',
-          tools_attributes: [
-            { name: 'Glass Panel', price: 100 },
-            { name: 'Installation', price: 50 }
-          ]
+          tools_attributes: {
+            '0' => { name: 'Glass Panel', price: 100 },
+            '1' => { name: 'Installation', price: 50 }
+          }
         },
-        {
+        '1' => {
           location: 'Living Room',
-          tools_attributes: [
-            { name: 'Frame Repair', price: 75 }
-          ]
+          tools_attributes: {
+            '0' => { name: 'Frame Repair', price: 75 }
+          }
         }
-      ]
+      }
     }
   end
 
@@ -91,7 +92,7 @@ RSpec.describe Wrs::CreationService do
       it 'includes validation errors' do
         service = described_class.new(user: user, params: invalid_params)
         result = service.call
-        expect(result[:errors]).to include("Name can't be blank")
+        expect(result[:errors].join(' ')).to include("Name can't be blank")
       end
     end
 
@@ -123,19 +124,13 @@ RSpec.describe Wrs::CreationService do
   describe 'transaction handling' do
     it 'rolls back all changes if any part fails' do
       # Mock a failure in window creation
-      allow_any_instance_of(WindowScheduleRepair).to receive(:save).and_return(false)
+      allow_any_instance_of(WindowScheduleRepair).to receive(:save!).and_raise(
+        ActiveRecord::RecordInvalid.new(WindowScheduleRepair.new)
+      )
 
       expect do
         described_class.new(user: user, params: valid_params).call
       end.not_to change(WindowScheduleRepair, :count)
-    end
-  end
-
-  describe 'Webflow sync' do
-    it 'triggers webflow sync job' do
-      expect do
-        described_class.new(user: user, params: valid_params).call
-      end.to have_enqueued_job(WebflowSyncJob)
     end
   end
 end

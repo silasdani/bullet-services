@@ -48,11 +48,38 @@ module Wrs
     def attach_invoice_pdf!(pdf_url)
       return if pdf_url.blank?
 
-      Webflow::PdfMirrorService.new(
-        record: invoice,
-        source_url: pdf_url,
-        attachment_name: :invoice_pdf
-      ).call
+      download_and_attach_pdf!(pdf_url)
+    end
+
+    def download_and_attach_pdf!(pdf_url)
+      require 'open-uri'
+      require 'openssl'
+
+      filename = "invoice-#{invoice.id}-#{Time.current.to_i}.pdf"
+
+      URI.open(
+        pdf_url,
+        'rb',
+        open_timeout: 10,
+        read_timeout: 20,
+        ssl_verify_mode: OpenSSL::SSL::VERIFY_PEER
+      ) do |io|
+        content_type = io.respond_to?(:content_type) ? io.content_type : nil
+        unless content_type.nil? || content_type.include?('pdf')
+          Rails.logger.warn("Invoice PDF download content_type=#{content_type.inspect} for url=#{pdf_url.inspect}")
+        end
+
+        invoice.invoice_pdf.attach(
+          io: io,
+          filename: filename,
+          content_type: 'application/pdf'
+        )
+      end
+    rescue OpenURI::HTTPError, SocketError, Timeout::Error => e
+      Rails.logger.error("Failed to download PDF from URL: #{pdf_url} (#{e.class}: #{e.message})")
+    rescue StandardError => e
+      Rails.logger.error("Unexpected error downloading PDF from URL: #{pdf_url} (#{e.class}: #{e.message})")
+      Rails.logger.error(e.backtrace.first(10).join("\n")) if e.backtrace
     end
 
     def attach_invoice_pdf_from_base64!(base64_data)

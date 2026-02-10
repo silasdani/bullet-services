@@ -5,7 +5,6 @@ class Invoice < ApplicationRecord
 
   validates :name, presence: true
   validates :slug, presence: true, uniqueness: true
-  validates :webflow_item_id, uniqueness: true, allow_blank: true
   validates :freshbooks_client_id, presence: true, unless: -> { generated_by == 'wrs_form' }
   validates :status, presence: true
   validates :final_status, presence: true
@@ -45,7 +44,7 @@ class Invoice < ApplicationRecord
   end
 
   has_many :freshbooks_invoices, foreign_key: :invoice_id, dependent: :destroy
-  belongs_to :window_schedule_repair, optional: true
+  belongs_to :window_schedule_repair, optional: true, class_name: 'WindowScheduleRepair', foreign_key: :work_order_id
 
   has_one_attached :invoice_pdf
 
@@ -55,8 +54,6 @@ class Invoice < ApplicationRecord
       name slug status final_status status_color is_draft is_archived
       job flat_address generated_by freshbooks_client_id
       included_vat_amount excluded_vat_amount
-      webflow_item_id webflow_collection_id
-      webflow_created_on webflow_updated_on webflow_published_on
       wrs_link invoice_pdf_link
       created_at updated_at
     ]

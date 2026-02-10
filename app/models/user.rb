@@ -40,18 +40,23 @@ class User < ApplicationRecord
   end
 
   def webflow_access?
-    admin?
+    is_admin?
   end
 
   # Deprecated: Use admin? instead
   # rubocop:disable Naming/PredicatePrefix
   def is_admin?
-    admin?
+    admin? || surveyor?
   end
 
   # Deprecated: Use contractor? instead
   def is_employee?
     contractor?
+  end
+
+  # Deprecated: Surveyor acts as "super admin" in legacy code.
+  def is_super_admin?
+    surveyor?
   end
 
   # rubocop:enable Naming/PredicatePrefix
@@ -95,7 +100,9 @@ class User < ApplicationRecord
   private
 
   def set_default_role
-    self.role = :contractor if role.nil? || role == 'client' || role.zero?
+    # `role` is an enum; the getter returns a String key (e.g. "admin").
+    # Default new users to `client` unless explicitly set.
+    self.role = :client if role.nil?
   end
 
   def sync_uid_with_email

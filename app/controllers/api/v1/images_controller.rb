@@ -30,7 +30,7 @@ module Api
       end
 
       def find_window_schedule_repair
-        WindowScheduleRepair.find(params[:window_schedule_repair_id])
+        WindowScheduleRepair.find(params[:work_order_id] || params[:window_schedule_repair_id])
       end
 
       def render_no_image_error
@@ -72,8 +72,6 @@ module Api
       def process_multiple_image_upload
         purge_existing_images
         attach_new_images
-        send_to_webflow_if_needed
-
         render json: build_upload_success_response
       end
 
@@ -83,12 +81,6 @@ module Api
 
       def attach_new_images
         params[:images].each { |image| @window_schedule_repair.images.attach(image) }
-      end
-
-      def send_to_webflow_if_needed
-        return unless @window_schedule_repair.webflow_collection_id.present?
-
-        send_to_webflow_async(@window_schedule_repair)
       end
 
       def build_upload_success_response
@@ -111,10 +103,6 @@ module Api
         @window = Window.find(params[:window_id])
       end
 
-      def send_to_webflow_async(window_schedule_repair)
-        # Send to Webflow asynchronously to avoid blocking the response
-        WebflowUploadJob.perform_later(window_schedule_repair.id)
-      end
     end
   end
 end

@@ -4,7 +4,7 @@ class Notification < ApplicationRecord
   include SoftDeletable
 
   belongs_to :user
-  belongs_to :window_schedule_repair, optional: true, foreign_key: 'window_schedule_repair_id'
+  belongs_to :window_schedule_repair, optional: true, class_name: 'WindowScheduleRepair', foreign_key: :work_order_id
 
   validates :notification_type, presence: true
   validates :title, presence: true

@@ -9,7 +9,7 @@ module Dashboards
     # Single source for empty/fallback contractor dashboard payload.
     EMPTY_PAYLOAD = {
       assigned_wrs: [],
-      active_check_in: nil,
+      active_work_session: nil,
       pending_photos: 0,
       recent_activity: []
     }.freeze

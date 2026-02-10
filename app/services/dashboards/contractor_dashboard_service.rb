@@ -5,7 +5,7 @@ module Dashboards
     def build_dashboard_data
       {
         assigned_wrs: load_assigned_wrs,
-        active_check_in: load_active_check_in,
+        active_work_session: load_active_work_session,
         pending_photos: load_pending_photos,
         recent_activity: load_recent_activity
       }
@@ -15,7 +15,7 @@ module Dashboards
 
     def load_assigned_wrs
       WindowScheduleRepair
-        .includes(:building, :windows, :check_ins)
+        .includes(:building, :windows)
         .where(user: user)
         .where(is_draft: false)
         .contractor_visible_status
@@ -27,19 +27,19 @@ module Dashboards
       []
     end
 
-    def load_active_check_in
-      active_check_in = CheckIn.active_for(user, nil).includes(:window_schedule_repair).first
-      return nil unless active_check_in
+    def load_active_work_session
+      session = WorkSession.active.for_user(user).includes(:work_order).first
+      return nil unless session
 
       {
-        id: active_check_in.id,
-        window_schedule_repair_id: active_check_in.window_schedule_repair_id,
-        window_schedule_repair_name: active_check_in.window_schedule_repair&.name || 'Unknown',
-        timestamp: active_check_in.timestamp,
-        address: active_check_in.address
+        id: session.id,
+        work_order_id: session.work_order_id,
+        work_order_name: session.work_order&.name || 'Unknown',
+        checked_in_at: session.checked_in_at,
+        address: session.address
       }
     rescue StandardError => e
-      log_error("Error loading active check-in: #{e.message}")
+      log_error("Error loading active work session: #{e.message}")
       nil
     end
 
@@ -49,17 +49,18 @@ module Dashboards
     end
 
     def load_recent_activity
-      CheckIn
+      WorkSession
         .where(user: user)
-        .includes(:window_schedule_repair)
-        .order(timestamp: :desc)
+        .includes(:work_order)
+        .order(checked_in_at: :desc)
         .limit(5)
-        .map do |check_in|
+        .map do |session|
           {
-            id: check_in.id,
-            action: check_in.action,
-            window_schedule_repair_name: check_in.window_schedule_repair&.name || 'Unknown',
-            timestamp: check_in.timestamp
+            id: session.id,
+            work_order_name: session.work_order&.name || 'Unknown',
+            checked_in_at: session.checked_in_at,
+            checked_out_at: session.checked_out_at,
+            active: session.active?
           }
         end
     rescue StandardError => e

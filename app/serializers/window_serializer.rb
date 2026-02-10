@@ -7,7 +7,7 @@ class WindowSerializer < ActiveModel::Serializer
              :updated_at,
              :image,                # backwards-compatible field (first image)
              :images,               # array of all image URLs
-             :effective_image_url,  # preferred URL (ActiveStorage if present, else Webflow)
+             :effective_image_url,  # preferred URL (ActiveStorage if present)
              :effective_image_urls, # array of all effective image URLs
              :image_name
 
@@ -48,10 +48,6 @@ class WindowSerializer < ActiveModel::Serializer
 
   def image_url
     safe_call { object.image_url }
-  end
-
-  def webflow_image_url
-    safe_call { object.webflow_image_url }
   end
 
   def effective_image_url

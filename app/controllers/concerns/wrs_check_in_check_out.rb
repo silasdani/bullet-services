@@ -6,9 +6,9 @@ module WrsCheckInCheckOut
   private
 
   def build_check_in_service
-    CheckIns::CheckInService.new(
+    WorkSessions::CheckInService.new(
       user: current_user,
-      window_schedule_repair: @window_schedule_repair,
+      work_order: @window_schedule_repair,
       latitude: params[:latitude],
       longitude: params[:longitude],
       address: params[:address]
@@ -16,38 +16,39 @@ module WrsCheckInCheckOut
   end
 
   def build_check_out_service
-    CheckIns::CheckOutService.new(
+    WorkSessions::CheckOutService.new(
       user: current_user,
-      window_schedule_repair: @window_schedule_repair,
+      work_order: @window_schedule_repair,
       latitude: params[:latitude],
       longitude: params[:longitude],
       address: params[:address]
     )
   end
 
-  def check_in_payload(record)
+  def work_session_payload(session)
     {
-      id: record.id,
-      action: record.action,
-      timestamp: record.timestamp,
-      window_schedule_repair_id: record.window_schedule_repair_id,
-      latitude: record.latitude,
-      longitude: record.longitude,
-      address: record.address
+      id: session.id,
+      work_order_id: session.work_order_id,
+      checked_in_at: session.checked_in_at,
+      checked_out_at: session.checked_out_at,
+      latitude: session.latitude,
+      longitude: session.longitude,
+      address: session.address,
+      active: session.active?
     }
   end
 
-  def check_out_payload(record, service)
-    check_in_payload(record).merge(hours_worked: service.hours_worked)
-  end
-
   def render_check_in_success(service)
-    render_success(data: check_in_payload(service.check_in), message: 'Checked in successfully', status: :created)
+    render_success(
+      data: work_session_payload(service.work_session),
+      message: 'Checked in successfully',
+      status: :created
+    )
   end
 
   def render_check_out_success(service)
     render_success(
-      data: check_out_payload(service.check_out, service),
+      data: work_session_payload(service.work_session).merge(hours_worked: service.hours_worked),
       message: 'Checked out successfully',
       status: :created
     )

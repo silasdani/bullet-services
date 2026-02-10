@@ -65,7 +65,7 @@ module Notifications
         notification_type: notification_type.to_s
       }
 
-      data[:window_schedule_repair_id] = window_schedule_repair.id.to_s if window_schedule_repair
+      data[:work_order_id] = window_schedule_repair.id.to_s if window_schedule_repair
       data.merge(metadata.transform_keys(&:to_s).transform_values(&:to_s))
     end
   end

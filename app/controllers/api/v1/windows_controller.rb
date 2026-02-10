@@ -71,7 +71,9 @@ module Api
       end
 
       def window_params
-        params.require(:window).permit(:image, :location, :window_schedule_repair_id)
+        permitted = params.require(:window).permit(:image, :location, :work_order_id, :window_schedule_repair_id)
+        permitted[:work_order_id] ||= permitted.delete(:window_schedule_repair_id)
+        permitted.except(:window_schedule_repair_id)
       end
     end
   end

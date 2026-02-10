@@ -3,9 +3,9 @@
 class WindowScheduleRepairSerializer < ActiveModel::Serializer
   attributes :id, :name, :slug, :flat_number, :details,
              :total_vat_included_price, :total_vat_excluded_price,
-             :status, :status_color, :grand_total, :created_at, :updated_at,
-             :deleted_at, :deleted?, :active?, :last_published, :is_draft, :is_archived,
-             :published?, :draft?, :archived?, :webflow_item_id
+             :status, :status_color, :total, :created_at, :updated_at,
+             :deleted_at, :deleted?, :active?, :is_draft, :is_archived,
+             :published?, :draft?, :archived?
 
   def address
     building = load_building_obj
@@ -38,15 +38,20 @@ class WindowScheduleRepairSerializer < ActiveModel::Serializer
     end
   end
 
-  def grand_total
+  def total
     return nil if scope&.contractor?
 
     begin
-      object.grand_total
+      object.total || object.total_vat_included_price || 0
     rescue StandardError => e
-      Rails.logger.error "Error getting grand_total: #{e.message}"
+      Rails.logger.error "Error getting total: #{e.message}"
       nil
     end
+  end
+
+  # Backwards compatibility alias
+  def grand_total
+    total
   end
 
   belongs_to :user

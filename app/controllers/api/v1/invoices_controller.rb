@@ -120,10 +120,9 @@ module Api
 
       def invoice_params
         params.require(:invoice).permit(
-          :name, :slug, :webflow_item_id, :is_archived, :is_draft,
-          :webflow_created_on, :webflow_published_on, :freshbooks_client_id,
+          :name, :slug, :is_archived, :is_draft, :freshbooks_client_id,
           :job, :wrs_link, :included_vat_amount, :excluded_vat_amount,
-          :status_color, :status, :final_status, :invoice_pdf_link
+          :status_color, :status, :final_status, :invoice_pdf_link, :work_order_id
         )
       end
     end

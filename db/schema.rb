@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_10_214242) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_10_230000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -197,7 +197,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_10_214242) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.datetime "read_at"
+    t.datetime "deleted_at"
     t.index ["created_at"], name: "index_notifications_on_created_at"
+    t.index ["deleted_at"], name: "index_notifications_on_deleted_at"
     t.index ["read_at"], name: "index_notifications_on_read_at"
     t.index ["user_id", "created_at"], name: "index_notifications_on_user_unread", where: "(read_at IS NULL)"
     t.index ["user_id", "read_at", "created_at"], name: "index_notifications_on_user_read_created"
@@ -379,22 +381,16 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_10_214242) do
   add_foreign_key "building_assignments", "users", column: "assigned_by_user_id"
   add_foreign_key "check_ins", "users"
   add_foreign_key "check_ins", "work_orders"
-  add_foreign_key "check_ins", "work_orders"
   add_foreign_key "invoices", "work_orders"
   add_foreign_key "notifications", "users"
   add_foreign_key "notifications", "work_orders"
-  add_foreign_key "notifications", "work_orders"
   add_foreign_key "ongoing_works", "users"
-  add_foreign_key "ongoing_works", "work_orders"
   add_foreign_key "ongoing_works", "work_orders"
   add_foreign_key "tools", "windows"
   add_foreign_key "windows", "work_orders"
-  add_foreign_key "windows", "work_orders"
-  add_foreign_key "work_order_decisions", "work_orders"
   add_foreign_key "work_order_decisions", "work_orders"
   add_foreign_key "work_orders", "buildings"
   add_foreign_key "work_orders", "users"
   add_foreign_key "work_sessions", "users"
-  add_foreign_key "work_sessions", "work_orders"
   add_foreign_key "work_sessions", "work_orders"
 end

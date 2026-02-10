@@ -45,7 +45,7 @@ module Notifications
 
     def queue_batch_notification_job
       BatchAdminNotificationJob.perform_later(
-        window_schedule_repair_id: window_schedule_repair.id,
+        work_order_id: window_schedule_repair.id,
         notification_type: notification_type,
         title: title,
         message: message,

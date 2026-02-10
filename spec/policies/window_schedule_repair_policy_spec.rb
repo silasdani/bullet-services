@@ -99,41 +99,6 @@ RSpec.describe WindowScheduleRepairPolicy, type: :policy do
         expect(other_policy.restore?).to be false
       end
     end
-
-    describe 'Webflow permissions' do
-      describe '#send_to_webflow?' do
-        it 'allows users with webflow access' do
-          expect(admin_policy.send_to_webflow?).to be true
-          expect(contractor_policy.send_to_webflow?).to be true
-        end
-
-        it 'does not allow users without webflow access' do
-          expect(policy.send_to_webflow?).to be false
-        end
-      end
-
-      describe '#publish_to_webflow?' do
-        it 'allows users with webflow access' do
-          expect(admin_policy.publish_to_webflow?).to be true
-          expect(contractor_policy.publish_to_webflow?).to be true
-        end
-
-        it 'does not allow users without webflow access' do
-          expect(policy.publish_to_webflow?).to be false
-        end
-      end
-
-      describe '#unpublish_from_webflow?' do
-        it 'allows users with webflow access' do
-          expect(admin_policy.unpublish_from_webflow?).to be true
-          expect(contractor_policy.unpublish_from_webflow?).to be true
-        end
-
-        it 'does not allow users without webflow access' do
-          expect(policy.unpublish_from_webflow?).to be false
-        end
-      end
-    end
   end
 
   describe 'scope' do

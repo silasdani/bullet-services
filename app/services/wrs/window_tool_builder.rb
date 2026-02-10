@@ -19,7 +19,7 @@ module Wrs
       windows_to_create = build_windows_data(wrs, window_data)
       Window.insert_all(windows_to_create, returning: %i[id location])
 
-      Window.where(window_schedule_repair_id: wrs.id)
+      Window.where(work_order_id: wrs.id)
             .where(location: window_data.map { |w| w[:location] })
             .index_by(&:location)
     end
@@ -27,9 +27,8 @@ module Wrs
     def self.build_windows_data(wrs, window_data)
       window_data.map do |window_info|
         {
-          window_schedule_repair_id: wrs.id,
+          work_order_id: wrs.id,
           location: window_info[:location],
-          webflow_image_url: window_info[:image_url],
           created_at: parse_time_safe(window_info[:created_on]),
           updated_at: parse_time_safe(window_info[:last_updated])
         }

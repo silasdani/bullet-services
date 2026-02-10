@@ -24,8 +24,15 @@ module Wrs
     attribute :decision, :string
 
     def call
-      return add_error('WRS is required') if window_schedule_repair.nil?
-      return add_error('Decision is required') if decision.blank?
+      if window_schedule_repair.nil?
+        add_error('WRS is required')
+        return self
+      end
+
+      if decision.blank?
+        add_error('Decision is required')
+        return self
+      end
 
       case decision.to_s
       when 'accept'
@@ -35,6 +42,8 @@ module Wrs
       else
         add_error('Invalid decision')
       end
+
+      self
     end
 
     private
@@ -55,6 +64,8 @@ module Wrs
           # Queue FreshBooks invoice creation as background job
           # This ensures we respond to the client immediately without waiting for 3rd party API
           queue_freshbooks_invoice_creation(invoice, fb_client)
+
+          self.result = { invoice_id: invoice.id }
         end
       end
     end
@@ -80,7 +91,7 @@ module Wrs
         slug: generate_invoice_slug,
         job: window_schedule_repair.name,
         freshbooks_client_id: fb_client_id,
-        window_schedule_repair_id: window_schedule_repair.id,
+        work_order_id: window_schedule_repair.id,
         wrs_link: wrs_public_url,
         included_vat_amount: window_schedule_repair.total_vat_included_price,
         excluded_vat_amount: window_schedule_repair.total_vat_excluded_price,

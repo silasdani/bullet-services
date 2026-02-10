@@ -61,8 +61,7 @@ module Wrs
 
     def build_window(window_attrs)
       @wrs.windows.build(
-        location: window_attrs[:location],
-        webflow_image_url: window_attrs[:webflow_image_url]
+        location: window_attrs[:location]
       )
     end
 

@@ -55,8 +55,8 @@ module Api
         {
           id: check_in.id,
           action: check_in.action,
-          window_schedule_repair_id: check_in.window_schedule_repair_id,
-          window_schedule_repair_name: check_in.window_schedule_repair&.name || 'Unknown',
+          work_order_id: check_in.work_order_id,
+          work_order_name: check_in.window_schedule_repair&.name || 'Unknown',
           timestamp: check_in.timestamp,
           address: check_in.address,
           latitude: check_in.latitude,

@@ -28,80 +28,55 @@ module Timesheets
     end
 
     def generate_entries
-      check_in_pairs = find_check_in_pairs
+      sessions = find_completed_sessions
 
-      @timesheet_entries = check_in_pairs.map do |check_in, check_out|
-        build_timesheet_entry(check_in, check_out)
-      end
+      @timesheet_entries = sessions.map { |session| build_timesheet_entry(session) }
 
       log_info("Generated #{@timesheet_entries.count} timesheet entries")
       self
     end
 
-    def find_check_in_pairs
-      check_ins = CheckIn.where(user: user, action: :check_in)
-                         .where('timestamp >= ? AND timestamp <= ?', start_date.beginning_of_day, end_date.end_of_day)
-                         .order(timestamp: :asc)
-
-      pairs = []
-      check_ins.each do |check_in|
-        check_out = find_matching_check_out(check_in)
-        pairs << [check_in, check_out] if check_out
-      end
-
-      pairs
+    def find_completed_sessions
+      WorkSession
+        .completed
+        .where(user: user)
+        .where(checked_in_at: start_date.beginning_of_day..end_date.end_of_day)
+        .includes(:work_order)
+        .order(checked_in_at: :asc)
     end
 
-    def find_matching_check_out(check_in)
-      CheckIn.where(
-        user: user,
-        window_schedule_repair: check_in.window_schedule_repair,
-        action: :check_out
-      ).where('timestamp > ?', check_in.timestamp)
-             .order(timestamp: :asc)
-             .first
-    end
-
-    def build_timesheet_entry(check_in, check_out)
-      hours_worked = calculate_hours_worked(check_in.timestamp, check_out.timestamp)
-      hourly_rate = calculate_hourly_rate(check_in, check_out)
+    def build_timesheet_entry(session)
+      hours_worked = session.duration_hours || 0
+      hourly_rate = calculate_hourly_rate(session)
       total_amount = calculate_total_amount(hours_worked, hourly_rate)
 
-      build_entry_hash(check_in, check_out, hours_worked, hourly_rate, total_amount)
+      build_entry_hash(session, hours_worked, hourly_rate, total_amount)
     end
 
-    def build_entry_hash(check_in, check_out, hours_worked, hourly_rate, total_amount)
+    def build_entry_hash(session, hours_worked, hourly_rate, total_amount)
       {
-        check_in_id: check_in.id,
-        check_out_id: check_out.id,
-        window_schedule_repair_id: check_in.window_schedule_repair_id,
-        window_schedule_repair_name: check_in.window_schedule_repair.name,
-        date: check_in.timestamp.to_date,
-        check_in_time: check_in.timestamp,
-        check_out_time: check_out.timestamp,
+        work_session_id: session.id,
+        work_order_id: session.work_order_id,
+        work_order_name: session.work_order&.name,
+        date: session.checked_in_at.to_date,
+        check_in_time: session.checked_in_at,
+        check_out_time: session.checked_out_at,
         hours_worked: hours_worked,
         hours_worked_minutes: (hours_worked * 60).to_i,
         hourly_rate: hourly_rate,
         total_amount: total_amount,
-        location: build_location_string(check_in)
+        location: build_location_string(session)
       }
     end
 
-    def build_location_string(check_in)
-      check_in.address || "#{check_in.latitude}, #{check_in.longitude}"
+    def build_location_string(session)
+      session.address || "#{session.latitude}, #{session.longitude}"
     end
 
-    def calculate_hours_worked(check_in_time, check_out_time)
-      return 0 unless check_in_time && check_out_time
-
-      duration_seconds = check_out_time - check_in_time
-      (duration_seconds / 1.hour).round(2)
-    end
-
-    def calculate_hourly_rate(check_in, check_out)
+    def calculate_hourly_rate(session)
       return 0 unless hourly_rate_calculator
 
-      hourly_rate_calculator.call(check_in, check_out)
+      hourly_rate_calculator.call(session)
     rescue StandardError => e
       log_warn("Hourly rate calculation failed: #{e.message}")
       0

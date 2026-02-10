@@ -39,9 +39,6 @@ Rails.application.routes.draw do
 
   namespace :api do
     namespace :v1 do
-      # Webflow webhooks (no authentication required)
-      post "webhooks/webflow/collection_item_published", to: "webhooks#webflow_collection_item_published"
-
       # FreshBooks webhooks (no authentication required, signature verified)
       post "webhooks/freshbooks", to: "freshbooks_webhooks#create"
 
@@ -54,10 +51,7 @@ Rails.application.routes.draw do
 
       resources :window_schedule_repairs do
         member do
-          post :send_to_webflow
           post :restore
-          post :publish_to_webflow
-          post :unpublish_from_webflow
           post :check_in
           post :check_out
         end
@@ -104,7 +98,7 @@ Rails.application.routes.draw do
         end
       end
 
-      resources :check_ins, only: [ :index, :show ] do
+      resources :work_sessions, only: [ :index, :show ] do
         collection do
           get :active
         end

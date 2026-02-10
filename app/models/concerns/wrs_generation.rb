@@ -6,8 +6,7 @@ module WrsGeneration
   included do
     before_validation :generate_slug, on: :create
     before_validation :generate_reference_number
-    before_validation :set_default_webflow_flags, on: :create
-    before_save :sync_address_from_building
+    before_validation :set_default_flags, on: :create
   end
 
   private
@@ -38,18 +37,8 @@ module WrsGeneration
     self.reference_number = "WRS-#{date_part}-#{sequence}"
   end
 
-  def set_default_webflow_flags
+  def set_default_flags
     self.is_draft = true if is_draft.nil?
     self.is_archived = false if is_archived.nil?
-  end
-
-  def sync_address_from_building
-    # Sync address column with building address (Webflow format) for backwards compatibility
-    # Format: "{building.name}, {building.street}, {building.zipcode}"
-    return unless building.present?
-
-    parts = [building.name, building.street, building.zipcode].compact.reject(&:blank?)
-    new_address = parts.join(', ')
-    write_attribute(:address, new_address) if new_address.present?
   end
 end

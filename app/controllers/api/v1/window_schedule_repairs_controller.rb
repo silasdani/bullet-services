@@ -3,12 +3,10 @@
 module Api
   module V1
     class WindowScheduleRepairsController < Api::V1::BaseController
-      include WebflowPublishing
       include WrsCheckInCheckOut
 
       before_action :set_window_schedule_repair,
-                    only: %i[show update restore publish_to_webflow unpublish_from_webflow send_to_webflow check_in
-                             check_out]
+                    only: %i[show update restore check_in check_out]
 
       def index
         authorize WindowScheduleRepair
@@ -38,6 +36,8 @@ module Api
         render_success(
           data: WindowScheduleRepairSerializer.new(@window_schedule_repair, scope: current_user).serializable_hash
         )
+      rescue Pundit::NotAuthorizedError
+        raise
       rescue StandardError => e
         Rails.logger.error "Error in WRS show action: #{e.message}"
         Rails.logger.error e.backtrace.first(10).join("\n")
@@ -122,7 +122,7 @@ module Api
 
       def check_in
         authorize @window_schedule_repair, :show?
-        authorize CheckIn, :check_in?
+        authorize WorkSession, :check_in?
         service = build_check_in_service
         service.call
         if service.success?
@@ -135,7 +135,7 @@ module Api
 
       def check_out
         authorize @window_schedule_repair, :show?
-        authorize CheckIn, :check_out?
+        authorize WorkSession, :check_out?
         service = build_check_out_service
         service.call
         if service.success?
@@ -203,9 +203,9 @@ module Api
 
       def wrs_permitted_params
         [
-          :name, :slug, :webflow_item_id, :reference_number,
+          :name, :slug, :reference_number,
           :building_id, :flat_number, :details,
-          :total_vat_excluded_price, :status, :status_color, :grand_total,
+          :total_vat_excluded_price, :status, :status_color,
           { images: [],
             windows_attributes: [
               :id, :location, :image, :_destroy,

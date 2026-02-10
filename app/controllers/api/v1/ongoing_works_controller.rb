@@ -85,7 +85,7 @@ module Api
       def serialize_ongoing_work(ongoing_work)
         {
           id: ongoing_work.id,
-          window_schedule_repair_id: ongoing_work.window_schedule_repair_id,
+          work_order_id: ongoing_work.work_order_id,
           description: ongoing_work.description,
           work_date: ongoing_work.work_date,
           user_id: ongoing_work.user_id,

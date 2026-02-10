@@ -47,10 +47,6 @@ RSpec.describe User, type: :model do
       it 'returns true for is_admin?' do
         expect(admin_user.is_admin?).to be true
       end
-
-      it 'returns true for webflow_access' do
-        expect(admin_user.webflow_access).to be true
-      end
     end
 
     context 'when user is contractor' do
@@ -62,10 +58,6 @@ RSpec.describe User, type: :model do
 
       it 'returns true for contractor?' do
         expect(contractor_user.contractor?).to be true
-      end
-
-      it 'returns true for webflow_access' do
-        expect(contractor_user.webflow_access).to be true
       end
     end
 
@@ -83,10 +75,6 @@ RSpec.describe User, type: :model do
       it 'returns true for is_super_admin? (deprecated alias)' do
         expect(surveyor_user.is_super_admin?).to be true
       end
-
-      it 'returns true for webflow_access' do
-        expect(surveyor_user.webflow_access).to be true
-      end
     end
 
     context 'when user is client' do
@@ -96,10 +84,6 @@ RSpec.describe User, type: :model do
 
       it 'returns false for is_employee?' do
         expect(user.is_employee?).to be false
-      end
-
-      it 'returns false for webflow_access' do
-        expect(user.webflow_access).to be false
       end
     end
   end

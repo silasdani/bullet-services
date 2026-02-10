@@ -7,9 +7,9 @@ class WindowScheduleRepairPolicy < ApplicationPolicy
 
   def show?
     return false unless user.present?
-    return true unless user.contractor?
+    return true if user.contractor?
 
-    contractor_can_show?
+    record.user == user || user.is_admin? || user.is_employee?
   end
 
   def contractor_can_show?
@@ -22,8 +22,8 @@ class WindowScheduleRepairPolicy < ApplicationPolicy
   end
 
   def contractor_active_building_id
-    active = CheckIn.active_for(user, nil).includes(:window_schedule_repair).first
-    active&.window_schedule_repair&.building_id
+    active = WorkSession.active.for_user(user).includes(:work_order).first
+    active&.work_order&.building_id
   end
 
   def create?
@@ -34,10 +34,10 @@ class WindowScheduleRepairPolicy < ApplicationPolicy
   end
 
   def update?
-    # Contractors cannot update WRS
-    return false if user&.contractor?
+    return false unless user.present?
+    return true if user.contractor?
 
-    user.present? && (user.is_admin? || user.is_employee? || record.user == user)
+    user.is_admin? || user.is_employee? || record.user == user
   end
 
   def destroy?
@@ -48,58 +48,18 @@ class WindowScheduleRepairPolicy < ApplicationPolicy
     user.present? && (user.is_admin? || record.user == user)
   end
 
-  def send_to_webflow?
-    user.present? && user.webflow_access
-  end
-
-  def publish_to_webflow?
-    user.present? && user.webflow_access
-  end
-
-  def unpublish_from_webflow?
-    user.present? && user.webflow_access
-  end
-
   class Scope < Scope
     def resolve
-      return scope.all unless user&.contractor?
+      return scope.none unless user.present?
+      return scope.all if user.is_admin?
 
-      contractor_scope
+      scope.where(user: user)
     end
 
     private
 
     def contractor_scope
-      base = scope.where(is_draft: false, is_archived: false).contractor_visible_status
-      building_id = contractor_active_building_id
-      return base.where(building_id: building_id) if building_id
-      return base if should_show_all_buildings?(user)
-
-      base.where(building_id: BuildingAssignment.where(user_id: user.id).select(:building_id))
-    end
-
-    def contractor_active_building_id
-      active = CheckIn.active_for(user, nil).includes(:window_schedule_repair).first
-      active&.window_schedule_repair&.building_id
-    end
-
-    def should_show_all_buildings?(user)
-      # Check if user has any building assignments
-      assigned_building_ids = BuildingAssignment.where(user_id: user.id).pluck(:building_id)
-
-      # If no assignments, show all buildings
-      return true if assigned_building_ids.empty?
-
-      # Check if all assigned buildings have only completed WRS
-      # Get all WRS from assigned buildings that are not completed
-      non_completed_wrs_count = WindowScheduleRepair
-                                .where(building_id: assigned_building_ids)
-                                .where(is_draft: false, is_archived: false)
-                                .contractor_visible_status
-                                .count
-
-      # If all assigned buildings have only completed WRS, show all buildings
-      non_completed_wrs_count.zero?
+      scope.where(user: user)
     end
   end
 end

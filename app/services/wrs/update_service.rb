@@ -90,8 +90,7 @@ module Wrs
 
     def update_window_fields?(window, window_attrs)
       update_params = {
-        location: window_attrs[:location],
-        webflow_image_url: window_attrs[:webflow_image_url]
+        location: window_attrs[:location]
       }.compact
 
       return true if window.update(update_params)
@@ -112,8 +111,7 @@ module Wrs
 
     def build_new_window(window_attrs)
       wrs.windows.build(
-        location: window_attrs[:location],
-        webflow_image_url: window_attrs[:webflow_image_url]
+        location: window_attrs[:location]
       )
     end
 

@@ -96,7 +96,6 @@ class InvoiceCsvImportService < ApplicationService
   def map_csv_row_to_attributes(row)
     {
       **map_basic_attributes(row),
-      **map_webflow_attributes(row),
       **map_freshbooks_attributes(row),
       **map_status_attributes(row),
       **map_financial_attributes(row)
@@ -109,16 +108,6 @@ class InvoiceCsvImportService < ApplicationService
       slug: row[:slug]&.strip,
       job: row[:job]&.strip,
       wrs_link: row[:wrs_link]&.strip
-    }
-  end
-
-  def map_webflow_attributes(row)
-    {
-      webflow_item_id: row[:webflow_item_id]&.strip,
-      is_archived: parse_boolean(row[:is_archived]),
-      is_draft: parse_boolean(row[:is_draft]),
-      webflow_created_on: row[:webflow_created_on]&.strip,
-      webflow_published_on: row[:webflow_published_on]&.strip
     }
   end
 

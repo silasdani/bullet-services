@@ -137,7 +137,7 @@ module Api
       end
 
       def csv_column_headers
-        ['Date', 'WRS Name', 'Check-in Time', 'Check-out Time', 'Hours Worked',
+        ['Date', 'Work Order', 'Check-in Time', 'Check-out Time', 'Hours Worked',
          'Hourly Rate', 'Total Amount', 'Location']
       end
 
@@ -150,7 +150,7 @@ module Api
       def build_csv_row(entry)
         [
           entry[:date],
-          entry[:window_schedule_repair_name],
+          entry[:work_order_name],
           entry[:check_in_time],
           entry[:check_out_time],
           entry[:hours_worked],

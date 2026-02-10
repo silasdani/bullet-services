@@ -5,6 +5,7 @@ require 'rails_helper'
 RSpec.describe Api::V1::WindowScheduleRepairsController, type: :request do
   let(:user) { create(:user) }
   let(:admin_user) { create(:user, :admin) }
+  let(:building) { create(:building) }
   let(:window_schedule_repair) { create(:window_schedule_repair, user: user) }
 
   # Helper method for API authentication using Devise Token Auth
@@ -18,6 +19,8 @@ RSpec.describe Api::V1::WindowScheduleRepairsController, type: :request do
     {
       'access-token' => token['access-token'],
       'client' => token['client'],
+      'token-type' => token['token-type'],
+      'expiry' => token['expiry'],
       'uid' => token['uid'],
       'Content-Type' => 'application/json'
     }
@@ -27,7 +30,7 @@ RSpec.describe Api::V1::WindowScheduleRepairsController, type: :request do
     context 'when user is authenticated' do
       it 'returns a successful response' do
         get api_v1_window_schedule_repairs_path, headers: auth_headers(user)
-        expect(response).to have_http_status(:success)
+        expect(response).to have_http_status(:success), response.body
       end
 
       it 'returns window schedule repairs data' do
@@ -65,7 +68,7 @@ RSpec.describe Api::V1::WindowScheduleRepairsController, type: :request do
 
       it 'returns forbidden' do
         get api_v1_window_schedule_repair_path(window_schedule_repair), headers: auth_headers(other_user)
-        expect(response).to have_http_status(:forbidden)
+        expect(response).to have_http_status(:forbidden), response.body
       end
     end
   end
@@ -75,7 +78,7 @@ RSpec.describe Api::V1::WindowScheduleRepairsController, type: :request do
       {
         window_schedule_repair: {
           name: 'Test WRS',
-          address: '123 Test St',
+          building_id: building.id,
           flat_number: 'Apt 1'
         }
       }
@@ -104,7 +107,7 @@ RSpec.describe Api::V1::WindowScheduleRepairsController, type: :request do
         {
           window_schedule_repair: {
             name: '', # Invalid: empty name
-            address: '123 Test St'
+            building_id: building.id
           }
         }
       end

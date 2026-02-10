@@ -13,7 +13,6 @@ RSpec.describe Wrs::DecisionService do
         allow_any_instance_of(Invoice)
           .to receive(:create_in_freshbooks!)
           .and_return({ pdf_url: 'https://example.com/invoice.pdf' })
-        allow(Webflow::PdfMirrorService).to receive(:new).and_return(double(call: true))
         allow(MailerSendEmailService).to receive(:new).and_return(double(call: true))
 
         service = described_class.new(

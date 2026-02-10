@@ -26,13 +26,12 @@ module Avo
         field :is_archived, as: :boolean, filterable: true, hide_on: %i[index show]
         field :flat_number, as: :text, hide_on: [:index]
         field :address, as: :text, hide_on: [:index]
-        field :grand_total_formatted, as: :text, readonly: true, only_on: %i[index show], name: 'Grand Total' do
-          record.grand_total ? "£#{record.grand_total.to_f.round(2)}" : '£0.00'
+        field :total_formatted, as: :text, readonly: true, only_on: %i[index show], name: 'Total' do
+          record.total ? "£#{record.total.to_f.round(2)}" : '£0.00'
         end
-        field :grand_total, as: :number, readonly: true, hide_on: %i[index show]
         field :windows, as: :has_many, hide_on: [:index]
         field :ongoing_works, as: :has_many, hide_on: [:index]
-        field :check_ins, as: :has_many, hide_on: [:index]
+        field :work_sessions, as: :has_many, hide_on: [:index]
         field :invoices, as: :has_many, hide_on: [:index]
         field :created_at, as: :date_time, readonly: true, sortable: true, filterable: true
         field :updated_at, as: :date_time, readonly: true, sortable: true
