@@ -9,4 +9,3 @@ FactoryBot.define do
     country { Faker::Address.country }
   end
 end
-

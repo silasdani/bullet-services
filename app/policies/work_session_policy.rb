@@ -14,11 +14,11 @@ class WorkSessionPolicy < ApplicationPolicy
   end
 
   def check_in?
-    user.present? && (user.contractor? || user.admin?)
+    user.present? && (user.contractor? || user.general_contractor? || user.admin?)
   end
 
   def check_out?
-    user.present? && (user.contractor? || user.admin?)
+    user.present? && (user.contractor? || user.general_contractor? || user.admin?)
   end
 
   def update?
@@ -36,7 +36,7 @@ class WorkSessionPolicy < ApplicationPolicy
       case user.role
       when 'admin'
         scope.all
-      when 'contractor'
+      when 'contractor', 'general_contractor'
         scope.for_user(user)
       else
         scope.none

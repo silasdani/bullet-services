@@ -41,6 +41,7 @@ module WorkSessions
     end
 
     def validate_contractor_assignment
+      # General contractors can check into any project; only contractors need assignment
       return self unless user&.contractor?
 
       return self unless work_order
@@ -52,8 +53,8 @@ module WorkSessions
     end
 
     def validate_work_order_status
-      # Contractors can only check in to approved work orders
-      if user.contractor? && work_order.status != 'approved'
+      # Contractors and general contractors can only check in to approved work orders
+      if (user.contractor? || user.general_contractor?) && work_order.status != 'approved'
         add_error('You can only check in to approved works.')
         return self
       end
@@ -103,7 +104,7 @@ module WorkSessions
 
     # rubocop:disable Metrics/AbcSize
     def create_notification
-      if user.contractor?
+      if user.contractor? || user.general_contractor?
         log_info("Creating check-in notification for contractor: #{user.email}")
         result = Notifications::AdminFcmNotificationService.new(
           window_schedule_repair: work_order, # Keep for backward compatibility

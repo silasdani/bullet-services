@@ -5,4 +5,3 @@ module Avo
   class PriceSnapshotsController < Avo::ResourcesController
   end
 end
-

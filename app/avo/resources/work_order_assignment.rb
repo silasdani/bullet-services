@@ -6,7 +6,7 @@ module Avo
       self.title = :id
       self.includes = %i[user work_order assigned_by_user]
       self.search = {
-        query: -> { query.ransack(m: "or").result(distinct: false) }
+        query: -> { query.ransack(m: 'or').result(distinct: false) }
       }
 
       def fields

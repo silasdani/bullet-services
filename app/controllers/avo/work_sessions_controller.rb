@@ -5,4 +5,3 @@ module Avo
   class WorkSessionsController < Avo::ResourcesController
   end
 end
-

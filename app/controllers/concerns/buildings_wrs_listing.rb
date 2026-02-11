@@ -11,6 +11,9 @@ module BuildingsWrsListing
   end
 
   def contractor_can_access_building_wrs?
+    # General contractors can access any building with visible WRS
+    return true if current_user.general_contractor?
+
     active_building_id = contractor_active_building_id
     return true if active_building_id == @building.id
     return true if contractor_assigned_to_building_work_order?
@@ -49,7 +52,9 @@ module BuildingsWrsListing
     scope = @building.window_schedule_repairs
                      .includes(:user, :windows, windows: [:tools, { images_attachments: :blob }])
                      .order(created_at: :desc)
-    scope = scope.where(is_draft: false).contractor_visible_status if current_user.contractor?
+    if current_user.contractor? || current_user.general_contractor?
+      scope = scope.where(is_draft: false).contractor_visible_status
+    end
     scope
   end
 

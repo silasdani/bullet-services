@@ -153,6 +153,8 @@ if false
             'badge bg-warning text-dark'
           when 'surveyor'
             'badge bg-danger'
+          when 'general_contractor'
+            'badge bg-info'
           else
             'badge bg-secondary'
           end
@@ -166,6 +168,8 @@ if false
             'Admin'
           when 'surveyor'
             'Surveyor'
+          when 'general_contractor'
+            'General Contractor'
           else
             role.titleize
           end
@@ -193,6 +197,8 @@ if false
             'badge bg-warning text-dark'
           when 'surveyor'
             'badge bg-danger'
+          when 'general_contractor'
+            'badge bg-info'
           else
             'badge bg-secondary'
           end
@@ -206,6 +212,8 @@ if false
             'Admin'
           when 'surveyor'
             'Surveyor'
+          when 'general_contractor'
+            'General Contractor'
           else
             role.titleize
           end

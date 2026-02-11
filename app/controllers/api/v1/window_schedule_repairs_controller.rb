@@ -164,7 +164,8 @@ module Api
           render_success(
             data: {
               user_id: target_user.id,
-              work_order: WindowScheduleRepairSerializer.new(@window_schedule_repair, scope: current_user).serializable_hash,
+              work_order: WindowScheduleRepairSerializer.new(@window_schedule_repair,
+                                                             scope: current_user).serializable_hash,
               assigned: true
             },
             message: 'Successfully assigned to work order'

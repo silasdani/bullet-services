@@ -5,4 +5,3 @@ module Avo
   class FreshbooksClientsController < Avo::ResourcesController
   end
 end
-

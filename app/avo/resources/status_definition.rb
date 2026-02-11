@@ -7,7 +7,8 @@ module Avo
       self.includes = []
       self.search = {
         query: lambda {
-          query.ransack(entity_type_cont: params[:q], status_key_cont: params[:q], status_label_cont: params[:q], m: "or")
+          query.ransack(entity_type_cont: params[:q], status_key_cont: params[:q], status_label_cont: params[:q],
+                        m: 'or')
                .result(distinct: false)
         }
       }
@@ -26,4 +27,3 @@ module Avo
     end
   end
 end
-

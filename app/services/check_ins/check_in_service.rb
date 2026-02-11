@@ -41,6 +41,7 @@ module CheckIns
     end
 
     def validate_contractor_assignment
+      # General contractors can check into any project; only contractors need assignment
       return self unless user&.contractor?
 
       return self unless window_schedule_repair
@@ -52,8 +53,8 @@ module CheckIns
     end
 
     def validate_wrs_status
-      # Contractors can only check in to approved WRS
-      if user.contractor? && window_schedule_repair.status != 'approved'
+      # Contractors and general contractors can only check in to approved WRS
+      if (user.contractor? || user.general_contractor?) && window_schedule_repair.status != 'approved'
         add_error('You can only check in to approved works.')
         return self
       end
@@ -104,7 +105,7 @@ module CheckIns
 
     # rubocop:disable Metrics/AbcSize
     def create_notification
-      if user.contractor?
+      if user.contractor? || user.general_contractor?
         log_info("Creating check-in notification for contractor: #{user.email}")
         result = Notifications::AdminFcmNotificationService.new(
           window_schedule_repair: window_schedule_repair,

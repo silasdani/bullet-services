@@ -19,5 +19,9 @@ FactoryBot.define do
     trait :surveyor do
       role { :surveyor }
     end
+
+    trait :general_contractor do
+      role { :general_contractor }
+    end
   end
 end

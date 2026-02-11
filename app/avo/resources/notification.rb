@@ -18,7 +18,7 @@ module Avo
         field :notification_type, as: :select, enum: ::Notification.notification_types, required: true, filterable: true
         field :title, as: :text, required: true, filterable: true
         field :message, as: :textarea, hide_on: [:index]
-        field :metadata, as: :code, language: "json", hide_on: [:index]
+        field :metadata, as: :code, language: 'json', hide_on: [:index]
         field :read_at, as: :date_time, filterable: true
         field :created_at, as: :date_time, readonly: true, sortable: true, filterable: true
         field :updated_at, as: :date_time, readonly: true, sortable: true
@@ -27,4 +27,3 @@ module Avo
     end
   end
 end
-

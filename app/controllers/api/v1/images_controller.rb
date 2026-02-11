@@ -102,7 +102,6 @@ module Api
       def set_window
         @window = Window.find(params[:window_id])
       end
-
     end
   end
 end

@@ -8,10 +8,10 @@ class BuildingPolicy < ApplicationPolicy
   def show?
     return false unless user.present?
 
-    if user.contractor? && !record.window_schedule_repairs
-                                  .where(is_draft: false, deleted_at: nil)
-                                  .merge(WindowScheduleRepair.contractor_visible_status)
-                                  .exists?
+    if (user.contractor? || user.general_contractor?) && !record.window_schedule_repairs
+                                                                .where(is_draft: false, deleted_at: nil)
+                                                                .merge(WindowScheduleRepair.contractor_visible_status)
+                                                                .exists?
       return false
     end
 
@@ -23,8 +23,8 @@ class BuildingPolicy < ApplicationPolicy
   end
 
   def update?
-    # Contractors cannot update buildings
-    return false if user&.contractor?
+    # Contractors and general contractors cannot update buildings
+    return false if user&.contractor? || user&.general_contractor?
 
     user.present?
   end
@@ -37,7 +37,7 @@ class BuildingPolicy < ApplicationPolicy
     def resolve
       # Contractors can see all buildings that have at least one non-draft WRS with approved/rejected/pending status
       # After check-in, they will only see WRS from that building, but can still see all buildings in the list
-      if user.contractor?
+      if user.contractor? || user.general_contractor?
         # Show all buildings that have at least one non-draft WRS with the right status
         scope.joins(:window_schedule_repairs)
              .where(window_schedule_repairs: {

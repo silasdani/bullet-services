@@ -18,4 +18,3 @@ FactoryBot.define do
     raw_data { {} }
   end
 end
-

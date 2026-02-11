@@ -12,7 +12,7 @@ class User < ApplicationRecord
 
   validates :role, presence: true
 
-  enum :role, client: 0, contractor: 1, admin: 2, surveyor: 3
+  enum :role, { client: 0, contractor: 1, admin: 2, surveyor: 3, general_contractor: 4 }
 
   has_many :work_order_assignments, dependent: :destroy
   has_many :assigned_work_orders, through: :work_order_assignments, source: :work_order
@@ -39,6 +39,10 @@ class User < ApplicationRecord
     role == 'surveyor'
   end
 
+  def general_contractor?
+    role == 'general_contractor'
+  end
+
   def webflow_access?
     is_admin?
   end
@@ -49,9 +53,9 @@ class User < ApplicationRecord
     admin? || surveyor?
   end
 
-  # Deprecated: Use contractor? instead
+  # Deprecated: Use contractor? or general_contractor? instead
   def is_employee?
-    contractor?
+    contractor? || general_contractor?
   end
 
   # Deprecated: Surveyor acts as "super admin" in legacy code.

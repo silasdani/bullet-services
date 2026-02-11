@@ -7,13 +7,15 @@ class WindowScheduleRepairPolicy < ApplicationPolicy
 
   def show?
     return false unless user.present?
-    return true if user.contractor?
+    return true if user.contractor? || user.general_contractor?
 
     record.user == user || user.is_admin? || user.is_employee?
   end
 
   def contractor_can_show?
     return false if record.draft? || record.is_archived?
+    # General contractors can show any visible WRS (they see all projects)
+    return true if user.general_contractor?
 
     active_building_id = contractor_active_building_id
     return record.building_id == active_building_id if active_building_id
@@ -27,15 +29,15 @@ class WindowScheduleRepairPolicy < ApplicationPolicy
   end
 
   def create?
-    # Contractors cannot create WRS
-    return false if user&.contractor?
+    # Contractors and general contractors cannot create WRS
+    return false if user&.contractor? || user&.general_contractor?
 
     user.present?
   end
 
   def update?
     return false unless user.present?
-    return true if user.contractor?
+    return true if user.contractor? || user.general_contractor?
 
     user.is_admin? || user.is_employee? || record.user == user
   end
@@ -52,6 +54,8 @@ class WindowScheduleRepairPolicy < ApplicationPolicy
     def resolve
       return scope.none unless user.present?
       return scope.all if user.is_admin?
+      # General contractors see all visible (non-draft) WRS
+      return scope.where(is_draft: false).contractor_visible_status if user.general_contractor?
 
       scope.where(user: user)
     end

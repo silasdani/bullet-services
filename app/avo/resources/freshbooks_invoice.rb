@@ -12,7 +12,7 @@ module Avo
             invoice_number_cont: params[:q],
             status_cont: params[:q],
             freshbooks_client_id_cont: params[:q],
-            m: "or"
+            m: 'or'
           ).result(distinct: false)
         }
       }
@@ -30,7 +30,7 @@ module Avo
         field :currency_code, as: :text, hide_on: [:index]
         field :notes, as: :textarea, hide_on: [:index]
         field :pdf_url, as: :text, hide_on: [:index]
-        field :raw_data, as: :code, language: "json", hide_on: [:index]
+        field :raw_data, as: :code, language: 'json', hide_on: [:index]
 
         field :invoice, as: :belongs_to, hide_on: [:index]
         field :freshbooks_payments, as: :has_many, hide_on: [:index]
@@ -41,4 +41,3 @@ module Avo
     end
   end
 end
-

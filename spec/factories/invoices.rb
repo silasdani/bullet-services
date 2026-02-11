@@ -20,4 +20,3 @@ FactoryBot.define do
     is_archived { false }
   end
 end
-

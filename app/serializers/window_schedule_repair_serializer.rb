@@ -15,9 +15,9 @@ class WindowScheduleRepairSerializer < ActiveModel::Serializer
     address_fallback
   end
 
-  # Hide prices for contractors
+  # Hide prices for contractors and general contractors
   def total_vat_included_price
-    return nil if scope&.contractor?
+    return nil if scope&.contractor? || scope&.general_contractor?
 
     begin
       object.total_vat_included_price
@@ -28,7 +28,7 @@ class WindowScheduleRepairSerializer < ActiveModel::Serializer
   end
 
   def total_vat_excluded_price
-    return nil if scope&.contractor?
+    return nil if scope&.contractor? || scope&.general_contractor?
 
     begin
       object.total_vat_excluded_price
@@ -39,7 +39,7 @@ class WindowScheduleRepairSerializer < ActiveModel::Serializer
   end
 
   def total
-    return nil if scope&.contractor?
+    return nil if scope&.contractor? || scope&.general_contractor?
 
     begin
       object.total || object.total_vat_included_price || 0

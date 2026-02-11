@@ -5,4 +5,3 @@ module Avo
   class FreshbooksInvoicesController < Avo::ResourcesController
   end
 end
-

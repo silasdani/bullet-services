@@ -33,7 +33,8 @@ RSpec.describe User, type: :model do
                                  'client' => 0,
                                  'contractor' => 1,
                                  'admin' => 2,
-                                 'surveyor' => 3
+                                 'surveyor' => 3,
+                                 'general_contractor' => 4
                                })
     end
   end

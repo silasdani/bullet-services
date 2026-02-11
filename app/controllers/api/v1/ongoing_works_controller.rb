@@ -118,8 +118,8 @@ module Api
       end
 
       def create_work_update_notification(ongoing_work)
-        # Contractors should not send work update notifications
-        return if current_user.contractor?
+        # Contractors and general contractors should not send work update notifications
+        return if current_user.contractor? || current_user.general_contractor?
 
         Notifications::CreateService.new(
           user: @window_schedule_repair.user,

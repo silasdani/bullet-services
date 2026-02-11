@@ -23,7 +23,7 @@ module Api
       def build_buildings_collection
         collection = policy_scope(Building).order(created_at: :desc)
         collection = apply_search_filter(collection)
-        if current_user.contractor?
+        if current_user.contractor? || current_user.general_contractor?
           filter_buildings_with_wrs(collection)
         else
           collection
@@ -31,7 +31,12 @@ module Api
       end
 
       def filter_buildings_with_wrs(collection)
-        assigned_work_order_ids = WorkOrderAssignment.where(user_id: current_user.id).pluck(:work_order_id)
+        # General contractors see all projects; contractors see only assigned (or all when unassigned)
+        assigned_work_order_ids = if current_user.general_contractor?
+                                    []
+                                  else
+                                    WorkOrderAssignment.where(user_id: current_user.id).pluck(:work_order_id)
+                                  end
 
         if assigned_work_order_ids.empty?
           # No assignments: show all buildings with active work orders
@@ -43,16 +48,17 @@ module Api
                                   .distinct
                                   .pluck(:building_id)
           return collection.none if building_ids_with_wrs.empty?
+
           return collection.where(id: building_ids_with_wrs)
         end
 
         # Has assignments: only show buildings with assigned work orders
         building_ids = WindowScheduleRepair
-                      .where(id: assigned_work_order_ids)
-                      .where(is_draft: false, deleted_at: nil)
-                      .contractor_visible_status
-                      .distinct
-                      .pluck(:building_id)
+                       .where(id: assigned_work_order_ids)
+                       .where(is_draft: false, deleted_at: nil)
+                       .contractor_visible_status
+                       .distinct
+                       .pluck(:building_id)
 
         return collection.none if building_ids.empty?
 
@@ -145,7 +151,7 @@ module Api
 
       def window_schedule_repairs
         authorize @building, :show?
-        if current_user.contractor?
+        if current_user.contractor? || current_user.general_contractor?
           return render_wrs_checked_in_elsewhere if contractor_checked_in_elsewhere?
           return render_wrs_not_assigned unless contractor_can_access_building_wrs?
         end
@@ -172,10 +178,10 @@ module Api
         return true if assigned_work_order_ids.empty?
 
         non_completed_count = WindowScheduleRepair
-                             .where(id: assigned_work_order_ids)
-                             .where(is_draft: false, is_archived: false)
-                             .contractor_visible_status
-                             .count
+                              .where(id: assigned_work_order_ids)
+                              .where(is_draft: false, is_archived: false)
+                              .contractor_visible_status
+                              .count
 
         non_completed_count.zero?
       end

@@ -5,4 +5,3 @@ module Avo
   class WorkOrderDecisionsController < Avo::ResourcesController
   end
 end
-

@@ -118,7 +118,7 @@ module WorkSessions
 
     def create_notification
       hours_worked = self.hours_worked
-      if user.contractor?
+      if user.contractor? || user.general_contractor?
         Notifications::AdminFcmNotificationService.new(
           window_schedule_repair: work_order, # Keep for backward compatibility
           notification_type: :check_out,

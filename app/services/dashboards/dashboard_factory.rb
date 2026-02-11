@@ -4,6 +4,7 @@ module Dashboards
   class DashboardFactory
     REGISTRY = {
       'contractor' => ContractorDashboardService,
+      'general_contractor' => GeneralContractorDashboardService,
       'admin' => AdminDashboardService
       # Future roles can be added here:
       # 'surveyor' => SurveyorDashboardService

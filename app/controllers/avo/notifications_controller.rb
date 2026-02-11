@@ -5,4 +5,3 @@ module Avo
   class NotificationsController < Avo::ResourcesController
   end
 end
-

@@ -13,7 +13,7 @@ module Avo
             first_name_cont: params[:q],
             last_name_cont: params[:q],
             organization_cont: params[:q],
-            m: "or"
+            m: 'or'
           ).result(distinct: false)
         }
       }
@@ -31,7 +31,7 @@ module Avo
         field :province, as: :text, hide_on: [:index]
         field :postal_code, as: :text, hide_on: [:index]
         field :country, as: :text, hide_on: [:index]
-        field :raw_data, as: :code, language: "json", hide_on: [:index]
+        field :raw_data, as: :code, language: 'json', hide_on: [:index]
         field :freshbooks_invoices, as: :has_many, hide_on: [:index]
         field :created_at, as: :date_time, readonly: true, sortable: true
         field :updated_at, as: :date_time, readonly: true, sortable: true
@@ -39,4 +39,3 @@ module Avo
     end
   end
 end
-

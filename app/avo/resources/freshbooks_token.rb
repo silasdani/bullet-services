@@ -6,7 +6,7 @@ module Avo
       self.title = :business_id
       self.includes = []
       self.search = {
-        query: -> { query.ransack(business_id_cont: params[:q], m: "or").result(distinct: false) }
+        query: -> { query.ransack(business_id_cont: params[:q], m: 'or').result(distinct: false) }
       }
 
       def fields
@@ -22,4 +22,3 @@ module Avo
     end
   end
 end
-

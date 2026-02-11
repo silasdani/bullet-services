@@ -5,4 +5,3 @@ module Avo
   class StatusDefinitionsController < Avo::ResourcesController
   end
 end
-
