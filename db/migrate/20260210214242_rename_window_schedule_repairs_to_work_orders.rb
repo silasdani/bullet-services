@@ -15,14 +15,15 @@ class RenameWindowScheduleRepairsToWorkOrders < ActiveRecord::Migration[8.0]
     rename_column :work_sessions, :window_schedule_repair_id, :work_order_id
     rename_column :price_snapshots, :priceable_id, :work_order_id if column_exists?(:price_snapshots, :priceable_id)
 
-    # Step 3: Drop old foreign key constraints
-    remove_foreign_key :windows, :window_schedule_repairs if foreign_key_exists?(:windows, :window_schedule_repairs)
-    remove_foreign_key :check_ins, :window_schedule_repairs if foreign_key_exists?(:check_ins, :window_schedule_repairs)
-    remove_foreign_key :invoices, :window_schedule_repairs if foreign_key_exists?(:invoices, :window_schedule_repairs)
-    remove_foreign_key :notifications, :window_schedule_repairs if foreign_key_exists?(:notifications, :window_schedule_repairs)
-    remove_foreign_key :ongoing_works, :window_schedule_repairs if foreign_key_exists?(:ongoing_works, :window_schedule_repairs)
-    remove_foreign_key :work_order_decisions, :window_schedule_repairs if foreign_key_exists?(:work_order_decisions, :window_schedule_repairs)
-    remove_foreign_key :work_sessions, :window_schedule_repairs if foreign_key_exists?(:work_sessions, :window_schedule_repairs)
+    # Step 3: Drop old foreign key constraints (use column: to remove FKs that now reference work_orders
+    # after table rename - remove_foreign_key :x, :window_schedule_repairs would not find them)
+    remove_foreign_key :windows, column: :work_order_id if foreign_key_exists?(:windows, column: :work_order_id)
+    remove_foreign_key :check_ins, column: :work_order_id if foreign_key_exists?(:check_ins, column: :work_order_id)
+    remove_foreign_key :invoices, column: :work_order_id if foreign_key_exists?(:invoices, column: :work_order_id)
+    remove_foreign_key :notifications, column: :work_order_id if foreign_key_exists?(:notifications, column: :work_order_id)
+    remove_foreign_key :ongoing_works, column: :work_order_id if foreign_key_exists?(:ongoing_works, column: :work_order_id)
+    remove_foreign_key :work_order_decisions, column: :work_order_id if foreign_key_exists?(:work_order_decisions, column: :work_order_id)
+    remove_foreign_key :work_sessions, column: :work_order_id if foreign_key_exists?(:work_sessions, column: :work_order_id)
     remove_foreign_key :work_orders, :buildings if foreign_key_exists?(:work_orders, :buildings)
     remove_foreign_key :work_orders, :users if foreign_key_exists?(:work_orders, :users)
 
