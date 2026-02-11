@@ -31,34 +31,8 @@ module Api
       end
 
       def filter_buildings_with_wrs(collection)
-        # General contractors see all projects; contractors see only assigned (or all when unassigned)
-        assigned_work_order_ids = if current_user.general_contractor?
-                                    []
-                                  else
-                                    WorkOrderAssignment.where(user_id: current_user.id).pluck(:work_order_id)
-                                  end
-
-        if assigned_work_order_ids.empty?
-          # No assignments: show all buildings with active work orders
-          building_ids_with_wrs = WindowScheduleRepair
-                                  .where(is_draft: false)
-                                  .where(deleted_at: nil)
-                                  .where.not(building_id: nil)
-                                  .contractor_visible_status
-                                  .distinct
-                                  .pluck(:building_id)
-          return collection.none if building_ids_with_wrs.empty?
-
-          return collection.where(id: building_ids_with_wrs)
-        end
-
-        # Has assignments: only show buildings with assigned work orders
-        building_ids = WindowScheduleRepair
-                       .where(id: assigned_work_order_ids)
-                       .where(is_draft: false, deleted_at: nil)
-                       .contractor_visible_status
-                       .distinct
-                       .pluck(:building_id)
+        assigned_work_order_ids = assigned_work_order_ids_for_wrs_filter
+        building_ids = building_ids_from_wrs_filter(assigned_work_order_ids)
 
         return collection.none if building_ids.empty?
 
@@ -66,6 +40,25 @@ module Api
       rescue StandardError => e
         Rails.logger.error "Error filtering buildings with WRS: #{e.message}"
         collection
+      end
+
+      def assigned_work_order_ids_for_wrs_filter
+        return [] if current_user.general_contractor?
+
+        WorkOrderAssignment.where(user_id: current_user.id).pluck(:work_order_id)
+      end
+
+      def building_ids_from_wrs_filter(assigned_work_order_ids)
+        scope = WindowScheduleRepair
+                .where(is_draft: false, deleted_at: nil)
+                .contractor_visible_status
+
+        scope = if assigned_work_order_ids.empty?
+                  scope.where.not(building_id: nil)
+                else
+                  scope.where(id: assigned_work_order_ids)
+                end
+        scope.distinct.pluck(:building_id)
       end
 
       def apply_search_filter(collection)

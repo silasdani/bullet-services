@@ -41,12 +41,10 @@ class WindowScheduleRepairSerializer < ActiveModel::Serializer
   def total
     return nil if scope&.contractor? || scope&.general_contractor?
 
-    begin
-      object.total || object.total_vat_included_price || 0
-    rescue StandardError => e
-      Rails.logger.error "Error getting total: #{e.message}"
-      nil
-    end
+    computed_total
+  rescue StandardError => e
+    Rails.logger.error "Error getting total: #{e.message}"
+    nil
   end
 
   # Backwards compatibility alias
@@ -122,6 +120,10 @@ class WindowScheduleRepairSerializer < ActiveModel::Serializer
   end
 
   private
+
+  def computed_total
+    object.total || object.total_vat_included_price || 0
+  end
 
   def association_loaded?(name)
     object.association(name).loaded?

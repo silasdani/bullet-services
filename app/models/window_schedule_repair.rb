@@ -116,7 +116,7 @@ class WindowScheduleRepair < ApplicationRecord
     decision == 'rejected'
   end
 
-  def has_decision?
+  def decision?
     work_order_decision.present?
   end
 

@@ -56,14 +56,17 @@ class WorkSession < ApplicationRecord
   def no_overlapping_sessions
     return unless user && work_order && checked_in_at
 
-    overlapping = WorkSession
-                  .where(user: user)
-                  .where(work_order_id: work_order_id)
-                  .where('checked_out_at IS NULL OR checked_out_at > ?', checked_in_at)
-                  .where('checked_in_at < ?', checked_in_at)
-                  .where.not(id: id || 0)
-                  .exists?
-
+    overlapping = overlapping_session_exists?
     errors.add(:base, 'Cannot create overlapping work session') if overlapping
+  end
+
+  def overlapping_session_exists?
+    WorkSession
+      .where(user: user)
+      .where(work_order_id: work_order_id)
+      .where('checked_out_at IS NULL OR checked_out_at > ?', checked_in_at)
+      .where('checked_in_at < ?', checked_in_at)
+      .where.not(id: id || 0)
+      .exists?
   end
 end

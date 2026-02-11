@@ -52,34 +52,50 @@ module Wrs
     end
 
     def download_and_attach_pdf!(pdf_url)
-      require 'open-uri'
-      require 'openssl'
-
       filename = "invoice-#{invoice.id}-#{Time.current.to_i}.pdf"
+      pdf_io = fetch_pdf_io(pdf_url)
+      return unless pdf_io
 
-      URI.open(
-        pdf_url,
-        'rb',
-        open_timeout: 10,
-        read_timeout: 20,
-        ssl_verify_mode: OpenSSL::SSL::VERIFY_PEER
-      ) do |io|
-        content_type = io.respond_to?(:content_type) ? io.content_type : nil
-        unless content_type.nil? || content_type.include?('pdf')
-          Rails.logger.warn("Invoice PDF download content_type=#{content_type.inspect} for url=#{pdf_url.inspect}")
-        end
-
-        invoice.invoice_pdf.attach(
-          io: io,
-          filename: filename,
-          content_type: 'application/pdf'
-        )
-      end
+      validate_and_log_content_type(pdf_io, pdf_url)
+      attach_pdf_to_invoice(pdf_io, filename)
     rescue OpenURI::HTTPError, SocketError, Timeout::Error => e
-      Rails.logger.error("Failed to download PDF from URL: #{pdf_url} (#{e.class}: #{e.message})")
+      log_pdf_download_error(pdf_url, e)
     rescue StandardError => e
-      Rails.logger.error("Unexpected error downloading PDF from URL: #{pdf_url} (#{e.class}: #{e.message})")
+      log_pdf_download_error(pdf_url, e)
       Rails.logger.error(e.backtrace.first(10).join("\n")) if e.backtrace
+    end
+
+    def fetch_pdf_io(pdf_url)
+      uri = URI.parse(pdf_url)
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = (uri.scheme == 'https')
+      http.open_timeout = 10
+      http.read_timeout = 20
+      response = http.request(Net::HTTP::Get.new(uri.request_uri))
+      return nil unless response.is_a?(Net::HTTPSuccess)
+
+      StringIO.new(response.body)
+    end
+
+    def validate_and_log_content_type(io, pdf_url)
+      content_type = io.respond_to?(:content_type) ? io.content_type : nil
+      return if content_type.nil? || content_type.include?('pdf')
+
+      Rails.logger.warn("Invoice PDF download content_type=#{content_type.inspect} for url=#{pdf_url.inspect}")
+    end
+
+    def attach_pdf_to_invoice(io, filename)
+      invoice.invoice_pdf.attach(
+        io: io,
+        filename: filename,
+        content_type: 'application/pdf'
+      )
+    end
+
+    def log_pdf_download_error(pdf_url, error)
+      Rails.logger.error(
+        "Failed to download PDF from URL: #{pdf_url} (#{error.class}: #{error.message})"
+      )
     end
 
     def attach_invoice_pdf_from_base64!(base64_data)

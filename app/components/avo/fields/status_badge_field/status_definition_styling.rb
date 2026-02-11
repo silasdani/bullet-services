@@ -21,7 +21,10 @@ module Avo
         def status_definition
           return nil unless effective_status_key
 
-          @status_definition ||= StatusDefinition.for_entity(ENTITY_TYPE).active.find_by(status_key: effective_status_key)
+          @status_definition ||= StatusDefinition
+                                 .for_entity(ENTITY_TYPE)
+                                 .active
+                                 .find_by(status_key: effective_status_key)
         end
 
         def badge_label
@@ -44,12 +47,21 @@ module Avo
 
         def luminance(hex)
           hex = hex.delete('#')
-          r = hex[0..1].to_i(16) / 255.0
-          g = hex[2..3].to_i(16) / 255.0
-          b = hex[4..5].to_i(16) / 255.0
-          [r, g, b].map { |c| c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055)**2.4 }.then do |rs, gs, bs|
-            (0.2126 * rs) + (0.7152 * gs) + (0.0722 * bs)
-          end
+          r, g, b = hex_to_normalized_rgb(hex)
+          rs, gs, bs = [r, g, b].map { |component| linearize(component) }
+          (0.2126 * rs) + (0.7152 * gs) + (0.0722 * bs)
+        end
+
+        def hex_to_normalized_rgb(hex)
+          [
+            hex[0..1].to_i(16) / 255.0,
+            hex[2..3].to_i(16) / 255.0,
+            hex[4..5].to_i(16) / 255.0
+          ]
+        end
+
+        def linearize(component)
+          component <= 0.03928 ? component / 12.92 : ((component + 0.055) / 1.055)**2.4
         end
       end
     end

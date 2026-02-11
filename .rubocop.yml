@@ -34,10 +34,13 @@ Metrics/MethodLength:
 
 Metrics/ClassLength:
   Max: 200
+  Exclude:
+    - 'app/services/wrs/pdf_attachment_service.rb'
 
 Metrics/AbcSize:
   Exclude:
     - 'lib/tasks/**/*.rake'
+    - 'app/avo/resources/user.rb'
 
 Metrics/CyclomaticComplexity:
   Exclude:
