@@ -11,6 +11,8 @@ class WindowScheduleRepair < ApplicationRecord
 
   belongs_to :user
   belongs_to :building
+  has_many :work_order_assignments, dependent: :destroy, foreign_key: :work_order_id
+  has_many :assigned_users, through: :work_order_assignments, source: :user
   has_many :windows, dependent: :destroy, foreign_key: :work_order_id
   has_many :tools, through: :windows
   has_many :invoices, dependent: :nullify, foreign_key: :work_order_id

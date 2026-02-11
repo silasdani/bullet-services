@@ -29,6 +29,7 @@ module Avo
         field :total_formatted, as: :text, readonly: true, only_on: %i[index show], name: 'Total' do
           record.total ? "£#{record.total.to_f.round(2)}" : '£0.00'
         end
+        field :assigned_users, as: :has_many, through: :work_order_assignments, hide_on: [:index]
         field :windows, as: :has_many, hide_on: [:index]
         field :ongoing_works, as: :has_many, hide_on: [:index]
         field :work_sessions, as: :has_many, hide_on: [:index]

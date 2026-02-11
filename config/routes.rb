@@ -54,6 +54,8 @@ Rails.application.routes.draw do
           post :restore
           post :check_in
           post :check_out
+          post :assign
+          post :unassign
         end
         resources :windows, only: [ :index, :create ]
         resources :ongoing_works, only: [ :index, :create ]
@@ -93,8 +95,6 @@ Rails.application.routes.draw do
       resources :buildings do
         member do
           get :window_schedule_repairs
-          post :assign
-          post :unassign
         end
       end
 

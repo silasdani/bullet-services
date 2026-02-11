@@ -30,6 +30,20 @@ StatusDefinition.find_or_create_by!(entity_type: 'WindowScheduleRepair', status_
   sd.is_active = true
 end
 
+StatusDefinition.find_or_create_by!(entity_type: 'WindowScheduleRepair', status_key: 'draft') do |sd|
+  sd.status_label = 'Draft'
+  sd.status_color = '#6f6f6f' # Carbon Gray - indicates draft/unpublished state
+  sd.display_order = 4
+  sd.is_active = true
+end
+
+StatusDefinition.find_or_create_by!(entity_type: 'WindowScheduleRepair', status_key: 'archived') do |sd|
+  sd.status_label = 'Archived'
+  sd.status_color = '#393939' # Carbon Gray 80 - indicates archived/inactive state
+  sd.display_order = 5
+  sd.is_active = true
+end
+
 # Seed status definitions for Invoice
 # Colors based on IBM Carbon Design System and Material Design best practices
 StatusDefinition.find_or_create_by!(entity_type: 'Invoice', status_key: 'draft') do |sd|

@@ -43,11 +43,10 @@ module WorkSessions
     def validate_contractor_assignment
       return self unless user&.contractor?
 
-      building_id = work_order&.building_id
-      return self unless building_id
+      return self unless work_order
 
-      unless BuildingAssignment.exists?(user_id: user.id, building_id: building_id)
-        add_error('You are not assigned to this project. Please assign the project first.')
+      unless WorkOrderAssignment.exists?(user_id: user.id, work_order_id: work_order.id)
+        add_error('You are not assigned to this work order. Please assign the work order first.')
       end
       self
     end

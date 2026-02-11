@@ -1,3 +1,5 @@
-<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= badge_class %>">
-  <%= badge_text %>
-</span>
+<%= index_field_wrapper(**field_wrapper_args, flush: true) do %>
+  <span class="inline-flex items-center px-3 py-1 rounded-md text-xs font-semibold uppercase tracking-wide shadow-sm whitespace-nowrap" style="<%= badge_style %>">
+    <%= badge_label %>
+  </span>
+<% end %>

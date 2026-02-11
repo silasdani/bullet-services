@@ -43,11 +43,10 @@ module CheckIns
     def validate_contractor_assignment
       return self unless user&.contractor?
 
-      building_id = window_schedule_repair&.building_id
-      return self unless building_id
+      return self unless window_schedule_repair
 
-      unless BuildingAssignment.exists?(user_id: user.id, building_id: building_id)
-        add_error('You are not assigned to this project. Please assign the project first.')
+      unless WorkOrderAssignment.exists?(user_id: user.id, work_order_id: window_schedule_repair.id)
+        add_error('You are not assigned to this work order. Please assign the work order first.')
       end
       self
     end

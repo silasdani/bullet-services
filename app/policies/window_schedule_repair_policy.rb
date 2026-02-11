@@ -18,7 +18,7 @@ class WindowScheduleRepairPolicy < ApplicationPolicy
     active_building_id = contractor_active_building_id
     return record.building_id == active_building_id if active_building_id
 
-    BuildingAssignment.exists?(user_id: user.id, building_id: record.building_id)
+    WorkOrderAssignment.exists?(user_id: user.id, work_order_id: record.id)
   end
 
   def contractor_active_building_id

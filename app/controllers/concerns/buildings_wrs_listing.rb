@@ -13,10 +13,17 @@ module BuildingsWrsListing
   def contractor_can_access_building_wrs?
     active_building_id = contractor_active_building_id
     return true if active_building_id == @building.id
-    return true if BuildingAssignment.exists?(user_id: current_user.id, building_id: @building.id)
-    return true if should_show_all_buildings?(current_user)
+    return true if contractor_assigned_to_building_work_order?
+    return true if should_show_all_work_orders?(current_user)
 
     false
+  end
+
+  def contractor_assigned_to_building_work_order?
+    WorkOrderAssignment
+      .joins(:work_order)
+      .where(user_id: current_user.id, work_orders: { building_id: @building.id })
+      .exists?
   end
 
   def contractor_active_building_id

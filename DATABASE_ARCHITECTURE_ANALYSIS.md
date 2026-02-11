@@ -282,7 +282,7 @@ This gives you:
 ### 4. **Missing Audit Trail**
 
 #### Issue
-No tracking of who created/modified records (except `building_assignments.assigned_by_user_id`)
+No tracking of who created/modified records (except `work_order_assignments.assigned_by_user_id`)
 
 #### Recommendation
 Add `audit_fields` concern and migration:

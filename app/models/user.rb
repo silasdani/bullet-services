@@ -14,8 +14,8 @@ class User < ApplicationRecord
 
   enum :role, client: 0, contractor: 1, admin: 2, surveyor: 3
 
-  has_many :building_assignments, dependent: :destroy
-  has_many :assigned_buildings, through: :building_assignments, source: :building
+  has_many :work_order_assignments, dependent: :destroy
+  has_many :assigned_work_orders, through: :work_order_assignments, source: :work_order
   has_many :window_schedule_repairs, dependent: :restrict_with_error
   has_many :windows, through: :window_schedule_repairs
   has_many :check_ins, dependent: :destroy

@@ -2,7 +2,6 @@
 
 # Generated to enable Rails' resource routes for Avo.
 module Avo
-  class BuildingAssignmentsController < Avo::ResourcesController
+  class WorkOrderAssignmentsController < Avo::ResourcesController
   end
 end
-

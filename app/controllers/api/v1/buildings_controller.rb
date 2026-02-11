@@ -5,7 +5,7 @@ module Api
     class BuildingsController < Api::V1::BaseController
       include BuildingsWrsListing
 
-      before_action :set_building, only: %i[show update destroy window_schedule_repairs assign unassign]
+      before_action :set_building, only: %i[show update destroy window_schedule_repairs]
 
       def index
         authorize Building
@@ -31,16 +31,32 @@ module Api
       end
 
       def filter_buildings_with_wrs(collection)
-        building_ids_with_wrs = WindowScheduleRepair
-                                .where(is_draft: false)
-                                .where(deleted_at: nil)
-                                .where.not(building_id: nil)
-                                .distinct
-                                .pluck(:building_id)
+        assigned_work_order_ids = WorkOrderAssignment.where(user_id: current_user.id).pluck(:work_order_id)
 
-        return collection.none if building_ids_with_wrs.empty?
+        if assigned_work_order_ids.empty?
+          # No assignments: show all buildings with active work orders
+          building_ids_with_wrs = WindowScheduleRepair
+                                  .where(is_draft: false)
+                                  .where(deleted_at: nil)
+                                  .where.not(building_id: nil)
+                                  .contractor_visible_status
+                                  .distinct
+                                  .pluck(:building_id)
+          return collection.none if building_ids_with_wrs.empty?
+          return collection.where(id: building_ids_with_wrs)
+        end
 
-        collection.where(id: building_ids_with_wrs)
+        # Has assignments: only show buildings with assigned work orders
+        building_ids = WindowScheduleRepair
+                      .where(id: assigned_work_order_ids)
+                      .where(is_draft: false, deleted_at: nil)
+                      .contractor_visible_status
+                      .distinct
+                      .pluck(:building_id)
+
+        return collection.none if building_ids.empty?
+
+        collection.where(id: building_ids)
       rescue StandardError => e
         Rails.logger.error "Error filtering buildings with WRS: #{e.message}"
         collection
@@ -138,76 +154,7 @@ module Api
         render_success(data: serialize_wrs_page(paginated), meta: pagination_meta(paginated))
       end
 
-      def assign
-        authorize @building, :show?
-        target_user = assignment_target_user
-
-        unless allowed_to_manage_assignment_for?(target_user)
-          return render_error(
-            message: 'Not authorized to assign this user to a project',
-            status: :forbidden
-          )
-        end
-
-        assignment = BuildingAssignment.find_or_initialize_by(user: target_user, building: @building)
-        assignment.assigned_by_user = current_user
-
-        if assignment.save
-          render_success(
-            data: {
-              user_id: target_user.id,
-              building: BuildingSerializer.new(@building).serializable_hash,
-              assigned: true
-            },
-            message: 'Successfully assigned to project'
-          )
-        else
-          render_error(
-            message: 'Failed to assign to project',
-            details: assignment.errors.full_messages
-          )
-        end
-      end
-
-      def unassign
-        authorize @building, :show?
-        target_user = assignment_target_user
-
-        unless allowed_to_manage_assignment_for?(target_user)
-          return render_error(
-            message: 'Not authorized to unassign this user from a project',
-            status: :forbidden
-          )
-        end
-
-        assignment = BuildingAssignment.find_by(user: target_user, building: @building)
-        assignment&.destroy
-
-        render_success(
-          data: {
-            user_id: target_user.id,
-            building_id: @building.id,
-            assigned: false
-          },
-          message: 'Successfully unassigned from project'
-        )
-      end
-
       private
-
-      def assignment_target_user
-        return current_user unless params[:user_id].present?
-        return current_user unless current_user.admin?
-
-        User.find(params[:user_id])
-      end
-
-      def allowed_to_manage_assignment_for?(target_user)
-        return true if current_user.admin?
-        return false unless current_user.contractor?
-
-        target_user.id == current_user.id
-      end
 
       def set_building
         @building = Building.includes(:window_schedule_repairs).find(params[:id])
@@ -219,18 +166,18 @@ module Api
         )
       end
 
-      def should_show_all_buildings?(user)
-        assigned_building_ids = BuildingAssignment.where(user_id: user.id).pluck(:building_id)
+      def should_show_all_work_orders?(user)
+        assigned_work_order_ids = WorkOrderAssignment.where(user_id: user.id).pluck(:work_order_id)
 
-        return true if assigned_building_ids.empty?
+        return true if assigned_work_order_ids.empty?
 
-        non_completed_wrs_count = WindowScheduleRepair
-                                  .where(building_id: assigned_building_ids)
-                                  .where(is_draft: false, is_archived: false)
-                                  .contractor_visible_status
-                                  .count
+        non_completed_count = WindowScheduleRepair
+                             .where(id: assigned_work_order_ids)
+                             .where(is_draft: false, is_archived: false)
+                             .contractor_visible_status
+                             .count
 
-        non_completed_wrs_count.zero?
+        non_completed_count.zero?
       end
     end
   end

@@ -5,8 +5,6 @@ class Building < ApplicationRecord
   include Geocodable
 
   has_many :window_schedule_repairs, dependent: :restrict_with_error
-  has_many :building_assignments, dependent: :destroy
-  has_many :assigned_users, through: :building_assignments, source: :user
 
   validates :name, presence: true
   validates :street, presence: true

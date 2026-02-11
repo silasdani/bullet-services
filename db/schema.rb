@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_10_230000) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_11_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -40,18 +40,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_10_230000) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
-  end
-
-  create_table "building_assignments", force: :cascade do |t|
-    t.bigint "user_id", null: false
-    t.bigint "building_id", null: false
-    t.bigint "assigned_by_user_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["assigned_by_user_id"], name: "index_building_assignments_on_assigned_by_user_id"
-    t.index ["building_id"], name: "index_building_assignments_on_building_id"
-    t.index ["user_id", "building_id"], name: "index_building_assignments_on_user_id_and_building_id", unique: true
-    t.index ["user_id"], name: "index_building_assignments_on_user_id"
   end
 
   create_table "buildings", force: :cascade do |t|
@@ -309,6 +297,18 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_10_230000) do
     t.index ["work_order_id"], name: "index_windows_on_work_order_id"
   end
 
+  create_table "work_order_assignments", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "work_order_id", null: false
+    t.bigint "assigned_by_user_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["assigned_by_user_id"], name: "index_work_order_assignments_on_assigned_by_user_id"
+    t.index ["user_id", "work_order_id"], name: "index_work_order_assignments_on_user_id_and_work_order_id", unique: true
+    t.index ["user_id"], name: "index_work_order_assignments_on_user_id"
+    t.index ["work_order_id"], name: "index_work_order_assignments_on_work_order_id"
+  end
+
   create_table "work_order_decisions", force: :cascade do |t|
     t.bigint "work_order_id", null: false
     t.string "decision", null: false
@@ -376,21 +376,27 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_10_230000) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
-  add_foreign_key "building_assignments", "buildings"
-  add_foreign_key "building_assignments", "users"
-  add_foreign_key "building_assignments", "users", column: "assigned_by_user_id"
   add_foreign_key "check_ins", "users"
+  add_foreign_key "check_ins", "work_orders"
   add_foreign_key "check_ins", "work_orders"
   add_foreign_key "invoices", "work_orders"
   add_foreign_key "notifications", "users"
   add_foreign_key "notifications", "work_orders"
+  add_foreign_key "notifications", "work_orders"
   add_foreign_key "ongoing_works", "users"
+  add_foreign_key "ongoing_works", "work_orders"
   add_foreign_key "ongoing_works", "work_orders"
   add_foreign_key "tools", "windows"
   add_foreign_key "windows", "work_orders"
+  add_foreign_key "windows", "work_orders"
+  add_foreign_key "work_order_assignments", "users"
+  add_foreign_key "work_order_assignments", "users", column: "assigned_by_user_id"
+  add_foreign_key "work_order_assignments", "work_orders"
+  add_foreign_key "work_order_decisions", "work_orders"
   add_foreign_key "work_order_decisions", "work_orders"
   add_foreign_key "work_orders", "buildings"
   add_foreign_key "work_orders", "users"
   add_foreign_key "work_sessions", "users"
+  add_foreign_key "work_sessions", "work_orders"
   add_foreign_key "work_sessions", "work_orders"
 end
