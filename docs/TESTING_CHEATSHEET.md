@@ -14,15 +14,15 @@ rails test test/services/wrs_creation_service_test.rb
 rails test test/services/wrs_creation_service_test.rb -n test_creates_WRS_with_windows_and_tools
 
 # Controller tests
-rails test test/controllers/api/v1/window_schedule_repairs_controller_test.rb
-rails test test/controllers/api/v1/window_schedule_repairs_controller_test.rb -n test_should_get_index
+rails test test/controllers/api/v1/work_orders_controller_test.rb
+rails test test/controllers/api/v1/work_orders_controller_test.rb -n test_should_get_index
 
 # Model tests
-rails test test/models/window_schedule_repair_auto_sync_test.rb
+rails test test/models/work_order_auto_sync_test.rb
 rails test test/models/window_test.rb
 
 # Policy tests
-rails test test/policies/window_schedule_repair_policy_test.rb
+rails test test/policies/work_order_policy_test.rb
 ```
 
 ### Run Tests with Verbose Output
@@ -36,13 +36,6 @@ rails test --seed 12345
 ```
 
 ## Test Environment Setup
-
-### Environment Variables (Already Set in test_helper.rb)
-```ruby
-ENV['WEBFLOW_TOKEN'] ||= 'test_token'
-ENV['WEBFLOW_SITE_ID'] ||= 'test_site_id'
-ENV['WEBFLOW_WRS_COLLECTION_ID'] ||= 'test_collection_id'
-```
 
 ### Test Database
 ```bash
@@ -72,7 +65,7 @@ def auth_headers(user)
 end
 
 # Usage in tests
-get api_v1_window_schedule_repairs_url, headers: auth_headers(@user)
+get api_v1_work_orders_url, headers: auth_headers(@user)
 ```
 
 ### User Setup
@@ -115,14 +108,14 @@ end
 ### API Controller Tests
 ```ruby
 test 'should get index' do
-  get api_v1_window_schedule_repairs_url, headers: auth_headers(@user)
+  get api_v1_work_orders_url, headers: auth_headers(@user)
   assert_response :success
 end
 
-test 'should create window_schedule_repair' do
-  assert_difference('WindowScheduleRepair.count') do
-    post api_v1_window_schedule_repairs_url, 
-         params: { window_schedule_repair: valid_attributes },
+test 'should create work_order' do
+  assert_difference('WorkOrder.count') do
+    post api_v1_work_orders_url, 
+         params: { work_order: valid_attributes },
          headers: auth_headers(@user)
   end
   assert_response :created
@@ -133,7 +126,7 @@ end
 ```ruby
 def setup
   @user = users(:one)
-  @window_schedule_repair = @user.window_schedule_repairs.create!(
+  @work_order = @user.work_orders.create!(
     name: 'Test Schedule',
     slug: "test-schedule-#{Time.current.to_i}",
     address: '123 Test St',
@@ -147,7 +140,7 @@ end
 ### Soft Delete Testing
 ```ruby
 test 'should soft delete WRS' do
-  wrs = window_schedule_repairs(:one)
+  wrs = work_orders(:one)
   wrs.soft_delete!
   
   assert wrs.deleted?
@@ -155,20 +148,12 @@ test 'should soft delete WRS' do
 end
 
 test 'should restore WRS' do
-  wrs = window_schedule_repairs(:one)
+  wrs = work_orders(:one)
   wrs.soft_delete!
   wrs.restore!
   
   assert wrs.active?
   assert wrs.deleted_at.nil?
-end
-```
-
-### Webflow Sync Testing
-```ruby
-test 'should auto sync to webflow' do
-  wrs = window_schedule_repairs(:one)
-  assert wrs.should_auto_sync_to_webflow?
 end
 ```
 
@@ -193,47 +178,16 @@ test 'creates WRS with image upload' do
 end
 ```
 
-## Job Testing
-
-### Background Job Testing
-```ruby
-test 'should enqueue webflow sync job' do
-  assert_enqueued_with(WebflowSyncJob) do
-    wrs = window_schedule_repairs(:one)
-    wrs.save!
-  end
-end
-
-test 'should not enqueue job when skip_webflow_sync is true' do
-  assert_no_enqueued_jobs(WebflowSyncJob) do
-    wrs = window_schedule_repairs(:one)
-    wrs.skip_webflow_sync = true
-    wrs.save!
-  end
-end
-```
-
 ## Policy Testing
 
 ### Pundit Policy Tests
 ```ruby
 test 'scope returns user WRS' do
   user = users(:one)
-  wrs = window_schedule_repairs(:one)
+  wrs = work_orders(:one)
   
-  scope = WindowScheduleRepairPolicy::Scope.new(user, WindowScheduleRepair).resolve
+  scope = WorkOrderPolicy::Scope.new(user, WorkOrder).resolve
   assert_includes scope, wrs
-end
-```
-
-## Webflow Service Testing
-
-### Webflow API Testing
-```ruby
-test 'should initialize with credentials' do
-  service = Webflow::ItemService.new
-  assert service.instance_variable_get(:@api_key).present?
-  assert service.instance_variable_get(:@site_id).present?
 end
 ```
 
@@ -242,17 +196,17 @@ end
 ### Database Changes
 ```ruby
 # Test record creation
-assert_difference('WindowScheduleRepair.count', 1) do
+assert_difference('WorkOrder.count', 1) do
   # action
 end
 
 # Test record deletion
-assert_difference('WindowScheduleRepair.count', -1) do
+assert_difference('WorkOrder.count', -1) do
   # action
 end
 
 # Test no change
-assert_no_difference('WindowScheduleRepair.count') do
+assert_no_difference('WorkOrder.count') do
   # action
 end
 ```
@@ -297,7 +251,7 @@ rails console --environment=test
 ```ruby
 # In test files
 @user = users(:one)
-@wrs = window_schedule_repairs(:one)
+@work_order = work_orders(:one)
 @window = windows(:one)
 ```
 
@@ -305,7 +259,7 @@ rails console --environment=test
 ```ruby
 # Create test data
 user = create(:user)
-wrs = create(:window_schedule_repair, user: user)
+work_order = create(:work_order, user: user)
 ```
 
 ## Common Issues & Solutions
@@ -362,7 +316,7 @@ rails credentials:show
 test/
 ├── controllers/
 │   └── api/v1/
-│       ├── window_schedule_repairs_controller_test.rb
+│       ├── work_orders_controller_test.rb
 │       ├── windows_controller_test.rb
 │       └── images_controller_test.rb
 ├── models/
@@ -370,16 +324,14 @@ test/
 │   ├── window_test.rb
 │   └── tool_test.rb
 ├── services/
-│   ├── wrs_creation_service_test.rb
-│   ├── webflow_service_test.rb
-│   └── webflow_auto_sync_service_test.rb
+│   └── wrs_creation_service_test.rb
 ├── policies/
 │   ├── window_schedule_repair_policy_test.rb
 │   ├── window_policy_test.rb
 │   └── user_policy_test.rb
 ├── fixtures/
 │   ├── users.yml
-│   ├── window_schedule_repairs.yml
+│   ├── work_orders.yml
 │   └── windows.yml
 └── test_helper.rb
 ```

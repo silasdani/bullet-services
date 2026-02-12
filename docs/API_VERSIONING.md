@@ -16,7 +16,7 @@ This document outlines the API versioning strategy for the Bullet Services API.
 We use URL-based versioning where the version is included in the path:
 
 ```
-/api/v1/window_schedule_repairs
+/api/v1/work_orders
 /api/v1/users
 /api/v1/invoices
 ```
@@ -92,10 +92,10 @@ When a new version is released:
 
 ```ruby
 # Old (v1)
-GET /api/v1/window_schedule_repairs
+GET /api/v1/work_orders
 
 # New (v2)
-GET /api/v2/window_schedule_repairs
+GET /api/v2/work_orders
 ```
 
 ## Version Headers

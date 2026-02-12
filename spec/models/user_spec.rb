@@ -4,11 +4,11 @@ require 'rails_helper'
 
 RSpec.describe User, type: :model do
   describe 'associations' do
-    it 'has many window_schedule_repairs' do
-      expect(User.reflect_on_association(:window_schedule_repairs)).to be_present
+    it 'has many work_orders' do
+      expect(User.reflect_on_association(:work_orders)).to be_present
     end
 
-    it 'has many windows through window_schedule_repairs' do
+    it 'has many windows through work_orders' do
       expect(User.reflect_on_association(:windows)).to be_present
     end
   end

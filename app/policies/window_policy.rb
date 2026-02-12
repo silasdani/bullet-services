@@ -7,9 +7,9 @@ class WindowPolicy < ApplicationPolicy
 
   def show?
     return false unless user.present?
-    return record.window_schedule_repair.user_id == user.id if user.supervisor?
+    return record.work_order.user_id == user.id if user.supervisor?
 
-    user.is_admin? || user.is_employee? || record.window_schedule_repair.user == user
+    user.is_admin? || user.is_employee? || record.work_order.user == user
   end
 
   def create?
@@ -18,16 +18,16 @@ class WindowPolicy < ApplicationPolicy
 
   def update?
     return false unless user.present?
-    return record.window_schedule_repair.user_id == user.id if user.supervisor?
+    return record.work_order.user_id == user.id if user.supervisor?
 
-    user.is_admin? || user.is_employee? || record.window_schedule_repair.user == user
+    user.is_admin? || user.is_employee? || record.work_order.user == user
   end
 
   def destroy?
     return false unless user.present?
-    return record.window_schedule_repair.user_id == user.id if user.supervisor?
+    return record.work_order.user_id == user.id if user.supervisor?
 
-    user.is_admin? || record.window_schedule_repair.user == user
+    user.is_admin? || record.work_order.user == user
   end
 
   class Scope < Scope
@@ -35,7 +35,7 @@ class WindowPolicy < ApplicationPolicy
       if user.is_admin?
         scope.all
       else
-        scope.joins(:window_schedule_repair).where(WindowScheduleRepair.table_name => { user_id: user.id })
+        scope.joins(:work_order).where(work_orders: { user_id: user.id })
       end
     end
   end

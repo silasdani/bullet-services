@@ -81,38 +81,7 @@ end
 
 ### 3. **Missing Normalization**
 
-#### A. Webflow Integration Fields
-
-**Current**: Webflow fields scattered across tables (`webflow_item_id`, `webflow_main_image_url`, `webflow_created_on`, etc.)
-
-**Recommendation**: Extract to a polymorphic `webflow_syncs` table:
-
-```ruby
-create_table "webflow_syncs" do |t|
-  t.references :syncable, polymorphic: true, null: false, index: true
-  t.string "webflow_item_id"
-  t.string "webflow_collection_id"
-  t.string "webflow_main_image_url"
-  t.string "webflow_created_on"
-  t.string "webflow_published_on"
-  t.string "webflow_updated_on"
-  t.datetime "last_synced_at"
-  t.jsonb "sync_metadata"
-  t.timestamps
-end
-
-# Usage
-class WindowScheduleRepair < ApplicationRecord
-  has_one :webflow_sync, as: :syncable, dependent: :destroy
-end
-```
-
-**Benefits**: 
-- Single source of truth for Webflow integration
-- Easier to add Webflow sync to other models
-- Cleaner model code
-
-#### B. Decision/Acceptance Fields
+#### A. Decision/Acceptance Fields
 
 **Current**: Decision fields mixed into `window_schedule_repairs`:
 - `decision_at`, `decision`, `decision_client_email`, `decision_client_name`
@@ -139,7 +108,7 @@ end
 - Easier to query decision history
 - Can support multiple decisions per WRS if needed
 
-#### C. Status Management
+#### B. Status Management
 
 **Current**: Multiple status-related fields:
 - `window_schedule_repairs.status` (enum)
@@ -710,22 +679,6 @@ create_table "repair_schedule_decisions" do |t|
   t.timestamps
 end
 
-# Webflow Syncs (extracted)
-create_table "webflow_syncs" do |t|
-  t.references "syncable", polymorphic: true, null: false
-  t.string "webflow_item_id"
-  t.string "webflow_collection_id"
-  t.string "webflow_main_image_url"
-  t.string "webflow_created_on"
-  t.string "webflow_published_on"
-  t.string "webflow_updated_on"
-  t.datetime "last_synced_at"
-  t.jsonb "sync_metadata"
-  t.timestamps
-  
-  t.index ["syncable_type", "syncable_id"], unique: true
-end
-
 # Windows - Simplified
 create_table "windows" do |t|
   t.string "location", null: false
@@ -814,9 +767,8 @@ end
 5. ✅ Remove redundant `read` boolean from notifications
 
 ### Phase 2: Extractions (Backward Compatible)
-1. ✅ Create `webflow_syncs` table, migrate data, add concern
-2. ✅ Create `repair_schedule_decisions` table, migrate data
-3. ✅ Create `tool_catalog` table, populate, add reference
+1. ✅ Create `repair_schedule_decisions` table, migrate data
+2. ✅ Create `tool_catalog` table, populate, add reference
 
 ### Phase 3: Breaking Changes (Requires Coordination)
 1. ⚠️ Remove `grand_total` from window_schedule_repairs
@@ -834,7 +786,6 @@ end
 ## Key Principles Applied
 
 ### 1. **Single Responsibility**
-- Extracted Webflow sync logic to separate table
 - Extracted decision logic to separate table
 - Separated price history from current prices
 
@@ -845,7 +796,6 @@ end
 
 ### 3. **Normalization**
 - Removed redundant fields (`grand_total`, `read`, `address`)
-- Extracted related data to separate tables
 - Created lookup tables for catalog data
 
 ### 4. **Scalability**
@@ -919,7 +869,7 @@ end
 
 The current schema is functional but has opportunities for improvement in:
 1. **Data consistency** (price types, redundant fields)
-2. **Normalization** (extract Webflow, decisions, status)
+2. **Normalization** (extract decisions, status)
 3. **Maintainability** (audit trail, tool catalog)
 4. **Performance** (indexes, query optimization)
 5. **Clarity** (naming, relationships)

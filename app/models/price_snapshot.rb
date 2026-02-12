@@ -3,7 +3,7 @@
 class PriceSnapshot < ApplicationRecord
   include SoftDeletable
 
-  belongs_to :work_order, class_name: 'WindowScheduleRepair', foreign_key: :work_order_id, inverse_of: :price_snapshots
+  belongs_to :work_order, foreign_key: :work_order_id, inverse_of: :price_snapshots
 
   before_validation :set_default_priceable_type, on: :create
 
@@ -26,6 +26,6 @@ class PriceSnapshot < ApplicationRecord
   private
 
   def set_default_priceable_type
-    self.priceable_type ||= 'WindowScheduleRepair'
+    self.priceable_type ||= 'WorkOrder'
   end
 end

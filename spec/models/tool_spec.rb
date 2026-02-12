@@ -4,8 +4,8 @@ require 'rails_helper'
 
 RSpec.describe Tool, type: :model do
   let(:user) { create(:user) }
-  let(:window_schedule_repair) { create(:window_schedule_repair, user: user) }
-  let(:window) { create(:window, window_schedule_repair: window_schedule_repair) }
+  let(:work_order) { create(:work_order, user: user) }
+  let(:window) { create(:window, work_order: work_order) }
   let(:tool) { build(:tool, window: window) }
 
   describe 'validations' do

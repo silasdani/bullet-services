@@ -38,9 +38,11 @@ Rails.application.routes.draw do
     namespace :v1 do
       post "webhooks/freshbooks", to: "freshbooks_webhooks#create"
 
-      resources :window_schedule_repairs do
+      resources :work_orders do
         member do
           post :restore
+          post :publish
+          post :unpublish
           post :check_in
           post :check_out
           post :assign
@@ -83,7 +85,7 @@ Rails.application.routes.draw do
 
       resources :buildings do
         member do
-          get :window_schedule_repairs
+          get :work_orders
         end
       end
 

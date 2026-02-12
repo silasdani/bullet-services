@@ -4,7 +4,7 @@ class WorkSession < ApplicationRecord
   include SoftDeletable
 
   belongs_to :user
-  belongs_to :work_order, class_name: 'WindowScheduleRepair', foreign_key: :work_order_id
+  belongs_to :work_order, foreign_key: :work_order_id
 
   validates :checked_in_at, presence: true
   validate :checked_out_after_check_in, if: -> { checked_out_at.present? }

@@ -4,7 +4,7 @@ module WorkSessions
   class CheckOutService < ApplicationService
     include AddressResolver
     attribute :user
-    attribute :work_order # Changed from window_schedule_repair
+    attribute :work_order
     attribute :latitude
     attribute :longitude
     attribute :address
@@ -68,7 +68,7 @@ module WorkSessions
 
       OngoingWork
         .where(
-          window_schedule_repair: work_order, # Keep for backward compatibility
+          work_order: work_order,
           user: user
         )
         .where('work_date >= ?', check_in_date)
@@ -82,7 +82,7 @@ module WorkSessions
 
       OngoingWork
         .where(
-          window_schedule_repair: work_order, # Keep for backward compatibility
+          work_order: work_order,
           user: user
         )
         .where('work_date >= ?', active_session.checked_in_at.to_date)
@@ -120,7 +120,7 @@ module WorkSessions
       hours_worked = self.hours_worked
       if user.contractor? || user.general_contractor?
         Notifications::AdminFcmNotificationService.new(
-          window_schedule_repair: work_order, # Keep for backward compatibility
+          work_order: work_order,
           notification_type: :check_out,
           title: 'Contractor Check-out',
           message: build_check_out_message(hours_worked),
@@ -128,7 +128,7 @@ module WorkSessions
         ).call
       else
         Notifications::AdminNotificationService.new(
-          window_schedule_repair: work_order, # Keep for backward compatibility
+          work_order: work_order,
           notification_type: :check_out,
           title: 'Contractor Check-out',
           message: build_check_out_message(hours_worked),

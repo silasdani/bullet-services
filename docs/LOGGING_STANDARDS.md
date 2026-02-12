@@ -48,7 +48,7 @@ Rails.logger.warn "Rate limit approaching for IP #{request.remote_ip}: #{current
 Use for error events that might still allow the application to continue running.
 
 ```ruby
-Rails.logger.error "Failed to sync WRS #{wrs.id} to Webflow: #{error.message}"
+Rails.logger.error "Failed to process WRS #{wrs.id}: #{error.message}"
 Rails.logger.error error.backtrace.join("\n") if Rails.env.development?
 ```
 
@@ -335,8 +335,8 @@ log_info "Creating invoice for WRS #{wrs.id}"
 log_info "Invoice #{invoice.id} created successfully"
 
 # Error handling
-log_error "Failed to sync to Webflow: #{error.class} - #{error.message}"
-log_error "WRS ID: #{wrs.id}, Webflow Item ID: #{wrs.webflow_item_id}"
+log_error "Failed to process WRS: #{error.class} - #{error.message}"
+log_error "WRS ID: #{wrs.id}"
 
 # Performance
 log_warn "Slow query detected: #{query_time}ms for #{query_name}"

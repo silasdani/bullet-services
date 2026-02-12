@@ -27,7 +27,7 @@ module Avo
         field :blocked, as: :boolean, filterable: true
         field :image, as: :file, is_image: true, hide_on: [:index]
         field :fcm_token, as: :text, hide_on: %i[index show]
-        field :window_schedule_repairs, as: :has_many, hide_on: [:index]
+        field :work_orders, as: :has_many, hide_on: [:index]
         field :ongoing_works, as: :has_many, hide_on: [:index]
         field :check_ins, as: :has_many, hide_on: [:index]
         field :work_sessions, as: :has_many, hide_on: [:index]

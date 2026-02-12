@@ -1,0 +1,33 @@
+<% content_for :email_title do %>
+  New Work Order Acceptance and Invoice Created
+<% end %>
+
+<div class="u-row-container" style="padding: 0px;background-color: transparent">
+  <div class="u-row" style="margin: 0 auto;min-width: 320px;max-width: 500px;overflow-wrap: break-word;word-wrap: break-word;word-break: break-word;background-color: transparent;">
+    <div style="border-collapse: collapse;display: table;width: 100%;height: 100%;background-color: transparent;">
+      <div class="u-col u-col-100" style="max-width: 320px;min-width: 500px;display: table-cell;vertical-align: top;">
+        <div style="height: 100%;width: 100% !important;">
+          <div style="box-sizing: border-box; height: 100%; padding: 30px;">
+            <table style="font-family:arial,helvetica,sans-serif;" role="presentation" cellpadding="0" cellspacing="0" width="100%" border="0">
+              <tbody>
+                <tr>
+                  <td style="overflow-wrap:break-word;word-break:break-word;padding:10px;font-family:arial,helvetica,sans-serif;" align="left">
+                    <div style="font-family: helvetica,sans-serif; font-size: 16px; line-height: 140%; text-align: left; word-wrap: break-word;">
+                      <p style="line-height: 140%;"><strong>Client:</strong> <%= @first_name %> <%= @last_name %></p>
+                      <p style="line-height: 140%;"><strong>Email:</strong> <%= @email %></p>
+                      <p style="line-height: 140%;"><strong>Address:</strong> <%= @address %></p>
+                      <p style="line-height: 140%;"><strong>Reference:</strong> <%= @work_order.reference_number %></p>
+                      <p style="line-height: 140%;"><strong>Invoice Number:</strong> <%= @invoice_number %></p>
+                      <p style="line-height: 140%;"><strong>Invoice total (incl. VAT):</strong> <%= @total_price %></p>
+                      <p style="line-height: 140%;"><strong>Work Order Link:</strong> <a href="<%= @work_order_link %>"><%= @work_order_link %></a></p>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

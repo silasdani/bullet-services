@@ -3,7 +3,7 @@
 module Notifications
   class CreateService < ApplicationService
     attribute :user
-    attribute :window_schedule_repair, default: -> {}
+    attribute :work_order, default: -> {}
     attribute :notification_type
     attribute :title
     attribute :message, default: -> {}
@@ -30,7 +30,7 @@ module Notifications
     def create_notification
       @notification = Notification.new(
         user: user,
-        window_schedule_repair: window_schedule_repair,
+        work_order: work_order,
         notification_type: notification_type,
         title: title,
         message: message,
@@ -65,7 +65,7 @@ module Notifications
         notification_type: notification_type.to_s
       }
 
-      data[:work_order_id] = window_schedule_repair.id.to_s if window_schedule_repair
+      data[:work_order_id] = work_order.id.to_s if work_order
       data.merge(metadata.transform_keys(&:to_s).transform_values(&:to_s))
     end
   end

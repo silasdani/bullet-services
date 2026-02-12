@@ -3,14 +3,14 @@
 module Api
   module V1
     class OngoingWorksController < Api::V1::BaseController
-      before_action :set_window_schedule_repair, only: %i[index create]
+      before_action :set_work_order, only: %i[index create]
       before_action :set_ongoing_work, only: %i[show update destroy]
 
-      # GET /api/v1/window_schedule_repairs/:window_schedule_repair_id/ongoing_works
+      # GET /api/v1/work_orders/:work_order_id/ongoing_works
       def index
-        authorize @window_schedule_repair, :show?
+        authorize @work_order, :show?
 
-        ongoing_works = OngoingWork.where(window_schedule_repair: @window_schedule_repair)
+        ongoing_works = OngoingWork.where(work_order: @work_order)
                                    .includes(:user)
                                    .order(work_date: :desc, created_at: :desc)
                                    .page(@page)
@@ -24,17 +24,17 @@ module Api
 
       # GET /api/v1/ongoing_works/:id
       def show
-        authorize @ongoing_work.window_schedule_repair, :show?
+        authorize @ongoing_work.work_order, :show?
 
         render_success(
           data: serialize_ongoing_work(@ongoing_work)
         )
       end
 
-      # POST /api/v1/window_schedule_repairs/:window_schedule_repair_id/ongoing_works
+      # POST /api/v1/work_orders/:work_order_id/ongoing_works
       def create
         authorize OngoingWork, :create?
-        authorize @window_schedule_repair, :show?
+        authorize @work_order, :show?
 
         ongoing_work = build_ongoing_work
 
@@ -74,8 +74,8 @@ module Api
 
       private
 
-      def set_window_schedule_repair
-        @window_schedule_repair = WindowScheduleRepair.find(params[:window_schedule_repair_id])
+      def set_work_order
+        @work_order = WorkOrder.find(params[:work_order_id])
       end
 
       def set_ongoing_work
@@ -96,12 +96,12 @@ module Api
 
       def build_work_update_message
         user_name = current_user.name || current_user.email
-        "#{user_name} uploaded work photos for #{@window_schedule_repair.name}"
+        "#{user_name} uploaded work photos for #{@work_order.name}"
       end
 
       def build_ongoing_work
         OngoingWork.new(
-          window_schedule_repair: @window_schedule_repair,
+          work_order: @work_order,
           user: current_user,
           description: params[:description],
           work_date: params[:work_date] || Date.current
@@ -122,8 +122,8 @@ module Api
         return if current_user.contractor? || current_user.general_contractor?
 
         Notifications::CreateService.new(
-          user: @window_schedule_repair.user,
-          window_schedule_repair: @window_schedule_repair,
+          user: @work_order.user,
+          work_order: @work_order,
           notification_type: :work_update,
           title: 'Work Update',
           message: build_work_update_message,

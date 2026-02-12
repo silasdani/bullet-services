@@ -201,22 +201,25 @@ module Freshbooks
         base64: result[:pdf_base64],
         url: result[:pdf_url]
       }
-      Wrs::PdfAttachmentService.new(invoice, pdf_data).call if pdf_data[:base64].present? || pdf_data[:url].present?
+      if pdf_data[:base64].present? || pdf_data[:url].present?
+        WorkOrders::PdfAttachmentService.new(invoice,
+                                             pdf_data).call
+      end
     rescue StandardError => e
       Rails.logger.error("Failed to attach PDF to invoice #{invoice.id}: #{e.message}")
       # Don't raise - PDF attachment failure shouldn't fail the job
     end
 
     def send_admin_accept_email(invoice, client_id, first_name, last_name, email)
-      wrs = invoice.window_schedule_repair
-      return unless wrs
+      work_order = invoice.work_order
+      return unless work_order
 
       fb_client = FreshbooksClient.find_by(freshbooks_id: client_id)
       return unless fb_client
 
       client_attrs = extract_client_attributes_for_email(fb_client, first_name, last_name, email)
       client_data = build_client_data_for_email(client_id, client_attrs)
-      send_email_notification(wrs, invoice, client_data, client_attrs)
+      send_email_notification(work_order, invoice, client_data, client_attrs)
     rescue StandardError => e
       Rails.logger.error("Failed to send admin accept email for invoice #{invoice.id}: #{e.message}")
       # Don't raise - email failure shouldn't fail the job
@@ -239,9 +242,9 @@ module Freshbooks
       }
     end
 
-    def send_email_notification(wrs, invoice, client_data, client_attrs)
-      Wrs::EmailNotifier.new(
-        wrs,
+    def send_email_notification(work_order, invoice, client_data, client_attrs)
+      WorkOrders::EmailNotifier.new(
+        work_order,
         client_attrs[:first_name],
         client_attrs[:last_name],
         client_attrs[:email]

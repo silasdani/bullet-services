@@ -4,7 +4,7 @@ module Dashboards
   class ContractorDashboardService < BaseDashboardService
     def build_dashboard_data
       {
-        assigned_wrs: load_assigned_wrs,
+        assigned_work_orders: load_assigned_work_orders,
         active_work_session: load_active_work_session,
         pending_photos: load_pending_photos,
         recent_activity: load_recent_activity
@@ -13,17 +13,17 @@ module Dashboards
 
     private
 
-    def load_assigned_wrs
-      WindowScheduleRepair
+    def load_assigned_work_orders
+      WorkOrder
         .includes(:building, :windows)
         .where(user: user)
         .where(is_draft: false)
         .contractor_visible_status
         .order(created_at: :desc)
         .limit(10)
-        .map { |wrs| serialize_wrs(wrs) }
+        .map { |wo| serialize_work_order(wo) }
     rescue StandardError => e
-      log_error("Error loading assigned WRS: #{e.message}")
+      log_error("Error loading assigned work orders: #{e.message}")
       []
     end
 
@@ -44,7 +44,6 @@ module Dashboards
     end
 
     def load_pending_photos
-      # Placeholder: frontend can derive from WRS/ongoing_work when needed.
       0
     end
 
@@ -68,38 +67,38 @@ module Dashboards
       []
     end
 
-    def serialize_wrs(wrs)
-      build_wrs_hash(wrs)
+    def serialize_work_order(wo)
+      build_work_order_hash(wo)
     rescue StandardError => e
-      log_error("Error serializing WRS #{wrs.id}: #{e.message}")
-      serialize_wrs_fallback(wrs)
+      log_error("Error serializing work order #{wo.id}: #{e.message}")
+      serialize_work_order_fallback(wo)
     end
 
-    def build_wrs_hash(wrs)
+    def build_work_order_hash(wo)
       {
-        id: wrs.id,
-        name: wrs.name || 'Unnamed',
-        building_name: wrs.building&.name,
-        address: wrs.building&.full_address || wrs.address || '',
-        status: wrs.status || 'pending',
-        windows_count: wrs_windows_count(wrs),
-        created_at: wrs.created_at
+        id: wo.id,
+        name: wo.name || 'Unnamed',
+        building_name: wo.building&.name,
+        address: wo.building&.full_address || wo.address || '',
+        status: wo.status || 'pending',
+        windows_count: work_order_windows_count(wo),
+        created_at: wo.created_at
       }
     end
 
-    def wrs_windows_count(wrs)
-      wrs.association(:windows).loaded? ? wrs.windows.size : wrs.windows.count
+    def work_order_windows_count(wo)
+      wo.association(:windows).loaded? ? wo.windows.size : wo.windows.count
     end
 
-    def serialize_wrs_fallback(wrs)
+    def serialize_work_order_fallback(wo)
       {
-        id: wrs.id,
-        name: wrs.name || 'Unnamed',
+        id: wo.id,
+        name: wo.name || 'Unnamed',
         building_name: nil,
         address: '',
         status: 'pending',
         windows_count: 0,
-        created_at: wrs.created_at
+        created_at: wo.created_at
       }
     end
   end

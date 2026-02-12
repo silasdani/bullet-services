@@ -2,7 +2,7 @@
 
 FactoryBot.define do
   factory :invoice do
-    association :window_schedule_repair
+    association :work_order
     name { "Invoice #{Faker::Company.name}" }
     slug { "invoice-#{SecureRandom.hex(6)}" }
 

@@ -2,7 +2,7 @@
 
 class CheckIn < ApplicationRecord
   belongs_to :user
-  belongs_to :window_schedule_repair, class_name: 'WindowScheduleRepair', foreign_key: :work_order_id
+  belongs_to :work_order, foreign_key: :work_order_id
 
   enum :action, check_in: 0, check_out: 1
 
@@ -20,7 +20,7 @@ class CheckIn < ApplicationRecord
   # Active = check-in row with no later check-out for same (user, wrs).
   scope :active_for, lambda { |user, wrs = nil|
     base = check_ins.where(user: user)
-    base = base.where(window_schedule_repair: wrs) if wrs.present?
+    base = base.where(work_order: wrs) if wrs.present?
 
     base.where(
       <<~SQL.squish,
@@ -41,6 +41,6 @@ class CheckIn < ApplicationRecord
   end
 
   def self.ransackable_associations(_auth_object = nil)
-    %w[user window_schedule_repair]
+    %w[user work_order]
   end
 end

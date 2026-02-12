@@ -18,8 +18,8 @@ class User < ApplicationRecord
 
   has_many :work_order_assignments, dependent: :destroy
   has_many :assigned_work_orders, through: :work_order_assignments, source: :work_order
-  has_many :window_schedule_repairs, dependent: :restrict_with_error
-  has_many :windows, through: :window_schedule_repairs
+  has_many :work_orders, dependent: :restrict_with_error
+  has_many :windows, through: :work_orders
   has_many :check_ins, dependent: :destroy
   has_many :ongoing_works, dependent: :destroy
   has_many :notifications, dependent: :destroy
@@ -47,10 +47,6 @@ class User < ApplicationRecord
 
   def supervisor?
     role == 'supervisor'
-  end
-
-  def webflow_access?
-    is_admin?
   end
 
   # Deprecated: Use admin? instead

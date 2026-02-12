@@ -44,15 +44,14 @@ bundle exec rspec
 ```
 User
   associations
-    has many window_schedule_repairs
-    has many windows through window_schedule_repairs
+    has many work_orders
+    has many windows through work_orders
   validations
     validates presence of email
     validates presence of password
   role helper methods
     when user is admin
       returns true for is_admin?
-      returns true for webflow_access
 ```
 
 ### 2. **Progress Format** (Quick Overview)
@@ -95,8 +94,8 @@ User
 ```ruby
 RSpec.describe User, type: :model do
   describe 'associations' do
-    it 'has many window_schedule_repairs' do
-      expect(User.reflect_on_association(:window_schedule_repairs)).to be_present
+    it 'has many work_orders' do
+      expect(User.reflect_on_association(:work_orders)).to be_present
     end
   end
 
@@ -112,16 +111,16 @@ end
 
 ### Controller Testing
 ```ruby
-RSpec.describe Api::V1::WindowScheduleRepairsController, type: :request do
+RSpec.describe Api::V1::WorkOrdersController, type: :request do
   let(:user) { create(:user) }
-  let(:window_schedule_repair) { create(:window_schedule_repair, user: user) }
+  let(:work_order) { create(:work_order, user: user) }
 
-  describe 'GET /api/v1/window_schedule_repairs' do
+  describe 'GET /api/v1/work_orders' do
     context 'when user is authenticated' do
       before { sign_in user }
 
       it 'returns a successful response' do
-        get api_v1_window_schedule_repairs_path
+        get api_v1_work_orders_path
         expect(response).to have_http_status(:success)
       end
     end
@@ -205,22 +204,19 @@ fixtures :users
 ```
 User
   associations
-    has many window_schedule_repairs
-    has many windows through window_schedule_repairs
+    has many work_orders
+    has many windows through work_orders
   validations
     validates presence of email
     validates presence of password
   role helper methods
     when user is admin
       returns true for is_admin?
-      returns true for webflow_access
     when user is employee
       returns true for is_employee?
-      returns true for webflow_access
     when user is client
       returns false for is_admin?
       returns false for is_employee?
-      returns false for webflow_access
 
 Finished in 0.29073 seconds (files took 0.81674 seconds to load)
 18 examples, 0 failures

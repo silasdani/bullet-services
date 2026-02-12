@@ -6,12 +6,12 @@ module Notifications
     retry_on StandardError, wait: :exponentially_longer, attempts: 3
 
     def perform(work_order_id:, notification_type:, title:, message:, metadata: {})
-      wrs = WindowScheduleRepair.find(work_order_id)
+      work_order = WorkOrder.find(work_order_id)
 
       User.admin.find_each(batch_size: 50) do |admin|
         Notifications::CreateService.new(
           user: admin,
-          window_schedule_repair: wrs,
+          work_order: work_order,
           notification_type: notification_type,
           title: title,
           message: message,

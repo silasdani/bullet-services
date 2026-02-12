@@ -4,7 +4,7 @@ module Avo
   module Resources
     class Notification < Avo::BaseResource
       self.title = :title
-      self.includes = %i[user window_schedule_repair]
+      self.includes = %i[user work_order]
       self.search = {
         query: lambda {
           query.ransack(title_cont: params[:q], message_cont: params[:q], m: 'or').result(distinct: false)
@@ -16,7 +16,7 @@ module Avo
         field :user, as: :belongs_to, required: true, filterable: true
         field :user_status_badge, as: :user_status_badge, association: :user, only_on: %i[index show],
                                   name: 'User Status'
-        field :window_schedule_repair, as: :belongs_to, filterable: true
+        field :work_order, as: :belongs_to, filterable: true
         field :notification_type, as: :select, enum: ::Notification.notification_types, required: true, filterable: true
         field :title, as: :text, required: true, filterable: true
         field :message, as: :textarea, hide_on: [:index]

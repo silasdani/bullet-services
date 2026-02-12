@@ -12,48 +12,42 @@ users = [
     password: 'password123',
     password_confirmation: 'password123',
     first_name: 'Admin', last_name: 'User',
-    role: :admin,
-    webflow_access: true
+    role: :admin
   },
   {
     email: 'employee1@bullet.com',
     password: 'password123',
     password_confirmation: 'password123',
     first_name: 'John', last_name: 'Smith',
-    role: :contractor,
-    webflow_access: false
+    role: :contractor
   },
   {
     email: 'employee2@bullet.com',
     password: 'password123',
     password_confirmation: 'password123',
     first_name: 'Sarah', last_name: 'Johnson',
-    role: :contractor,
-    webflow_access: false
+    role: :contractor
   },
   {
     email: 'client1@example.com',
     password: 'password123',
     password_confirmation: 'password123',
     first_name: 'Michael', last_name: 'Brown',
-    role: :client,
-    webflow_access: false
+    role: :client
   },
   {
     email: 'client2@example.com',
     password: 'password123',
     password_confirmation: 'password123',
     first_name: 'Emma', last_name: 'Wilson',
-    role: :client,
-    webflow_access: false
+    role: :client
   },
   {
     email: 'client3@example.com',
     password: 'password123',
     password_confirmation: 'password123',
     first_name: 'David', last_name: 'Taylor',
-    role: :client,
-    webflow_access: false
+    role: :client
   }
 ]
 
@@ -65,8 +59,8 @@ end
 
 puts "Created #{created_users.count} users"
 
-# Create Window Schedule Repairs
-puts 'Creating window schedule repairs...'
+# Create Work Orders
+puts 'Creating work orders...'
 
 # Sample property addresses in London
 addresses = [
@@ -129,13 +123,13 @@ repair_details = [
   'Modern window installation with triple glazing'
 ]
 
-# Create 20 Window Schedule Repairs
+# Create 20 Work Orders
 20.times do |i|
   user = created_users.sample
   address = addresses.sample
   flat_number = "#{rand(1..50)}#{('A'..'Z').to_a.sample}"
 
-  wsr = WindowScheduleRepair.create!(
+  wsr = WorkOrder.create!(
     name: "Window Repair #{i + 1}",
     address: address,
     flat_number: flat_number,
@@ -175,7 +169,7 @@ puts 'Creating WRSs for existing test user...'
 test_user = User.find_by(email: 'test@bullet.co.uk')
 if test_user
   5.times do |i|
-    wsr = WindowScheduleRepair.create!(
+    wsr = WorkOrder.create!(
       name: "Test User WRS #{i + 1}",
       address: addresses.sample,
       flat_number: "#{rand(1..50)}#{('A'..'Z').to_a.sample}",
@@ -215,7 +209,7 @@ end
 
 puts "\n=== Summary ==="
 puts "Users: #{User.count}"
-puts "Window Schedule Repairs: #{WindowScheduleRepair.count}"
+puts "Work Orders: #{WorkOrder.count}"
 puts "Windows: #{Window.count}"
 puts "Tools: #{Tool.count}"
 
@@ -224,8 +218,8 @@ puts 'Admin user: admin@bullet.com / password123'
 puts 'Contractor users: employee1@bullet.com, employee2@bullet.com / password123'
 puts 'Client users: client1@example.com, client2@example.com, client3@example.com / password123'
 
-puts "\n=== Recent WSRs ==="
-WindowScheduleRepair.limit(5).each do |wsr|
+puts "\n=== Recent Work Orders ==="
+WorkOrder.limit(5).each do |wsr|
   puts "#{wsr.name} - #{wsr.address} - Status: #{wsr.status} - Total: £#{wsr.grand_total}"
 end
 

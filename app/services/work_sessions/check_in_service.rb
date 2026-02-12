@@ -6,7 +6,7 @@ module WorkSessions
     PROXIMITY_RADIUS_METERS = 50
 
     attribute :user
-    attribute :work_order # Changed from window_schedule_repair
+    attribute :work_order
     attribute :latitude
     attribute :longitude
     attribute :address
@@ -107,7 +107,7 @@ module WorkSessions
       if user.contractor? || user.general_contractor?
         log_info("Creating check-in notification for contractor: #{user.email}")
         result = Notifications::AdminFcmNotificationService.new(
-          window_schedule_repair: work_order, # Keep for backward compatibility
+          work_order: work_order,
           notification_type: :check_in,
           title: 'Contractor Check-in',
           message: build_check_in_message,
@@ -117,7 +117,7 @@ module WorkSessions
       else
         log_info("Creating check-in notification for non-contractor: #{user.email}")
         Notifications::AdminNotificationService.new(
-          window_schedule_repair: work_order, # Keep for backward compatibility
+          work_order: work_order,
           notification_type: :check_in,
           title: 'Contractor Check-in',
           message: build_check_in_message,

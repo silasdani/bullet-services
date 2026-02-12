@@ -4,7 +4,7 @@ module Avo
   module Fields
     class StatusBadgeField
       module StatusDefinitionStyling
-        ENTITY_TYPE = 'WindowScheduleRepair'
+        ENTITY_TYPE = 'WorkOrder'
 
         def wrs
           @resource&.record

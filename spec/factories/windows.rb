@@ -2,7 +2,7 @@
 
 FactoryBot.define do
   factory :window do
-    association :window_schedule_repair
+    association :work_order
     location { Faker::Lorem.word }
 
     trait :with_tools do

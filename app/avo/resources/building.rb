@@ -21,7 +21,7 @@ module Avo
         field :country, as: :text, required: true, filterable: true
         field :latitude, as: :number, readonly: true, hide_on: [:index]
         field :longitude, as: :number, readonly: true, hide_on: [:index]
-        field :window_schedule_repairs, as: :has_many, hide_on: [:index]
+        field :work_orders, as: :has_many, hide_on: [:index]
         field :created_at, as: :date_time, readonly: true, sortable: true, filterable: true
         field :updated_at, as: :date_time, readonly: true, sortable: true
       end

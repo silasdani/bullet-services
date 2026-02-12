@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class OngoingWork < ApplicationRecord
-  belongs_to :window_schedule_repair, class_name: 'WindowScheduleRepair', foreign_key: :work_order_id
+  belongs_to :work_order, foreign_key: :work_order_id
   belongs_to :user
   has_many_attached :images
 

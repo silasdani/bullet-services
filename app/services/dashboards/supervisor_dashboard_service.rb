@@ -4,8 +4,8 @@ module Dashboards
   class SupervisorDashboardService < BaseDashboardService
     def build_dashboard_data
       {
-        my_wrs: load_my_wrs,
-        assigned_project_wrs: load_assigned_project_wrs,
+        my_work_orders: load_my_work_orders,
+        assigned_project_work_orders: load_assigned_project_work_orders,
         projects_count: load_projects_count,
         recent_activity: load_recent_activity
       }
@@ -13,8 +13,8 @@ module Dashboards
 
     def build_fallback_dashboard_data
       {
-        my_wrs: [],
-        assigned_project_wrs: [],
+        my_work_orders: [],
+        assigned_project_work_orders: [],
         projects_count: 0,
         recent_activity: []
       }
@@ -22,34 +22,34 @@ module Dashboards
 
     private
 
-    def load_my_wrs
-      policy_scope(WindowScheduleRepair)
+    def load_my_work_orders
+      policy_scope(WorkOrder)
         .where(user_id: user.id)
         .includes(:building, :windows)
         .order(created_at: :desc)
         .limit(10)
-        .map { |wrs| serialize_wrs(wrs) }
+        .map { |wo| serialize_work_order(wo) }
     rescue StandardError => e
-      log_error("Error loading my WRS: #{e.message}")
+      log_error("Error loading my work orders: #{e.message}")
       []
     end
 
-    def load_assigned_project_wrs
+    def load_assigned_project_work_orders
       assigned_building_ids = WorkOrderAssignment.where(user_id: user.id)
                                                  .joins(:work_order)
                                                  .pluck('work_orders.building_id')
                                                  .uniq
       return [] if assigned_building_ids.blank?
 
-      WindowScheduleRepair
+      WorkOrder
         .where(building_id: assigned_building_ids)
-        .where.not(user_id: user.id) # Exclude own WRS (already in my_wrs)
+        .where.not(user_id: user.id)
         .includes(:building, :windows)
         .order(created_at: :desc)
         .limit(10)
-        .map { |wrs| serialize_wrs(wrs) }
+        .map { |wo| serialize_work_order(wo) }
     rescue StandardError => e
-      log_error("Error loading assigned project WRS: #{e.message}")
+      log_error("Error loading assigned project work orders: #{e.message}")
       []
     end
 
@@ -61,16 +61,16 @@ module Dashboards
       []
     end
 
-    def serialize_wrs(wrs)
+    def serialize_work_order(wo)
       {
-        id: wrs.id,
-        name: wrs.name || 'Unnamed',
-        building_name: wrs.building&.name,
-        address: wrs.building&.full_address || '',
-        status: wrs.status || 'pending',
-        windows_count: wrs.association(:windows).loaded? ? wrs.windows.size : wrs.windows.count,
-        created_at: wrs.created_at,
-        is_mine: wrs.user_id == user.id
+        id: wo.id,
+        name: wo.name || 'Unnamed',
+        building_name: wo.building&.name,
+        address: wo.building&.full_address || '',
+        status: wo.status || 'pending',
+        windows_count: wo.association(:windows).loaded? ? wo.windows.size : wo.windows.count,
+        created_at: wo.created_at,
+        is_mine: wo.user_id == user.id
       }
     end
 
@@ -78,16 +78,16 @@ module Dashboards
       Pundit.policy_scope!(user, scope)
     end
 
-    def latest_wrs_updated_at
+    def latest_work_order_updated_at
       assigned_building_ids = WorkOrderAssignment.where(user_id: user.id)
                                                  .joins(:work_order)
                                                  .pluck('work_orders.building_id')
                                                  .uniq
-      base = WindowScheduleRepair.where(user_id: user.id)
-      base = base.or(WindowScheduleRepair.where(building_id: assigned_building_ids)) if assigned_building_ids.any?
+      base = WorkOrder.where(user_id: user.id)
+      base = base.or(WorkOrder.where(building_id: assigned_building_ids)) if assigned_building_ids.any?
       base.maximum(:updated_at).to_i
     rescue StandardError => e
-      log_error("Error getting latest WRS updated_at: #{e.message}")
+      log_error("Error getting latest work order updated_at: #{e.message}")
       0
     end
   end

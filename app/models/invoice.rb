@@ -44,7 +44,7 @@ class Invoice < ApplicationRecord
   end
 
   has_many :freshbooks_invoices, foreign_key: :invoice_id, dependent: :destroy
-  belongs_to :window_schedule_repair, optional: true, class_name: 'WindowScheduleRepair', foreign_key: :work_order_id
+  belongs_to :work_order, optional: true, foreign_key: :work_order_id
 
   has_one_attached :invoice_pdf
 

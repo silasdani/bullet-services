@@ -4,7 +4,7 @@ module Avo
   module Resources
     class CheckIn < Avo::BaseResource
       self.title = :id
-      self.includes = %i[user window_schedule_repair]
+      self.includes = %i[user work_order]
       self.search = {
         query: -> { query.ransack(id_eq: params[:q], address_cont: params[:q], m: 'or').result(distinct: false) }
       }
@@ -14,7 +14,7 @@ module Avo
         field :user, as: :belongs_to, required: true, filterable: true
         field :user_status_badge, as: :user_status_badge, association: :user, only_on: %i[index show],
                                   name: 'User Status'
-        field :window_schedule_repair, as: :belongs_to, required: true, filterable: true
+        field :work_order, as: :belongs_to, required: true, filterable: true
         field :action, as: :select, enum: ::CheckIn.actions, required: true, filterable: true
         field :timestamp, as: :date_time, required: true, sortable: true, filterable: true
         field :address, as: :text, hide_on: [:index]

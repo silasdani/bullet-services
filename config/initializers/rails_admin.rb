@@ -18,8 +18,8 @@ if false
   # Explicitly set asset_source for RailsAdmin 3.x to silence warnings
   config.asset_source = :sprockets
 
-  # Only include User and WindowScheduleRepair models (Window and Tool are nested)
-  config.included_models = ['User', 'WindowScheduleRepair', 'Window', 'Tool', 'Invoice', 'Building', 'OngoingWork']
+  # Only include User and WorkOrder models (Window and Tool are nested)
+  config.included_models = ['User', 'WorkOrder', 'Window', 'Tool', 'Invoice', 'Building', 'OngoingWork']
 
   # Authenticate: ensure user is logged in via Devise session
   config.authenticate_with do
@@ -234,8 +234,8 @@ if false
     end
   end
 
-  # Configure WindowScheduleRepair model (WRS)
-  config.model 'WindowScheduleRepair' do
+  # Configure WorkOrder model (WRS)
+  config.model 'WorkOrder' do
     label 'WRS'
     navigation_label 'Management'
     weight 2
@@ -347,7 +347,6 @@ if false
       field :grand_total
       field :is_draft
       field :is_archived
-      field :webflow_item_id
       field :created_at
       field :updated_at
       field :deleted_at
@@ -1030,11 +1029,6 @@ if false
       field :status_color
       field :is_draft
       field :is_archived
-      field :webflow_collection_id
-      field :webflow_item_id
-      field :webflow_created_on
-      field :webflow_updated_on
-      field :webflow_published_on
       field :invoice_pdf do
         label 'PDF Attachment'
         pretty_value do
@@ -1134,11 +1128,6 @@ if false
       field :status_color
       field :is_draft
       field :is_archived
-      field :webflow_collection_id
-      field :webflow_item_id
-      field :webflow_created_on
-      field :webflow_updated_on
-      field :webflow_published_on
       field :invoice_pdf do
         label 'PDF File'
       end
@@ -1162,11 +1151,6 @@ if false
       field :status_color
       field :is_draft
       field :is_archived
-      field :webflow_collection_id
-      field :webflow_item_id
-      field :webflow_created_on
-      field :webflow_updated_on
-      field :webflow_published_on
       field :invoice_pdf do
         label 'PDF File'
       end
@@ -1190,11 +1174,6 @@ if false
       field :status_color
       field :is_draft
       field :is_archived
-      field :webflow_collection_id
-      field :webflow_item_id
-      field :webflow_created_on
-      field :webflow_updated_on
-      field :webflow_published_on
       field :invoice_pdf do
         label 'PDF File'
       end
@@ -1211,7 +1190,7 @@ if false
     weight 3
 
     # Optimize queries by eager loading associations
-    scope { Building.includes(:window_schedule_repairs).where(deleted_at: nil) }
+    scope { Building.includes(:work_orders).where(deleted_at: nil) }
 
     list do
       field :id
@@ -1223,12 +1202,12 @@ if false
         end
       end
       field :wrs_count do
-        label 'WRS Count'
+        label 'Work Orders Count'
         pretty_value do
-          if bindings[:object].association(:window_schedule_repairs).loaded?
-            bindings[:object].window_schedule_repairs.size
+          if bindings[:object].association(:work_orders).loaded?
+            bindings[:object].work_orders.size
           else
-            bindings[:object].window_schedule_repairs.count
+            bindings[:object].work_orders.count
           end
         end
       end
@@ -1260,16 +1239,16 @@ if false
           bindings[:object].display_name
         end
       end
-      field :window_schedule_repairs do
-        label 'WRS'
+      field :work_orders do
+        label 'Work Orders'
         pretty_value do
-          if bindings[:object].window_schedule_repairs.any?
+          if bindings[:object].work_orders.any?
             bindings[:view].content_tag(:div, class: 'wrs-list') do
-              bindings[:object].window_schedule_repairs.map do |wrs|
+              bindings[:object].work_orders.map do |wrs|
                 bindings[:view].content_tag(:div, style: 'margin: 10px 0; padding: 10px; background-color: #f9fafb; border-radius: 6px;') do
                   bindings[:view].link_to(
                     "#{wrs.name} (#{wrs.reference_number})",
-                    bindings[:view].rails_admin.show_path(model_name: 'window_schedule_repair', id: wrs.id),
+                    bindings[:view].rails_admin.show_path(model_name: 'work_order', id: wrs.id),
                     style: 'text-decoration: none; color: #000000; font-weight: 500;'
                   ) +
                   bindings[:view].content_tag(:div, style: 'margin-top: 5px; font-size: 0.875rem;') do
@@ -1299,7 +1278,7 @@ if false
               end.join.html_safe
             end
           else
-            'No WRS found'
+            'No work orders found'
           end
         end
       end
@@ -1339,14 +1318,14 @@ if false
     navigation_label 'Management'
     weight 4
 
-    scope { OngoingWork.includes(window_schedule_repair: :building, user: []).order(work_date: :desc, created_at: :desc) }
+    scope { OngoingWork.includes(work_order: :building, user: []).order(work_date: :desc, created_at: :desc) }
 
     list do
-      filters [:work_date, :window_schedule_repair, :user, :created_at]
+      filters [:work_date, :work_order, :user, :created_at]
 
       sort_by :work_date
       sort_by :created_at
-      sort_by :window_schedule_repair_id
+      sort_by :work_order_id
       field :id
 
       field :work_date do
@@ -1370,10 +1349,10 @@ if false
         end
       end
 
-      field :window_schedule_repair do
+      field :work_order do
         label 'WRS'
         pretty_value do
-          wrs = bindings[:object].window_schedule_repair
+          wrs = bindings[:object].work_order
           if wrs
             building = wrs.building
             building_info = building ? "#{building.name}, #{building.city}" : ''
@@ -1393,7 +1372,7 @@ if false
             html = ActiveSupport::SafeBuffer.new
             html << bindings[:view].link_to(
               "#{wrs.name} (#{wrs.reference_number})",
-              bindings[:view].rails_admin.show_path(model_name: 'window_schedule_repair', id: wrs.id),
+              bindings[:view].rails_admin.show_path(model_name: 'work_order', id: wrs.id),
               style: 'font-weight: 500;'
             )
             html << status_badge if status_badge.present?
@@ -1454,7 +1433,7 @@ if false
         label 'Status'
         formatted_value do
           ongoing_work = bindings[:object]
-          wrs = ongoing_work.window_schedule_repair
+          wrs = ongoing_work.work_order
           user = ongoing_work.user
 
           if wrs && user
@@ -1512,10 +1491,10 @@ if false
         end
       end
 
-      field :window_schedule_repair do
+      field :work_order do
         label 'Window Schedule Repair'
         pretty_value do
-          wrs = bindings[:object].window_schedule_repair
+          wrs = bindings[:object].work_order
           if wrs
             building = wrs.building
             html = ActiveSupport::SafeBuffer.new
@@ -1523,7 +1502,7 @@ if false
             html << bindings[:view].content_tag(:div, style: 'margin-bottom: 10px;') do
               bindings[:view].link_to(
                 "#{wrs.name} (#{wrs.reference_number})",
-                bindings[:view].rails_admin.show_path(model_name: 'window_schedule_repair', id: wrs.id),
+                bindings[:view].rails_admin.show_path(model_name: 'work_order', id: wrs.id),
                 style: 'font-size: 1.1rem; font-weight: 600; text-decoration: none;'
               )
             end
@@ -1585,7 +1564,7 @@ if false
         label 'Check-in Status'
         formatted_value do
           ongoing_work = bindings[:object]
-          wrs = ongoing_work.window_schedule_repair
+          wrs = ongoing_work.work_order
           user = ongoing_work.user
 
           if wrs && user
@@ -1625,7 +1604,7 @@ if false
       field :images do
         pretty_value do
           ongoing_work = bindings[:object]
-          wrs = ongoing_work.window_schedule_repair
+          wrs = ongoing_work.work_order
 
           if ongoing_work.images.attached?
             windows = wrs&.windows&.order(:created_at) || []
@@ -1735,7 +1714,7 @@ if false
     end
 
     edit do
-      field :window_schedule_repair do
+      field :work_order do
         label 'WRS'
       end
       field :user
@@ -1748,7 +1727,7 @@ if false
     end
 
     create do
-      field :window_schedule_repair do
+      field :work_order do
         label 'WRS'
       end
       field :user
@@ -1761,7 +1740,7 @@ if false
     end
 
     update do
-      field :window_schedule_repair do
+      field :work_order do
         label 'WRS'
       end
       field :user

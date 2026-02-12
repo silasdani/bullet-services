@@ -3,7 +3,7 @@
 class WorkOrderDecision < ApplicationRecord
   include SoftDeletable
 
-  belongs_to :work_order, class_name: 'WindowScheduleRepair', foreign_key: :work_order_id
+  belongs_to :work_order, foreign_key: :work_order_id
 
   validates :decision, presence: true, inclusion: { in: %w[approved rejected] }
   validates :decision_at, presence: true

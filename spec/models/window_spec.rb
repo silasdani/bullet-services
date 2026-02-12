@@ -4,10 +4,10 @@ require 'rails_helper'
 
 RSpec.describe Window, type: :model do
   let(:user) { create(:user) }
-  let(:window_schedule_repair) do
-    create(:window_schedule_repair, user: user)
+  let(:work_order) do
+    create(:work_order, user: user)
   end
-  let(:window) { build(:window, window_schedule_repair: window_schedule_repair) }
+  let(:window) { build(:window, work_order: work_order) }
 
   describe 'validations' do
     it 'is valid with valid attributes' do
@@ -22,15 +22,15 @@ RSpec.describe Window, type: :model do
   end
 
   describe 'associations' do
-    it 'belongs to window_schedule_repair' do
-      expect(window).to respond_to(:window_schedule_repair)
-      expect(window.window_schedule_repair).to eq(window_schedule_repair)
+    it 'belongs to work_order' do
+      expect(window).to respond_to(:work_order)
+      expect(window.work_order).to eq(work_order)
     end
 
-    it 'is destroyed when window_schedule_repair is destroyed' do
+    it 'is destroyed when work_order is destroyed' do
       window.save!
       expect do
-        window_schedule_repair.destroy
+        work_order.destroy
       end.to change(Window, :count).by(-1)
     end
   end

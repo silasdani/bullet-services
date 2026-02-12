@@ -5,11 +5,11 @@ class ImagePolicy < ApplicationPolicy
     # Users can upload images to windows they own or are assigned to
     user.is_admin? ||
       user.is_employee? ||
-      (user.client? && record.window_schedule_repair.user == user)
+      (user.client? && record.work_order.user == user)
   end
 
   def upload_multiple_images?
-    # Users can upload multiple images to WRS they own or are assigned to
+    # Users can upload multiple images to work orders they own or are assigned to
     user.is_admin? ||
       user.is_employee? ||
       (user.client? && record.user == user)

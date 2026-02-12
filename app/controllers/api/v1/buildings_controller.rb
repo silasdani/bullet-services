@@ -3,9 +3,9 @@
 module Api
   module V1
     class BuildingsController < Api::V1::BaseController
-      include BuildingsWrsListing
+      include BuildingsWorkOrderListing
 
-      before_action :set_building, only: %i[show update destroy window_schedule_repairs]
+      before_action :set_building, only: %i[show update destroy work_orders]
 
       def index
         authorize Building
@@ -24,32 +24,32 @@ module Api
         collection = policy_scope(Building).order(created_at: :desc)
         collection = apply_search_filter(collection)
         if current_user.contractor? || current_user.general_contractor?
-          filter_buildings_with_wrs(collection)
+          filter_buildings_with_work_orders(collection)
         else
           collection
         end
       end
 
-      def filter_buildings_with_wrs(collection)
-        assigned_work_order_ids = assigned_work_order_ids_for_wrs_filter
-        building_ids = building_ids_from_wrs_filter(assigned_work_order_ids)
+      def filter_buildings_with_work_orders(collection)
+        assigned_work_order_ids = assigned_work_order_ids_for_filter
+        building_ids = building_ids_from_work_order_filter(assigned_work_order_ids)
 
         return collection.none if building_ids.empty?
 
         collection.where(id: building_ids)
       rescue StandardError => e
-        Rails.logger.error "Error filtering buildings with WRS: #{e.message}"
+        Rails.logger.error "Error filtering buildings with work orders: #{e.message}"
         collection
       end
 
-      def assigned_work_order_ids_for_wrs_filter
+      def assigned_work_order_ids_for_filter
         return [] if current_user.general_contractor?
 
         WorkOrderAssignment.where(user_id: current_user.id).pluck(:work_order_id)
       end
 
-      def building_ids_from_wrs_filter(assigned_work_order_ids)
-        scope = WindowScheduleRepair
+      def building_ids_from_work_order_filter(assigned_work_order_ids)
+        scope = WorkOrder
                 .where(is_draft: false, deleted_at: nil)
                 .contractor_visible_status
 
@@ -117,7 +117,6 @@ module Api
       def update
         authorize @building
 
-        # Update building fields directly
         if @building.update(building_params)
           render_success(
             data: BuildingSerializer.new(@building.reload).serializable_hash,
@@ -142,23 +141,25 @@ module Api
         )
       end
 
-      def window_schedule_repairs
+      def work_orders
         authorize @building, :show?
         if current_user.contractor? || current_user.general_contractor?
-          return render_wrs_checked_in_elsewhere if contractor_checked_in_elsewhere?
-          return render_wrs_not_assigned unless contractor_can_access_building_wrs?
+          return render_work_order_checked_in_elsewhere if contractor_checked_in_elsewhere?
+          return render_work_order_not_assigned unless contractor_can_access_building_work_orders?
         end
-        return render_wrs_not_assigned if current_user.supervisor? && !supervisor_can_access_building_wrs?
+        if current_user.supervisor? && !supervisor_can_access_building_work_orders?
+          return render_work_order_not_assigned
+        end
 
-        wrs = wrs_collection_for_building
-        paginated = wrs.page(@page).per(@per_page)
-        render_success(data: serialize_wrs_page(paginated), meta: pagination_meta(paginated))
+        wo_collection = work_order_collection_for_building
+        paginated = wo_collection.page(@page).per(@per_page)
+        render_success(data: serialize_work_order_page(paginated), meta: pagination_meta(paginated))
       end
 
       private
 
       def set_building
-        @building = Building.includes(:window_schedule_repairs).find(params[:id])
+        @building = Building.includes(:work_orders).find(params[:id])
       end
 
       def building_params
@@ -172,7 +173,7 @@ module Api
 
         return true if assigned_work_order_ids.empty?
 
-        non_completed_count = WindowScheduleRepair
+        non_completed_count = WorkOrder
                               .where(id: assigned_work_order_ids)
                               .where(is_draft: false, is_archived: false)
                               .contractor_visible_status

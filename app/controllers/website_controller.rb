@@ -2,8 +2,6 @@
 
 class WebsiteController < ApplicationController
   # Public website pages - skip authorization
-  # CSRF protection: Use protect_from_forgery with :null_session for API-like endpoints
-  # or ensure proper CSRF token handling in forms
   protect_from_forgery with: :exception, except: %i[contact_submit wrs_decision]
 
   before_action :verify_contact_form_request, only: [:contact_submit]
@@ -33,7 +31,7 @@ class WebsiteController < ApplicationController
     load_wrs
     return unless @wrs
 
-    @decision_form = WrsDecisionForm.new
+    @decision_form = WorkOrderDecisionForm.new
   end
 
   def wrs_decision
@@ -43,11 +41,11 @@ class WebsiteController < ApplicationController
     # Prevent duplicate submissions if invoice already exists
     if @wrs.invoices.exists?
       redirect_to wrs_show_path(slug: @wrs.slug),
-                  alert: 'A decision has already been made for this WRS. Invoice already exists.'
+                  alert: 'A decision has already been made for this work order. Invoice already exists.'
       return
     end
 
-    @decision_form = WrsDecisionForm.new(wrs_decision_params)
+    @decision_form = WorkOrderDecisionForm.new(wrs_decision_params)
 
     return render_invalid_wrs_decision unless @decision_form.valid?
 
@@ -70,13 +68,12 @@ class WebsiteController < ApplicationController
   private
 
   def load_wrs
-    # Find WRS by slug, excluding soft-deleted records
-    # Eager load invoices to check if decision form should be shown
-    @wrs = WindowScheduleRepair.active.includes(windows: :tools, invoices: []).find_by(slug: params[:slug])
+    # Find work order by slug — must be published (not draft, not archived) and not soft-deleted
+    @wrs = WorkOrder.active.published.includes(windows: :tools, invoices: []).find_by(slug: params[:slug])
 
     return if @wrs
 
-    redirect_to root_path, alert: 'Window Schedule Repair not found.'
+    redirect_to root_path, alert: 'Work order not found.'
   end
 
   def contact_params
@@ -88,9 +85,8 @@ class WebsiteController < ApplicationController
   end
 
   def process_wrs_decision
-    # Actual processing (FreshBooks, emails, etc.) is handled by Wrs::DecisionService
-    Wrs::DecisionService.new(
-      window_schedule_repair: @wrs,
+    WorkOrders::DecisionService.new(
+      work_order: @wrs,
       first_name: @decision_form.first_name,
       last_name: @decision_form.last_name,
       email: @decision_form.email,
@@ -114,8 +110,6 @@ class WebsiteController < ApplicationController
   end
 
   def verify_contact_form_request
-    # Verify CSRF token is present for POST requests
-    # This ensures the request comes from our form, not a cross-site request
     return if request.get? || request.head?
 
     return if verified_request?
@@ -127,12 +121,8 @@ class WebsiteController < ApplicationController
   end
 
   def verify_wrs_decision_request
-    # Verify the request is a POST and has required parameters
-    # For public forms accessed via email links, session may not persist
-    # so we're more lenient but still validate the request structure
     return if request.get? || request.head?
 
-    # Basic validation: ensure we have the required form parameters
     unless params[:wrs_decision_form].present?
       Rails.logger.warn "WRS decision request missing form parameters from #{request.remote_ip}"
       redirect_to wrs_show_path(slug: params[:slug]),

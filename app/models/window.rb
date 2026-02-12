@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Window < ApplicationRecord
-  belongs_to :window_schedule_repair, class_name: 'WindowScheduleRepair', foreign_key: :work_order_id
+  belongs_to :work_order, foreign_key: :work_order_id
   has_many :tools, dependent: :destroy
   has_many_attached :images
 
@@ -26,7 +26,7 @@ class Window < ApplicationRecord
   def image_name
     return nil unless images.attached?
 
-    window_number = window_schedule_repair.windows.order(:created_at).index(self) + 1
+    window_number = work_order.windows.order(:created_at).index(self) + 1
     "window-#{window_number}-image"
   end
 
@@ -104,7 +104,7 @@ class Window < ApplicationRecord
   end
 
   def self.ransackable_associations(_auth_object = nil)
-    %w[window_schedule_repair tools]
+    %w[work_order tools]
   end
 
   private

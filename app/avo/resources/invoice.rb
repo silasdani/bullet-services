@@ -6,7 +6,7 @@ module Avo
       STATUS_OPTIONS = { draft: 'draft', sent: 'sent', viewed: 'viewed', paid: 'paid', voided: 'voided' }.freeze
 
       self.title = :name
-      self.includes = [:window_schedule_repair]
+      self.includes = [:work_order]
       self.search = {
         query: lambda {
           query.ransack(name_cont: params[:q], slug_cont: params[:q], flat_address_cont: params[:q],
@@ -24,7 +24,7 @@ module Avo
                              options: STATUS_OPTIONS, required: true, filterable: true, hide_on: %i[index show]
         field :status, as: :select,
                        options: STATUS_OPTIONS, required: true, hide_on: %i[index show]
-        field :window_schedule_repair, as: :belongs_to, filterable: true
+        field :work_order, as: :belongs_to, filterable: true
         field :total_amount, as: :text, readonly: true, only_on: %i[index show] do
           amount = record.total_amount
           amount ? "£#{amount.to_f.round(2)}" : '£0.00'
