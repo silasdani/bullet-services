@@ -6,7 +6,10 @@ class WindowPolicy < ApplicationPolicy
   end
 
   def show?
-    user.present? && (user.is_admin? || user.is_employee? || record.window_schedule_repair.user == user)
+    return false unless user.present?
+    return record.window_schedule_repair.user_id == user.id if user.supervisor?
+
+    user.is_admin? || user.is_employee? || record.window_schedule_repair.user == user
   end
 
   def create?
@@ -14,11 +17,17 @@ class WindowPolicy < ApplicationPolicy
   end
 
   def update?
-    user.present? && (user.is_admin? || user.is_employee? || record.window_schedule_repair.user == user)
+    return false unless user.present?
+    return record.window_schedule_repair.user_id == user.id if user.supervisor?
+
+    user.is_admin? || user.is_employee? || record.window_schedule_repair.user == user
   end
 
   def destroy?
-    user.present? && (user.is_admin? || record.window_schedule_repair.user == user)
+    return false unless user.present?
+    return record.window_schedule_repair.user_id == user.id if user.supervisor?
+
+    user.is_admin? || record.window_schedule_repair.user == user
   end
 
   class Scope < Scope

@@ -84,9 +84,10 @@ module Wrs
       tools_attributes.each_value do |tool_attrs|
         next if tool_attrs[:name].blank?
 
+        tool_price = user.supervisor? ? 0 : (tool_attrs[:price] || 0)
         tool = window.tools.build(
           name: tool_attrs[:name],
-          price: tool_attrs[:price] || 0
+          price: tool_price
         )
 
         unless tool.save
@@ -110,12 +111,25 @@ module Wrs
         building_id: params[:building_id],
         flat_number: params[:flat_number],
         details: params[:details],
-        status: :pending
+        status: :pending,
+        work_type: params[:work_type].presence || :wrs
       }.compact
     end
 
     def success_result
+      notify_admin_supervisor_created if user.supervisor?
+
       { success: true, wrs: @wrs }
+    end
+
+    def notify_admin_supervisor_created
+      Notifications::AdminNotificationService.new(
+        window_schedule_repair: @wrs,
+        notification_type: 'supervisor_wrs_created',
+        title: 'WRS created by supervisor (needs pricing)',
+        message: "#{user.name} created \"#{@wrs.name}\" without prices. Please add pricing.",
+        metadata: { created_by_user_id: user.id }
+      ).call
     end
   end
 end

@@ -4,6 +4,7 @@ module Wrs
   class UpdateService < ApplicationService
     attribute :wrs
     attribute :params, default: -> { {} }
+    attribute :current_user, default: nil # Used to check if supervisor (strips tool prices)
 
     def call
       result = with_error_handling do
@@ -132,6 +133,10 @@ module Wrs
       end
     end
 
+    def tool_price(tool_attrs)
+      current_user&.supervisor? ? 0 : (tool_attrs[:price] || 0)
+    end
+
     def update_existing_tool(window, tool_attrs)
       tool = window.tools.find(tool_attrs[:id])
 
@@ -140,7 +145,7 @@ module Wrs
       else
         unless tool.update(
           name: tool_attrs[:name],
-          price: tool_attrs[:price] || 0
+          price: tool_price(tool_attrs)
         )
           add_errors(tool.errors.full_messages)
           raise ActiveRecord::Rollback
@@ -153,7 +158,7 @@ module Wrs
 
       tool = window.tools.build(
         name: tool_attrs[:name],
-        price: tool_attrs[:price] || 0
+        price: tool_price(tool_attrs)
       )
 
       return if tool.save
@@ -168,7 +173,7 @@ module Wrs
 
         tool = window.tools.build(
           name: tool_attrs[:name],
-          price: tool_attrs[:price] || 0
+          price: tool_price(tool_attrs)
         )
 
         unless tool.save
@@ -192,7 +197,8 @@ module Wrs
         building_id: params[:building_id],
         flat_number: params[:flat_number],
         details: params[:details],
-        status: params[:status]
+        status: params[:status],
+        work_type: params[:work_type]
       }.compact
     end
 

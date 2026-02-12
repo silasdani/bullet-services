@@ -9,7 +9,7 @@ class Notification < ApplicationRecord
   validates :notification_type, presence: true
   validates :title, presence: true
 
-  enum :notification_type, check_in: 0, check_out: 1, work_update: 2, system: 3
+  enum :notification_type, check_in: 0, check_out: 1, work_update: 2, system: 3, supervisor_wrs_created: 4
 
   scope :unread, -> { where(read_at: nil) }
   scope :read, -> { where.not(read_at: nil) }

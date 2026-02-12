@@ -27,6 +27,7 @@ class WindowScheduleRepair < ApplicationRecord
   accepts_nested_attributes_for :windows, allow_destroy: true, reject_if: :all_blank
 
   enum :status, pending: 0, approved: 1, rejected: 2, completed: 3
+  enum :work_type, wrs: 0, general: 1
 
   validates :name, presence: true
   validates :building, presence: true
@@ -126,8 +127,11 @@ class WindowScheduleRepair < ApplicationRecord
   end
 
   # Ransack configuration for filtering
+  scope :wrs_only, -> { where(work_type: :wrs) }
+  scope :general_only, -> { where(work_type: :general) }
+
   def self.ransackable_attributes(_auth_object = nil)
-    %w[name slug flat_number reference_number details status created_at updated_at total_vat_included_price
+    %w[name slug flat_number reference_number details status work_type created_at updated_at total_vat_included_price
        total_vat_excluded_price deleted_at is_draft is_archived]
   end
 

@@ -3,7 +3,7 @@
 class WindowScheduleRepairSerializer < ActiveModel::Serializer
   attributes :id, :name, :slug, :flat_number, :details,
              :total_vat_included_price, :total_vat_excluded_price,
-             :status, :status_color, :total, :created_at, :updated_at,
+             :status, :status_color, :work_type, :total, :created_at, :updated_at,
              :deleted_at, :deleted?, :active?, :is_draft, :is_archived,
              :published?, :draft?, :archived?
 
@@ -15,9 +15,9 @@ class WindowScheduleRepairSerializer < ActiveModel::Serializer
     address_fallback
   end
 
-  # Hide prices for contractors and general contractors
+  # Hide prices for contractors, general contractors, and supervisors
   def total_vat_included_price
-    return nil if scope&.contractor? || scope&.general_contractor?
+    return nil if scope&.contractor? || scope&.general_contractor? || scope&.supervisor?
 
     begin
       object.total_vat_included_price
@@ -28,7 +28,7 @@ class WindowScheduleRepairSerializer < ActiveModel::Serializer
   end
 
   def total_vat_excluded_price
-    return nil if scope&.contractor? || scope&.general_contractor?
+    return nil if scope&.contractor? || scope&.general_contractor? || scope&.supervisor?
 
     begin
       object.total_vat_excluded_price
@@ -39,7 +39,7 @@ class WindowScheduleRepairSerializer < ActiveModel::Serializer
   end
 
   def total
-    return nil if scope&.contractor? || scope&.general_contractor?
+    return nil if scope&.contractor? || scope&.general_contractor? || scope&.supervisor?
 
     computed_total
   rescue StandardError => e

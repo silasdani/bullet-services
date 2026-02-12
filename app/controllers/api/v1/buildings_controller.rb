@@ -148,6 +148,8 @@ module Api
           return render_wrs_checked_in_elsewhere if contractor_checked_in_elsewhere?
           return render_wrs_not_assigned unless contractor_can_access_building_wrs?
         end
+        return render_wrs_not_assigned if current_user.supervisor? && !supervisor_can_access_building_wrs?
+
         wrs = wrs_collection_for_building
         paginated = wrs.page(@page).per(@per_page)
         render_success(data: serialize_wrs_page(paginated), meta: pagination_meta(paginated))

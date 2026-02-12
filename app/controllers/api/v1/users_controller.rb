@@ -103,7 +103,7 @@ module Api
         return {} unless params[:user].present?
 
         permitted = params.require(:user).permit(
-          :email, :name, :nickname, :password, :password_confirmation,
+          :email, :nickname, :password, :password_confirmation,
           :fcm_token, :first_name, :last_name, :phone_no
         )
         permitted[:role] = params[:user][:role] if current_user&.admin? && params[:user][:role].present?

@@ -132,6 +132,13 @@ StatusDefinition.find_or_create_by!(entity_type: 'User', status_key: 'general_co
   sd.is_active = true
 end
 
+StatusDefinition.find_or_create_by!(entity_type: 'User', status_key: 'supervisor') do |sd|
+  sd.status_label = 'Supervisor'
+  sd.status_color = '#8a3ffc' # Carbon Purple
+  sd.display_order = 5
+  sd.is_active = true
+end
+
 StatusDefinition.find_or_create_by!(entity_type: 'User', status_key: 'blocked') do |sd|
   sd.status_label = 'Blocked'
   sd.status_color = '#da1e28' # Carbon Red

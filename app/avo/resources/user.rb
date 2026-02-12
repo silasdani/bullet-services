@@ -9,7 +9,6 @@ module Avo
         query: lambda {
           query.ransack(
             email_cont: params[:q],
-            name_cont: params[:q],
             first_name_cont: params[:q],
             last_name_cont: params[:q],
             m: 'or'
@@ -21,7 +20,6 @@ module Avo
         field :id, as: :id, link_to_resource: true
         field :first_name, as: :text, required: true, filterable: true
         field :last_name, as: :text, required: true, filterable: true
-        field :name, as: :text, filterable: true
         field :email, as: :text, required: true, filterable: true
         field :phone_no, as: :text, filterable: true
         field :status_badge, as: :user_status_badge, only_on: %i[index show], name: 'Status'

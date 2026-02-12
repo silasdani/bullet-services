@@ -5,9 +5,8 @@ module Dashboards
     REGISTRY = {
       'contractor' => ContractorDashboardService,
       'general_contractor' => GeneralContractorDashboardService,
-      'admin' => AdminDashboardService
-      # Future roles can be added here:
-      # 'surveyor' => SurveyorDashboardService
+      'admin' => AdminDashboardService,
+      'supervisor' => SupervisorDashboardService
     }.freeze
 
     def self.build(user)

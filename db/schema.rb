@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_12_000000) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_12_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -266,7 +266,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_12_000000) do
     t.datetime "confirmed_at"
     t.datetime "confirmation_sent_at"
     t.string "unconfirmed_email"
-    t.string "name"
     t.string "nickname"
     t.string "image"
     t.string "email"
@@ -346,6 +345,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_12_000000) do
     t.boolean "is_draft", default: true, null: false
     t.boolean "is_archived", default: false, null: false
     t.bigint "building_id", null: false
+    t.integer "work_type", default: 0, null: false
     t.index ["building_id", "status", "deleted_at"], name: "index_wrs_on_building_status_deleted"
     t.index ["building_id"], name: "index_work_orders_on_building_id"
     t.index ["deleted_at"], name: "index_work_orders_on_deleted_at"
@@ -354,6 +354,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_12_000000) do
     t.index ["status"], name: "index_wrs_on_status_active", where: "((deleted_at IS NULL) AND (is_draft = false))"
     t.index ["user_id", "status", "created_at"], name: "index_wrs_on_user_status_created"
     t.index ["user_id"], name: "index_work_orders_on_user_id"
+    t.index ["work_type"], name: "index_work_orders_on_work_type"
     t.check_constraint "total_vat_excluded_price >= 0::numeric", name: "wrs_total_vat_excluded_non_negative"
     t.check_constraint "total_vat_included_price >= 0::numeric", name: "wrs_total_vat_included_non_negative"
   end

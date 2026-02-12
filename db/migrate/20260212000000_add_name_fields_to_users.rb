@@ -15,9 +15,15 @@ class AddNameFieldsToUsers < ActiveRecord::Migration[8.0]
         end
       end
     end
+
+    remove_column :users, :name, :string
   end
 
   def down
+    add_column :users, :name, :string
+    User.unscoped.find_each do |user|
+      user.update_columns(name: "#{user.first_name} #{user.last_name}")
+    end
     remove_column :users, :first_name, :string
     remove_column :users, :last_name, :string
     remove_column :users, :phone_no, :string

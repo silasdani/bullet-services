@@ -11,7 +11,7 @@ module Avo
         }
       }
 
-      # rubocop:disable Metrics/AbcSize
+      # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
       def fields
         field :id, as: :id, link_to_resource: true
         field :reference_number, as: :text, required: true, filterable: true
@@ -22,6 +22,8 @@ module Avo
         field :user_status_badge, as: :user_status_badge, association: :user, only_on: %i[index show],
                                   name: 'User Status'
         field :status_badge, as: :status_badge, only_on: %i[index show], name: 'Status'
+        field :work_type, as: :select, enum: ::WindowScheduleRepair.work_types, required: true, filterable: true,
+                          only_on: %i[index show new edit]
         field :status, as: :select, enum: ::WindowScheduleRepair.statuses, required: true, filterable: true,
                        hide_on: %i[index show]
         field :is_draft, as: :boolean, filterable: true, hide_on: %i[index show]
@@ -39,7 +41,7 @@ module Avo
         field :created_at, as: :date_time, readonly: true, sortable: true, filterable: true
         field :updated_at, as: :date_time, readonly: true, sortable: true
       end
-      # rubocop:enable Metrics/AbcSize
+      # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
     end
   end
 end

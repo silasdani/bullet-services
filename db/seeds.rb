@@ -11,7 +11,7 @@ users = [
     email: 'admin@bullet.com',
     password: 'password123',
     password_confirmation: 'password123',
-    name: 'Admin User',
+    first_name: 'Admin', last_name: 'User',
     role: :admin,
     webflow_access: true
   },
@@ -19,7 +19,7 @@ users = [
     email: 'employee1@bullet.com',
     password: 'password123',
     password_confirmation: 'password123',
-    name: 'John Smith',
+    first_name: 'John', last_name: 'Smith',
     role: :contractor,
     webflow_access: false
   },
@@ -27,7 +27,7 @@ users = [
     email: 'employee2@bullet.com',
     password: 'password123',
     password_confirmation: 'password123',
-    name: 'Sarah Johnson',
+    first_name: 'Sarah', last_name: 'Johnson',
     role: :contractor,
     webflow_access: false
   },
@@ -35,7 +35,7 @@ users = [
     email: 'client1@example.com',
     password: 'password123',
     password_confirmation: 'password123',
-    name: 'Michael Brown',
+    first_name: 'Michael', last_name: 'Brown',
     role: :client,
     webflow_access: false
   },
@@ -43,7 +43,7 @@ users = [
     email: 'client2@example.com',
     password: 'password123',
     password_confirmation: 'password123',
-    name: 'Emma Wilson',
+    first_name: 'Emma', last_name: 'Wilson',
     role: :client,
     webflow_access: false
   },
@@ -51,7 +51,7 @@ users = [
     email: 'client3@example.com',
     password: 'password123',
     password_confirmation: 'password123',
-    name: 'David Taylor',
+    first_name: 'David', last_name: 'Taylor',
     role: :client,
     webflow_access: false
   }

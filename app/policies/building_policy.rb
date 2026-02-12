@@ -46,6 +46,9 @@ class BuildingPolicy < ApplicationPolicy
                       status: WindowScheduleRepair.statuses.values_at(:pending, :approved, :rejected)
                     })
              .distinct
+      elsif user.supervisor?
+        # Supervisor sees all projects (buildings)
+        scope.all
       else
         # Admins, clients, and surveyors can see all buildings
         scope.all

@@ -29,6 +29,14 @@ module BuildingsWrsListing
       .exists?
   end
 
+  def supervisor_can_access_building_wrs?
+    return false unless current_user.supervisor?
+
+    # Supervisor can access if they created WRS on this building or are assigned to WRS here
+    WindowScheduleRepair.where(building_id: @building.id, user_id: current_user.id).exists? ||
+      contractor_assigned_to_building_work_order?
+  end
+
   def contractor_active_building_id
     active = WorkSession.active.for_user(current_user).includes(:work_order).first
     active&.work_order&.building_id

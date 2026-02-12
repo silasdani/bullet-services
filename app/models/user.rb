@@ -14,7 +14,7 @@ class User < ApplicationRecord
   validates :first_name, presence: true
   validates :last_name, presence: true
 
-  enum :role, { client: 0, contractor: 1, admin: 2, surveyor: 3, general_contractor: 4 }
+  enum :role, { client: 0, contractor: 1, admin: 2, surveyor: 3, general_contractor: 4, supervisor: 5 }
 
   has_many :work_order_assignments, dependent: :destroy
   has_many :assigned_work_orders, through: :work_order_assignments, source: :work_order
@@ -25,7 +25,6 @@ class User < ApplicationRecord
   has_many :notifications, dependent: :destroy
 
   before_validation :set_default_role, on: :create
-  before_validation :sync_name_fields
   after_create :set_confirmed
   before_save :sync_uid_with_email
 
@@ -44,6 +43,10 @@ class User < ApplicationRecord
 
   def general_contractor?
     role == 'general_contractor'
+  end
+
+  def supervisor?
+    role == 'supervisor'
   end
 
   def webflow_access?
@@ -97,11 +100,15 @@ class User < ApplicationRecord
   }
 
   def self.ransackable_attributes(_auth_object = nil)
-    %w[name email role blocked created_at updated_at deleted_at first_name last_name phone_no]
+    %w[email role blocked created_at updated_at deleted_at first_name last_name phone_no]
   end
 
   def self.ransackable_associations(_auth_object = nil)
     []
+  end
+
+  def name
+    [first_name, last_name].compact_blank.join(' ').presence
   end
 
   private
@@ -116,13 +123,5 @@ class User < ApplicationRecord
     return unless email.present? && (uid.blank? || uid != email)
 
     self.uid = email
-  end
-
-  def sync_name_fields
-    return unless first_name.blank? && last_name.blank? && name.present?
-
-    first, last = name.split(' ', 2)
-    self.first_name = first.presence || 'Unknown'
-    self.last_name = last.to_s
   end
 end

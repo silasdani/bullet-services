@@ -74,7 +74,8 @@ module Api
 
         service = Wrs::UpdateService.new(
           wrs: @window_schedule_repair,
-          params: window_schedule_repair_params
+          params: window_schedule_repair_params,
+          current_user: current_user
         )
 
         result = service.call
@@ -165,6 +166,9 @@ module Api
                      .includes(:user, :building, :windows, windows: [:tools, { images_attachments: :blob }])
                      .order(created_at: :desc)
 
+        # Filter by work_type if provided (e.g. ?work_type=wrs or ?work_type=general)
+        collection = collection.where(work_type: params[:work_type]) if params[:work_type].present?
+
         # Apply Ransack filters if present (but policy scope restrictions remain)
         collection = collection.ransack(params[:q]).result if params[:q].present?
 
@@ -216,7 +220,7 @@ module Api
         [
           :name, :slug, :reference_number,
           :building_id, :flat_number, :details,
-          :total_vat_excluded_price, :status, :status_color,
+          :total_vat_excluded_price, :status, :status_color, :work_type,
           { images: [],
             windows_attributes: [
               :id, :location, :image, :_destroy,

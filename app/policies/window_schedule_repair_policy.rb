@@ -8,8 +8,18 @@ class WindowScheduleRepairPolicy < ApplicationPolicy
   def show?
     return false unless user.present?
     return true if user.contractor? || user.general_contractor?
+    return true if user.supervisor? && supervisor_can_show?
 
     record.user == user || user.is_admin? || user.is_employee?
+  end
+
+  def supervisor_can_show?
+    record.user_id == user.id || supervisor_assigned_to_building?
+  end
+
+  def supervisor_assigned_to_building?
+    WorkOrderAssignment.where(user_id: user.id).joins(:work_order)
+                       .where(work_orders: { building_id: record.building_id }).exists?
   end
 
   def contractor_can_show?
@@ -38,6 +48,8 @@ class WindowScheduleRepairPolicy < ApplicationPolicy
   def update?
     return false unless user.present?
     return true if user.contractor? || user.general_contractor?
+    # Supervisor can only update WRS they created
+    return record.user_id == user.id if user.supervisor?
 
     user.is_admin? || user.is_employee? || record.user == user
   end
@@ -56,14 +68,18 @@ class WindowScheduleRepairPolicy < ApplicationPolicy
       return scope.all if user.is_admin?
       # General contractors see all visible (non-draft) WRS
       return scope.where(is_draft: false).contractor_visible_status if user.general_contractor?
+      # Supervisor: WRS they created + all WRS from buildings they're assigned to
+      return supervisor_scope if user.supervisor?
 
       scope.where(user: user)
     end
 
-    private
-
-    def contractor_scope
-      scope.where(user: user)
+    def supervisor_scope
+      assigned_building_ids = WorkOrderAssignment.where(user_id: user.id)
+                                                 .joins(:work_order)
+                                                 .pluck('work_orders.building_id')
+                                                 .uniq
+      scope.where(user_id: user.id).or(scope.where(building_id: assigned_building_ids))
     end
   end
 end

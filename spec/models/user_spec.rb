@@ -34,7 +34,8 @@ RSpec.describe User, type: :model do
                                  'contractor' => 1,
                                  'admin' => 2,
                                  'surveyor' => 3,
-                                 'general_contractor' => 4
+                                 'general_contractor' => 4,
+                                 'supervisor' => 5
                                })
     end
   end
@@ -116,7 +117,10 @@ RSpec.describe User, type: :model do
 
   describe 'default role assignment' do
     it 'assigns client role by default' do
-      user = User.new(email: 'test@example.com', password: 'password123')
+      user = User.new(
+        email: 'test@example.com', password: 'password123',
+        first_name: 'Test', last_name: 'User'
+      )
       user.save!
       expect(user.role).to eq('client')
     end

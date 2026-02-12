@@ -26,7 +26,7 @@ class WindowSerializer < ActiveModel::Serializer
   end
 
   def total_price
-    return nil if scope&.contractor? || scope&.general_contractor?
+    return nil if scope&.contractor? || scope&.general_contractor? || scope&.supervisor?
 
     begin
       object.total_price
@@ -63,7 +63,7 @@ class WindowSerializer < ActiveModel::Serializer
   end
 
   def show_prices?
-    !scope&.contractor? && !scope&.general_contractor?
+    !scope&.contractor? && !scope&.general_contractor? && !scope&.supervisor?
   end
 
   private
