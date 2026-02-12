@@ -26,14 +26,12 @@ class WindowSerializer < ActiveModel::Serializer
   end
 
   def total_price
-    return nil if scope&.contractor? || scope&.general_contractor? || scope&.supervisor?
+    return nil unless show_prices?
 
-    begin
-      object.total_price
-    rescue StandardError => e
-      Rails.logger.error "Error calculating total_price in window serializer: #{e.message}"
-      nil
-    end
+    object.total_price
+  rescue StandardError => e
+    Rails.logger.error "Error calculating total_price in window serializer: #{e.message}"
+    nil
   end
 
   # Backwards-compatible: return the effective image URL (first image)

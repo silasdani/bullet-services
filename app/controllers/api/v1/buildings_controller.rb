@@ -143,6 +143,17 @@ module Api
 
       def work_orders
         authorize @building, :show?
+        return if work_order_access_denied?
+
+        render_paginated_work_orders
+      end
+
+      def render_paginated_work_orders
+        collection = work_order_collection_for_building.page(@page).per(@per_page)
+        render_success(data: serialize_work_order_page(collection), meta: pagination_meta(collection))
+      end
+
+      def work_order_access_denied?
         if current_user.contractor? || current_user.general_contractor?
           return render_work_order_checked_in_elsewhere if contractor_checked_in_elsewhere?
           return render_work_order_not_assigned unless contractor_can_access_building_work_orders?
@@ -151,9 +162,7 @@ module Api
           return render_work_order_not_assigned
         end
 
-        wo_collection = work_order_collection_for_building
-        paginated = wo_collection.page(@page).per(@per_page)
-        render_success(data: serialize_work_order_page(paginated), meta: pagination_meta(paginated))
+        false
       end
 
       private

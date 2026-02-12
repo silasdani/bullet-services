@@ -152,16 +152,13 @@ module WorkOrders
     end
 
     def attach_pdf_with_retries(tempfile)
-      reload_invoice_if_persisted
-      attachment_success = attempt_attachment_with_retries(tempfile)
-      log_attachment_success(attachment_success)
+      invoice.reload if invoice.persisted?
+      return unless attempt_attachment_with_retries(tempfile)
+
+      Rails.logger.info("Successfully attached PDF from base64 data to invoice #{invoice.id}")
     rescue StandardError => e
       log_attachment_failure(e)
       raise
-    end
-
-    def reload_invoice_if_persisted
-      invoice.reload if invoice.persisted?
     end
 
     def attempt_attachment_with_retries(tempfile)
@@ -175,14 +172,6 @@ module WorkOrders
       end
 
       attachment_success
-    end
-
-    def log_attachment_success(attachment_success)
-      return unless attachment_success
-
-      Rails.logger.info(
-        "Successfully attached PDF from base64 data to invoice #{invoice.id}"
-      )
     end
 
     def log_attachment_failure(error)
@@ -252,14 +241,9 @@ module WorkOrders
       return unless tempfile
 
       tempfile.close
+      tempfile.unlink
     rescue StandardError
       nil
-    ensure
-      begin
-        tempfile&.unlink
-      rescue StandardError
-        nil
-      end
     end
   end
 end

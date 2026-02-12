@@ -35,7 +35,7 @@ class BuildingPolicy < ApplicationPolicy
 
   class Scope < Scope
     def resolve
-      # Contractors can see all buildings that have at least one non-draft work order with approved/rejected/pending status
+      # Contractors see buildings with at least one visible (non-draft) work order
       if user.contractor? || user.general_contractor?
         scope.joins(:work_orders)
              .where(work_orders: {
@@ -44,8 +44,6 @@ class BuildingPolicy < ApplicationPolicy
                       status: WorkOrder.statuses.values_at(:pending, :approved, :rejected)
                     })
              .distinct
-      elsif user.supervisor?
-        scope.all
       else
         scope.all
       end

@@ -7,9 +7,11 @@ class WindowPolicy < ApplicationPolicy
 
   def show?
     return false unless user.present?
-    return record.work_order.user_id == user.id if user.supervisor?
 
-    user.is_admin? || user.is_employee? || record.work_order.user == user
+    wo = record.work_order
+    return wo.user_id == user.id if user.supervisor?
+
+    user.is_admin? || user.is_employee? || wo.user == user
   end
 
   def create?
@@ -18,9 +20,11 @@ class WindowPolicy < ApplicationPolicy
 
   def update?
     return false unless user.present?
-    return record.work_order.user_id == user.id if user.supervisor?
 
-    user.is_admin? || user.is_employee? || record.work_order.user == user
+    wo = record.work_order
+    return wo.user_id == user.id if user.supervisor?
+
+    user.is_admin? || user.is_employee? || wo.user == user
   end
 
   def destroy?

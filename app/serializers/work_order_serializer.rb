@@ -17,29 +17,25 @@ class WorkOrderSerializer < ActiveModel::Serializer
 
   # Hide prices for contractors, general contractors, and supervisors
   def total_vat_included_price
-    return nil if scope&.contractor? || scope&.general_contractor? || scope&.supervisor?
+    return nil if hide_prices?
 
-    begin
-      object.total_vat_included_price
-    rescue StandardError => e
-      Rails.logger.error "Error getting total_vat_included_price: #{e.message}"
-      nil
-    end
+    object.total_vat_included_price
+  rescue StandardError => e
+    Rails.logger.error "Error getting total_vat_included_price: #{e.message}"
+    nil
   end
 
   def total_vat_excluded_price
-    return nil if scope&.contractor? || scope&.general_contractor? || scope&.supervisor?
+    return nil if hide_prices?
 
-    begin
-      object.total_vat_excluded_price
-    rescue StandardError => e
-      Rails.logger.error "Error getting total_vat_excluded_price: #{e.message}"
-      nil
-    end
+    object.total_vat_excluded_price
+  rescue StandardError => e
+    Rails.logger.error "Error getting total_vat_excluded_price: #{e.message}"
+    nil
   end
 
   def total
-    return nil if scope&.contractor? || scope&.general_contractor? || scope&.supervisor?
+    return nil if hide_prices?
 
     computed_total
   rescue StandardError => e
@@ -120,6 +116,10 @@ class WorkOrderSerializer < ActiveModel::Serializer
   end
 
   private
+
+  def hide_prices?
+    scope&.contractor? || scope&.general_contractor? || scope&.supervisor?
+  end
 
   def computed_total
     object.total || object.total_vat_included_price || 0

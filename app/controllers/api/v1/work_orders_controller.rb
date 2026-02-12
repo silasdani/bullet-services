@@ -12,21 +12,15 @@ module Api
       def index
         authorize WorkOrder
 
-        begin
-          collection = build_work_order_collection
+        collection = build_work_order_collection
+        paginated_collection = collection.page(@page).per(@per_page)
+        serialized_data = serialize_work_order_collection(paginated_collection)
 
-          paginated_collection = collection.page(@page).per(@per_page)
-          serialized_data = serialize_work_order_collection(paginated_collection)
-
-          render_success(
-            data: serialized_data,
-            meta: pagination_meta(paginated_collection)
-          )
-        rescue StandardError => e
-          Rails.logger.error "Error in work orders index action: #{e.message}"
-          Rails.logger.error e.backtrace.first(10).join("\n")
-          render_error(message: 'Failed to load work orders list', status: :internal_server_error)
-        end
+        render_success(data: serialized_data, meta: pagination_meta(paginated_collection))
+      rescue StandardError => e
+        Rails.logger.error "Error in work orders index action: #{e.message}"
+        Rails.logger.error e.backtrace.first(10).join("\n")
+        render_error(message: 'Failed to load work orders list', status: :internal_server_error)
       end
 
       def show
@@ -221,7 +215,9 @@ module Api
       end
 
       def set_work_order
-        @work_order = find_work_order_for_action
+        base = action_name == 'restore' ? WorkOrder.with_deleted : WorkOrder
+        @work_order = base.includes(:user, :building, :windows, windows: [:tools, { images_attachments: :blob }])
+                          .find(params[:id])
         nil
       rescue ActiveRecord::RecordNotFound
         render_error(message: 'Work order not found', status: :not_found)
@@ -233,30 +229,19 @@ module Api
         nil
       end
 
-      def find_work_order_for_action
-        base = action_name == 'restore' ? WorkOrder.with_deleted : WorkOrder
-        base.includes(:user, :building, :windows, windows: [:tools, { images_attachments: :blob }]).find(params[:id])
-      end
-
       def work_order_params
-        if request.content_type&.include?('multipart/form-data')
-          params.permit(*work_order_permitted_params)
-        else
-          params.require(:work_order).permit(*work_order_permitted_params)
-        end
-      end
-
-      def work_order_permitted_params
-        [
-          :name, :slug, :reference_number,
-          :building_id, :flat_number, :details,
+        permitted = [
+          :name, :slug, :reference_number, :building_id, :flat_number, :details,
           :total_vat_excluded_price, :status, :status_color, :work_type,
           { images: [],
-            windows_attributes: [
-              :id, :location, :image, :_destroy,
-              { tools_attributes: %i[id name price _destroy] }
-            ] }
+            windows_attributes: [:id, :location, :image, :_destroy,
+                                 { tools_attributes: %i[id name price _destroy] }] }
         ]
+        if request.content_type&.include?('multipart/form-data')
+          params.permit(*permitted)
+        else
+          params.require(:work_order).permit(*permitted)
+        end
       end
     end
   end

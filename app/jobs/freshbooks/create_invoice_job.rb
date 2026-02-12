@@ -21,13 +21,7 @@ module Freshbooks
     private
 
     def extract_client_params(client_info)
-      {
-        client_id: client_info[:client_id],
-        first_name: client_info[:first_name],
-        last_name: client_info[:last_name],
-        email: client_info[:email],
-        building_id: client_info[:building_id]
-      }
+      client_info.slice(:client_id, :first_name, :last_name, :email, :building_id)
     end
 
     def process_invoice_creation(invoice, fb_client_id, lines, client_params)

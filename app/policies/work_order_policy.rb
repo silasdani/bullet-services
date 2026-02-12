@@ -7,10 +7,10 @@ class WorkOrderPolicy < ApplicationPolicy
 
   def show?
     return false unless user.present?
-    return true if user.contractor? || user.general_contractor?
+    return true if contractor_or_general_contractor?
     return true if user.supervisor? && supervisor_can_show?
 
-    record.user == user || user.is_admin? || user.is_employee?
+    admin_or_employee_or_owner?
   end
 
   def supervisor_can_show?
@@ -47,17 +47,17 @@ class WorkOrderPolicy < ApplicationPolicy
 
   def update?
     return false unless user.present?
-    return true if user.contractor? || user.general_contractor?
+    return true if contractor_or_general_contractor?
     # Supervisor can only update work orders they created
     return record.user_id == user.id if user.supervisor?
 
-    user.is_admin? || user.is_employee? || record.user == user
+    admin_or_employee_or_owner?
   end
 
   def publish?
     return false unless user.present?
     # Contractors and general contractors cannot publish/unpublish
-    return false if user.contractor? || user.general_contractor?
+    return false if contractor_or_general_contractor?
     # Supervisors can publish/unpublish work orders they created
     return record.user_id == user.id if user.supervisor?
 
@@ -68,6 +68,16 @@ class WorkOrderPolicy < ApplicationPolicy
     user.present? && (user.is_admin? || record.user == user)
   end
 
+  private
+
+  def contractor_or_general_contractor?
+    user.contractor? || user.general_contractor?
+  end
+
+  def admin_or_employee_or_owner?
+    user.is_admin? || user.is_employee? || record.user == user
+  end
+
   def restore?
     user.present? && (user.is_admin? || record.user == user)
   end
@@ -76,12 +86,19 @@ class WorkOrderPolicy < ApplicationPolicy
     def resolve
       return scope.none unless user.present?
       return scope.all if user.is_admin?
-      # General contractors see all visible (non-draft) work orders
-      return scope.where(is_draft: false).contractor_visible_status if user.general_contractor?
-      # Supervisor: work orders they created + all work orders from buildings they're assigned to
+      return general_contractor_scope if user.general_contractor?
       return supervisor_scope if user.supervisor?
 
+      owner_scope
+    end
+
+    def owner_scope
       scope.where(user: user)
+    end
+
+    # General contractors see all visible (non-draft) work orders
+    def general_contractor_scope
+      scope.where(is_draft: false).contractor_visible_status
     end
 
     def supervisor_scope

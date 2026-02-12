@@ -28,29 +28,37 @@ module Dashboards
         .includes(:building, :windows)
         .order(created_at: :desc)
         .limit(10)
-        .map { |wo| serialize_work_order(wo) }
+        .map { |work_order| serialize_work_order(work_order) }
     rescue StandardError => e
       log_error("Error loading my work orders: #{e.message}")
       []
     end
 
     def load_assigned_project_work_orders
-      assigned_building_ids = WorkOrderAssignment.where(user_id: user.id)
-                                                 .joins(:work_order)
-                                                 .pluck('work_orders.building_id')
-                                                 .uniq
-      return [] if assigned_building_ids.blank?
+      building_ids = assigned_project_building_ids
+      return [] if building_ids.blank?
 
+      fetch_project_work_orders(building_ids)
+    rescue StandardError => e
+      log_error("Error loading assigned project work orders: #{e.message}")
+      []
+    end
+
+    def assigned_project_building_ids
+      WorkOrderAssignment.where(user_id: user.id)
+                         .joins(:work_order)
+                         .pluck('work_orders.building_id')
+                         .uniq
+    end
+
+    def fetch_project_work_orders(building_ids)
       WorkOrder
-        .where(building_id: assigned_building_ids)
+        .where(building_id: building_ids)
         .where.not(user_id: user.id)
         .includes(:building, :windows)
         .order(created_at: :desc)
         .limit(10)
-        .map { |wo| serialize_work_order(wo) }
-    rescue StandardError => e
-      log_error("Error loading assigned project work orders: #{e.message}")
-      []
+        .map { |work_order| serialize_work_order(work_order) }
     end
 
     def load_projects_count
@@ -61,17 +69,22 @@ module Dashboards
       []
     end
 
-    def serialize_work_order(wo)
+    def serialize_work_order(work_order)
+      building = work_order.building
       {
-        id: wo.id,
-        name: wo.name || 'Unnamed',
-        building_name: wo.building&.name,
-        address: wo.building&.full_address || '',
-        status: wo.status || 'pending',
-        windows_count: wo.association(:windows).loaded? ? wo.windows.size : wo.windows.count,
-        created_at: wo.created_at,
-        is_mine: wo.user_id == user.id
+        id: work_order.id,
+        name: work_order.name || 'Unnamed',
+        building_name: building&.name,
+        address: building&.full_address || '',
+        status: work_order.status || 'pending',
+        windows_count: work_order_windows_count(work_order),
+        created_at: work_order.created_at,
+        is_mine: work_order.user_id == user.id
       }
+    end
+
+    def work_order_windows_count(work_order)
+      work_order.association(:windows).loaded? ? work_order.windows.size : work_order.windows.count
     end
 
     def policy_scope(scope)
