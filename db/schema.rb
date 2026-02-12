@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_11_223554) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_12_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -278,6 +278,9 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_11_223554) do
     t.datetime "deleted_at"
     t.boolean "blocked", default: false, null: false
     t.string "fcm_token"
+    t.string "first_name"
+    t.string "last_name"
+    t.string "phone_no"
     t.index ["blocked"], name: "index_users_on_blocked"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["deleted_at"], name: "index_users_on_deleted_at"

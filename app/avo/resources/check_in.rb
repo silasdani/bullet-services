@@ -12,6 +12,8 @@ module Avo
       def fields
         field :id, as: :id, link_to_resource: true
         field :user, as: :belongs_to, required: true, filterable: true
+        field :user_status_badge, as: :user_status_badge, association: :user, only_on: %i[index show],
+                                  name: 'User Status'
         field :window_schedule_repair, as: :belongs_to, required: true, filterable: true
         field :action, as: :select, enum: ::CheckIn.actions, required: true, filterable: true
         field :timestamp, as: :date_time, required: true, sortable: true, filterable: true

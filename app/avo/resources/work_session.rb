@@ -14,6 +14,8 @@ module Avo
       def fields
         field :id, as: :id, link_to_resource: true
         field :user, as: :belongs_to, required: true, filterable: true
+        field :user_status_badge, as: :user_status_badge, association: :user, only_on: %i[index show],
+                                  name: 'User Status'
         field :work_order, as: :belongs_to, required: true, filterable: true
         field :checked_in_at, as: :date_time, required: true, sortable: true, filterable: true
         field :checked_out_at, as: :date_time, sortable: true, filterable: true

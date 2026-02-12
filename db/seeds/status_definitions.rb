@@ -95,4 +95,48 @@ StatusDefinition.find_or_create_by!(entity_type: 'Invoice', status_key: 'voided'
   sd.is_active = true
 end
 
+# Seed status definitions for User (role + blocked)
+# Colors based on IBM Carbon Design System
+StatusDefinition.find_or_create_by!(entity_type: 'User', status_key: 'client') do |sd|
+  sd.status_label = 'Client'
+  sd.status_color = '#0043ce' # Carbon Blue
+  sd.display_order = 0
+  sd.is_active = true
+end
+
+StatusDefinition.find_or_create_by!(entity_type: 'User', status_key: 'contractor') do |sd|
+  sd.status_label = 'Contractor'
+  sd.status_color = '#24a148' # Carbon Green
+  sd.display_order = 1
+  sd.is_active = true
+end
+
+StatusDefinition.find_or_create_by!(entity_type: 'User', status_key: 'admin') do |sd|
+  sd.status_label = 'Admin'
+  sd.status_color = '#f1c21b' # Carbon Yellow
+  sd.display_order = 2
+  sd.is_active = true
+end
+
+StatusDefinition.find_or_create_by!(entity_type: 'User', status_key: 'surveyor') do |sd|
+  sd.status_label = 'Surveyor'
+  sd.status_color = '#a56eff' # Carbon Purple
+  sd.display_order = 3
+  sd.is_active = true
+end
+
+StatusDefinition.find_or_create_by!(entity_type: 'User', status_key: 'general_contractor') do |sd|
+  sd.status_label = 'General Contractor'
+  sd.status_color = '#009d9a' # Carbon Teal
+  sd.display_order = 4
+  sd.is_active = true
+end
+
+StatusDefinition.find_or_create_by!(entity_type: 'User', status_key: 'blocked') do |sd|
+  sd.status_label = 'Blocked'
+  sd.status_color = '#da1e28' # Carbon Red
+  sd.display_order = 5
+  sd.is_active = true
+end
+
 puts '✅ Status definitions seeded successfully'

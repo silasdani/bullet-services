@@ -15,6 +15,8 @@ module Avo
         field :work_date, as: :date, required: true, sortable: true, filterable: true
         field :window_schedule_repair, as: :belongs_to, required: true, filterable: true
         field :user, as: :belongs_to, required: true, name: 'Contractor', filterable: true
+        field :user_status_badge, as: :user_status_badge, association: :user, only_on: %i[index show],
+                                  name: 'User Status'
         field :images_count, as: :text, name: 'Images', only_on: [:index] do
           count = record.images.count
           count.positive? ? "#{count} #{'image'.pluralize(count)}" : 'No images'

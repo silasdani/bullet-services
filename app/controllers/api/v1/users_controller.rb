@@ -8,12 +8,12 @@ module Api
       def index
         authorize User
         @users = User.includes(image_attachment: :blob).order(created_at: :desc)
-        render json: @users
+        render json: serialize_collection(@users), status: :ok
       end
 
       def show
         authorize @user
-        render json: @user
+        render json: serialize_user(@user), status: :ok
       end
 
       def create
@@ -21,7 +21,7 @@ module Api
         authorize @user
         if @user.save
           attach_image if params[:image].present?
-          render json: @user, status: :created
+          render json: serialize_user(@user), status: :created
         else
           render json: { errors: @user.errors.full_messages }, status: :unprocessable_entity
         end
@@ -31,7 +31,7 @@ module Api
         authorize @user
         if @user.update(user_params)
           attach_image if params[:image].present?
-          render json: @user
+          render json: serialize_user(@user), status: :ok
         else
           render json: { errors: @user.errors.full_messages }, status: :unprocessable_entity
         end
@@ -49,7 +49,7 @@ module Api
         authorize @user, :block?
 
         @user.block!
-        render json: { message: 'User blocked successfully', user: @user }, status: :ok
+        render json: { message: 'User blocked successfully', user: serialize_user(@user) }, status: :ok
       end
 
       # POST /api/v1/users/:id/unblock
@@ -58,18 +58,13 @@ module Api
         authorize @user, :unblock?
 
         @user.unblock!
-        render json: { message: 'User unblocked successfully', user: @user }, status: :ok
+        render json: { message: 'User unblocked successfully', user: serialize_user(@user) }, status: :ok
       end
 
       def me
-        Rails.logger.info "Current user: #{current_user.inspect}"
-        Rails.logger.info "User authenticated: #{user_signed_in?}"
+        return render json: { error: 'Not authenticated' }, status: :unauthorized unless current_user
 
-        if current_user
-          render json: current_user
-        else
-          render json: { error: 'Not authenticated' }, status: :unauthorized
-        end
+        render json: serialize_user(current_user), status: :ok
       end
 
       # POST /api/v1/users/register_fcm_token
@@ -105,19 +100,26 @@ module Api
       end
 
       def user_params
-        if params[:user].present?
-          permitted = params.require(:user).permit(:email, :name, :nickname, :password, :password_confirmation,
-                                                   :fcm_token)
-          # Only allow admins to update role
-          permitted[:role] = params[:user][:role] if current_user&.admin? && params[:user][:role].present?
-          permitted
-        else
-          {}
-        end
+        return {} unless params[:user].present?
+
+        permitted = params.require(:user).permit(
+          :email, :name, :nickname, :password, :password_confirmation,
+          :fcm_token, :first_name, :last_name, :phone_no
+        )
+        permitted[:role] = params[:user][:role] if current_user&.admin? && params[:user][:role].present?
+        permitted
       end
 
       def attach_image
         @user.image.attach(params[:image])
+      end
+
+      def serialize_user(user)
+        UserSerializer.new(user).as_json
+      end
+
+      def serialize_collection(users)
+        users.map { |u| UserSerializer.new(u).as_json }
       end
     end
   end

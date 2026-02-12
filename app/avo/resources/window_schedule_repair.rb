@@ -19,6 +19,8 @@ module Avo
         field :slug, as: :text, readonly: true, hide_on: [:index]
         field :building, as: :belongs_to, required: true, filterable: true
         field :user, as: :belongs_to, required: true, filterable: true
+        field :user_status_badge, as: :user_status_badge, association: :user, only_on: %i[index show],
+                                  name: 'User Status'
         field :status_badge, as: :status_badge, only_on: %i[index show], name: 'Status'
         field :status, as: :select, enum: ::WindowScheduleRepair.statuses, required: true, filterable: true,
                        hide_on: %i[index show]
