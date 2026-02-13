@@ -10,7 +10,11 @@ class OngoingWorkPolicy < ApplicationPolicy
   end
 
   def create?
-    user.present? && user.contractor?
+    user.present? && (user.contractor? || user.general_contractor?)
+  end
+
+  def publish?
+    user.present? && (user.admin? || record.user == user)
   end
 
   def update?

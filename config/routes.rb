@@ -34,32 +34,19 @@ Rails.application.routes.draw do
     registrations: "users/registrations"
   }
 
-  # FreshBooks OAuth callback (for capturing authorization code)
-  get '/freshbooks/callback', to: 'freshbooks_callback#callback', as: :freshbooks_callback
-
   namespace :api do
     namespace :v1 do
-      # Webflow webhooks (no authentication required)
-      post "webhooks/webflow/collection_item_published", to: "webhooks#webflow_collection_item_published"
-
-      # FreshBooks webhooks (no authentication required, signature verified)
       post "webhooks/freshbooks", to: "freshbooks_webhooks#create"
 
-      # FreshBooks management endpoints
-      get "freshbooks/status", to: "freshbooks#status"
-      post "freshbooks/sync_clients", to: "freshbooks#sync_clients"
-      post "freshbooks/sync_invoices", to: "freshbooks#sync_invoices"
-      post "freshbooks/sync_payments", to: "freshbooks#sync_payments"
-      post "freshbooks/create_invoice", to: "freshbooks#create_invoice"
-
-      resources :window_schedule_repairs do
+      resources :work_orders do
         member do
-          post :send_to_webflow
           post :restore
-          post :publish_to_webflow
-          post :unpublish_from_webflow
+          post :publish
+          post :unpublish
           post :check_in
           post :check_out
+          post :assign
+          post :unassign
         end
         resources :windows, only: [ :index, :create ]
         resources :ongoing_works, only: [ :index, :create ]
@@ -98,18 +85,23 @@ Rails.application.routes.draw do
 
       resources :buildings do
         member do
-          get :window_schedule_repairs
-          post :assign
-          post :unassign
+          get :work_orders
         end
       end
 
-      resources :check_ins, only: [ :index, :show ] do
+      resources :work_sessions, only: [ :index, :show ] do
         collection do
           get :active
         end
       end
-      resources :ongoing_works, only: [ :show, :update, :destroy ]
+      resources :ongoing_works, only: [ :show, :update, :destroy ] do
+        member do
+          post :check_in
+          post :check_out
+          post :publish
+        end
+        resources :work_sessions, only: [ :index ], controller: 'ongoing_works/work_sessions'
+      end
       resources :timesheets, only: [ :index ] do
         collection do
           get :export

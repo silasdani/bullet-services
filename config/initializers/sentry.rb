@@ -22,7 +22,7 @@ Sentry.init do |config|
   config.breadcrumbs_logger = [:active_support_logger, :http_logger]
 
   # Don't send events in development/test unless explicitly enabled
-  config.enabled_environments = %w[production staging development]
+  config.enabled_environments = %w[production]
   config.enabled_environments << ENV['RAILS_ENV'] if ENV['SENTRY_ENABLED'] == 'true'
 
   # Capture unhandled exceptions from background jobs

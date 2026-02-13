@@ -11,7 +11,7 @@ module Avo
       @page_title = 'Dashboard'
       @metrics = {
         users_count: User.count,
-        wrs_count: WindowScheduleRepair.count,
+        work_orders_count: WorkOrder.count,
         ongoing_works_count: OngoingWork.count,
         outstanding_invoices_count: outstanding_scope.count,
         outstanding_amount: outstanding_scope.sum { |inv| (inv.total_amount || 0).to_f }.round(2),

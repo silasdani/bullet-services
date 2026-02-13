@@ -30,6 +30,11 @@ module Api
       # These methods are kept for backward compatibility but delegate to concern
 
       def handle_internal_error(exception)
+        # Let specific handlers from `ErrorHandling` win even though we rescue StandardError here.
+        return handle_unauthorized(exception) if exception.is_a?(Pundit::NotAuthorizedError)
+        return handle_not_found(exception) if exception.is_a?(ActiveRecord::RecordNotFound)
+        return handle_application_error(exception) if exception.is_a?(ApplicationError)
+
         log_internal_error(exception)
         render_error(
           message: error_message_for(exception),

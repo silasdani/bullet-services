@@ -13,7 +13,7 @@ module ConfigHelper
   # @param key [String] The configuration key
   # @param env_key [String] Environment variable name (defaults to key.upcase)
   # @param default [Object] Default value if not found
-  # @param credentials_path [Array] Path to credentials (e.g., [:webflow, :api_key])
+  # @param credentials_path [Array] Path to credentials (e.g., [:freshbooks, :api_key])
   # @return [Object] Configuration value
   def get_config(key:, env_key: nil, default: nil, credentials_path: nil)
     env_key ||= key.to_s.upcase

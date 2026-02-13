@@ -18,13 +18,13 @@ class BuildingSerializer < ActiveModel::Serializer
     object.display_name
   end
 
-  # Count of WRS for this building
+  # Count of work orders for this building
   # Use size to avoid extra query if association is loaded, otherwise use count
   attribute :wrs_count do
-    if object.association(:window_schedule_repairs).loaded?
-      object.window_schedule_repairs.size
+    if object.association(:work_orders).loaded?
+      object.work_orders.size
     else
-      object.window_schedule_repairs.count
+      object.work_orders.count
     end
   end
 end

@@ -4,11 +4,11 @@ require 'rails_helper'
 
 RSpec.describe User, type: :model do
   describe 'associations' do
-    it 'has many window_schedule_repairs' do
-      expect(User.reflect_on_association(:window_schedule_repairs)).to be_present
+    it 'has many work_orders' do
+      expect(User.reflect_on_association(:work_orders)).to be_present
     end
 
-    it 'has many windows through window_schedule_repairs' do
+    it 'has many windows through work_orders' do
       expect(User.reflect_on_association(:windows)).to be_present
     end
   end
@@ -33,7 +33,9 @@ RSpec.describe User, type: :model do
                                  'client' => 0,
                                  'contractor' => 1,
                                  'admin' => 2,
-                                 'surveyor' => 3
+                                 'surveyor' => 3,
+                                 'general_contractor' => 4,
+                                 'supervisor' => 5
                                })
     end
   end
@@ -47,10 +49,6 @@ RSpec.describe User, type: :model do
       it 'returns true for is_admin?' do
         expect(admin_user.is_admin?).to be true
       end
-
-      it 'returns true for webflow_access' do
-        expect(admin_user.webflow_access).to be true
-      end
     end
 
     context 'when user is contractor' do
@@ -62,10 +60,6 @@ RSpec.describe User, type: :model do
 
       it 'returns true for contractor?' do
         expect(contractor_user.contractor?).to be true
-      end
-
-      it 'returns true for webflow_access' do
-        expect(contractor_user.webflow_access).to be true
       end
     end
 
@@ -83,10 +77,6 @@ RSpec.describe User, type: :model do
       it 'returns true for is_super_admin? (deprecated alias)' do
         expect(surveyor_user.is_super_admin?).to be true
       end
-
-      it 'returns true for webflow_access' do
-        expect(surveyor_user.webflow_access).to be true
-      end
     end
 
     context 'when user is client' do
@@ -96,10 +86,6 @@ RSpec.describe User, type: :model do
 
       it 'returns false for is_employee?' do
         expect(user.is_employee?).to be false
-      end
-
-      it 'returns false for webflow_access' do
-        expect(user.webflow_access).to be false
       end
     end
   end
@@ -131,7 +117,10 @@ RSpec.describe User, type: :model do
 
   describe 'default role assignment' do
     it 'assigns client role by default' do
-      user = User.new(email: 'test@example.com', password: 'password123')
+      user = User.new(
+        email: 'test@example.com', password: 'password123',
+        first_name: 'Test', last_name: 'User'
+      )
       user.save!
       expect(user.role).to eq('client')
     end

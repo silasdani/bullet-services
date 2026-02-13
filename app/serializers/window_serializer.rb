@@ -7,7 +7,7 @@ class WindowSerializer < ActiveModel::Serializer
              :updated_at,
              :image,                # backwards-compatible field (first image)
              :images,               # array of all image URLs
-             :effective_image_url,  # preferred URL (ActiveStorage if present, else Webflow)
+             :effective_image_url,  # preferred URL (ActiveStorage if present)
              :effective_image_urls, # array of all effective image URLs
              :image_name
 
@@ -26,14 +26,12 @@ class WindowSerializer < ActiveModel::Serializer
   end
 
   def total_price
-    return nil if scope&.contractor?
+    return nil unless show_prices?
 
-    begin
-      object.total_price
-    rescue StandardError => e
-      Rails.logger.error "Error calculating total_price in window serializer: #{e.message}"
-      nil
-    end
+    object.total_price
+  rescue StandardError => e
+    Rails.logger.error "Error calculating total_price in window serializer: #{e.message}"
+    nil
   end
 
   # Backwards-compatible: return the effective image URL (first image)
@@ -50,10 +48,6 @@ class WindowSerializer < ActiveModel::Serializer
     safe_call { object.image_url }
   end
 
-  def webflow_image_url
-    safe_call { object.webflow_image_url }
-  end
-
   def effective_image_url
     safe_call { object.effective_image_url }
   end
@@ -67,7 +61,7 @@ class WindowSerializer < ActiveModel::Serializer
   end
 
   def show_prices?
-    !scope&.contractor?
+    !scope&.contractor? && !scope&.general_contractor? && !scope&.supervisor?
   end
 
   private

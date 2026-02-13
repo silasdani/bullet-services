@@ -30,8 +30,8 @@ module Api
             message: @notification.message,
             read: @notification.read?,
             read_at: @notification.read_at,
-            window_schedule_repair_id: @notification.window_schedule_repair_id,
-            window_schedule_repair_name: @notification.window_schedule_repair&.name,
+            work_order_id: @notification.work_order_id,
+            work_order_name: @notification.work_order&.name,
             metadata: @notification.metadata,
             created_at: @notification.created_at,
             updated_at: @notification.updated_at
@@ -75,7 +75,7 @@ module Api
 
         now = Time.current
         count = Notification.where(user: current_user, read_at: nil)
-                            .update_all(read_at: now, read: true, updated_at: now)
+                            .update_all(read_at: now, updated_at: now)
 
         render_success(
           data: { count: count },
@@ -91,7 +91,7 @@ module Api
 
       def load_notifications
         Notification.where(user: current_user)
-                    .includes(:window_schedule_repair)
+                    .includes(:work_order)
                     .order(created_at: :desc)
                     .page(@page)
                     .per(@per_page)
@@ -110,8 +110,8 @@ module Api
             message: notif.message,
             read: notif.read?,
             read_at: notif.read_at,
-            window_schedule_repair_id: notif.window_schedule_repair_id,
-            window_schedule_repair_name: notif.window_schedule_repair&.name,
+            work_order_id: notif.work_order_id,
+            work_order_name: notif.work_order&.name,
             metadata: notif.metadata,
             created_at: notif.created_at
           }

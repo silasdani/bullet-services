@@ -1,7 +1,7 @@
-# Window Schedule Repairs Filtering & Pagination
+# Work Orders Filtering & Pagination
 
 ## Overview
-The WindowScheduleRepairs API now supports comprehensive filtering and pagination using Ransack and Kaminari gems.
+The Work Orders API now supports comprehensive filtering and pagination using Ransack and Kaminari gems.
 
 ## Installation
 After adding the gems to your Gemfile, run:
@@ -11,7 +11,7 @@ bundle install
 
 ## API Endpoints
 
-### GET /api/v1/window_schedule_repairs
+### GET /api/v1/work_orders
 
 #### Query Parameters
 
@@ -37,32 +37,32 @@ bundle install
 
 **Basic pagination:**
 ```
-GET /api/v1/window_schedule_repairs?page=2&per_page=10
+GET /api/v1/work_orders?page=2&per_page=10
 ```
 
 **Date range filtering:**
 ```
-GET /api/v1/window_schedule_repairs?q[created_at_gteq]=2024-01-01&q[created_at_lteq]=2024-12-31
+GET /api/v1/work_orders?q[created_at_gteq]=2024-01-01&q[created_at_lteq]=2024-12-31
 ```
 
 **Price range filtering:**
 ```
-GET /api/v1/window_schedule_repairs?q[grand_total_gteq]=1000&q[grand_total_lteq]=5000
+GET /api/v1/work_orders?q[grand_total_gteq]=1000&q[grand_total_lteq]=5000
 ```
 
 **Status filtering:**
 ```
-GET /api/v1/window_schedule_repairs?q[status_eq]=1
+GET /api/v1/work_orders?q[status_eq]=1
 ```
 
 **Search by name:**
 ```
-GET /api/v1/window_schedule_repairs?q[name_cont]=repair
+GET /api/v1/work_orders?q[name_cont]=repair
 ```
 
 **Combined filters with sorting:**
 ```
-GET /api/v1/window_schedule_repairs?q[created_at_gteq]=2024-01-01&q[status_eq]=1&q[s]=grand_total desc&page=1&per_page=20
+GET /api/v1/work_orders?q[created_at_gteq]=2024-01-01&q[status_eq]=1&q[s]=grand_total desc&page=1&per_page=20
 ```
 
 #### Response Format
@@ -99,7 +99,7 @@ GET /api/v1/window_schedule_repairs?q[created_at_gteq]=2024-01-01&q[status_eq]=1
 ## Available Filter Fields
 
 ### Direct Fields
-- `name` - Window schedule repair name
+- `name` - Work order name
 - `slug` - Unique slug
 - `flat_number` - Flat number
 - `reference_number` - Reference number

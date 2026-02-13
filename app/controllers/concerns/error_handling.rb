@@ -6,7 +6,6 @@ module ErrorHandling
 
   included do
     rescue_from ApplicationError, with: :handle_application_error
-    rescue_from WebflowApiError, with: :handle_webflow_error
     rescue_from ActiveRecord::RecordNotFound, with: :handle_not_found
     rescue_from Pundit::NotAuthorizedError, with: :handle_unauthorized
   end
@@ -19,16 +18,6 @@ module ErrorHandling
       code: exception.code,
       details: exception.details,
       status: :unprocessable_entity
-    )
-  end
-
-  def handle_webflow_error(exception)
-    Rails.logger.error "Webflow API Error: #{exception.message}"
-
-    render_error(
-      message: 'External service temporarily unavailable',
-      code: 'EXTERNAL_SERVICE_ERROR',
-      status: :service_unavailable
     )
   end
 

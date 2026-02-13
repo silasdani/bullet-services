@@ -4,9 +4,7 @@ class Building < ApplicationRecord
   include SoftDeletable
   include Geocodable
 
-  has_many :window_schedule_repairs, dependent: :restrict_with_error
-  has_many :building_assignments, dependent: :destroy
-  has_many :assigned_users, through: :building_assignments, source: :user
+  has_many :work_orders, dependent: :restrict_with_error
 
   validates :name, presence: true
   validates :street, presence: true
@@ -35,7 +33,7 @@ class Building < ApplicationRecord
     "#{name} - #{full_address}"
   end
 
-  # Get address string in Webflow format: "{name}, {street}, {zipcode}"
+  # Get address string: "{name}, {street}, {zipcode}"
   def address_string
     parts = [name, street, zipcode].compact.reject(&:blank?)
     parts.join(', ')

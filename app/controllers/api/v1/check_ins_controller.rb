@@ -30,7 +30,7 @@ module Api
       def active
         authorize CheckIn
 
-        active_check_in = CheckIn.active_for(current_user, nil).includes(:window_schedule_repair).first
+        active_check_in = CheckIn.active_for(current_user, nil).includes(:work_order).first
 
         if active_check_in
           render_success(data: serialize_check_in(active_check_in))
@@ -42,7 +42,7 @@ module Api
       private
 
       def build_check_ins_collection
-        collection = policy_scope(CheckIn).includes(:user, :window_schedule_repair)
+        collection = policy_scope(CheckIn).includes(:user, :work_order)
         collection = collection.ransack(params[:q]).result if params[:q].present?
         collection.order(timestamp: :desc)
       end
@@ -55,8 +55,8 @@ module Api
         {
           id: check_in.id,
           action: check_in.action,
-          window_schedule_repair_id: check_in.window_schedule_repair_id,
-          window_schedule_repair_name: check_in.window_schedule_repair&.name || 'Unknown',
+          work_order_id: check_in.work_order_id,
+          work_order_name: check_in.work_order&.name || 'Unknown',
           timestamp: check_in.timestamp,
           address: check_in.address,
           latitude: check_in.latitude,

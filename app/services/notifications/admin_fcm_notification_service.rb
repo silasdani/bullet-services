@@ -9,7 +9,7 @@ module Notifications
                       'danielsilas32@gmail.com']
                    end
 
-    attribute :window_schedule_repair
+    attribute :work_order
     attribute :notification_type
     attribute :title
     attribute :message
@@ -28,7 +28,7 @@ module Notifications
     private
 
     def validate_attributes
-      add_error('Window schedule repair is required') unless window_schedule_repair
+      add_error('Work order is required') unless work_order
       add_error('Notification type is required') unless notification_type
       add_error('Title is required') unless title
       self
@@ -54,7 +54,7 @@ module Notifications
     def create_notification_for(admin)
       result = Notifications::CreateService.new(
         user: admin,
-        window_schedule_repair: window_schedule_repair,
+        work_order: work_order,
         notification_type: notification_type,
         title: title,
         message: message,

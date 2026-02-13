@@ -8,8 +8,8 @@ RSpec.describe WindowPolicy, type: :policy do
   let(:contractor_user) { create(:user, :contractor) }
   let(:other_user) { create(:user) }
 
-  let(:window_schedule_repair) { create(:window_schedule_repair, user: user) }
-  let(:window) { create(:window, window_schedule_repair: window_schedule_repair) }
+  let(:work_order) { create(:work_order, user: user) }
+  let(:window) { create(:window, work_order: work_order) }
 
   let(:policy) { described_class.new(user, window) }
   let(:admin_policy) { described_class.new(admin_user, window) }
@@ -86,8 +86,8 @@ RSpec.describe WindowPolicy, type: :policy do
 
     it 'returns user\'s windows for regular user' do
       # Create additional windows for other users
-      other_wrs = create(:window_schedule_repair, user: other_user)
-      create(:window, window_schedule_repair: other_wrs)
+      other_work_order = create(:work_order, user: other_user)
+      create(:window, work_order: other_work_order)
 
       resolved_scope = policy_scope.resolve
       expect(resolved_scope).to include(window)
@@ -101,8 +101,8 @@ RSpec.describe WindowPolicy, type: :policy do
 
     it 'returns contractor\'s own windows' do
       # Create a window for the contractor
-      contractor_wrs = create(:window_schedule_repair, user: contractor_user)
-      contractor_window = create(:window, window_schedule_repair: contractor_wrs)
+      contractor_work_order = create(:work_order, user: contractor_user)
+      contractor_window = create(:window, work_order: contractor_work_order)
 
       resolved_scope = contractor_policy_scope.resolve
       expect(resolved_scope).to include(contractor_window)

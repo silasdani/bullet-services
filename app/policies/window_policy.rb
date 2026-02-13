@@ -6,7 +6,12 @@ class WindowPolicy < ApplicationPolicy
   end
 
   def show?
-    user.present? && (user.is_admin? || user.is_employee? || record.window_schedule_repair.user == user)
+    return false unless user.present?
+
+    wo = record.work_order
+    return supervisor_can_access?(wo) if user.supervisor?
+
+    user.is_admin? || user.is_employee? || wo.user == user
   end
 
   def create?
@@ -14,11 +19,32 @@ class WindowPolicy < ApplicationPolicy
   end
 
   def update?
-    user.present? && (user.is_admin? || user.is_employee? || record.window_schedule_repair.user == user)
+    return false unless user.present?
+
+    wo = record.work_order
+    return supervisor_can_access?(wo) if user.supervisor?
+
+    user.is_admin? || user.is_employee? || wo.user == user
   end
 
   def destroy?
-    user.present? && (user.is_admin? || record.window_schedule_repair.user == user)
+    return false unless user.present?
+
+    wo = record.work_order
+    return supervisor_can_access?(wo) if user.supervisor?
+
+    user.is_admin? || wo.user == user
+  end
+
+  private
+
+  def supervisor_can_access?(work_order)
+    work_order.user_id == user.id || supervisor_assigned_to_building?(work_order)
+  end
+
+  def supervisor_assigned_to_building?(work_order)
+    WorkOrderAssignment.where(user_id: user.id).joins(:work_order)
+                       .where(work_orders: { building_id: work_order.building_id }).exists?
   end
 
   class Scope < Scope
@@ -26,7 +52,7 @@ class WindowPolicy < ApplicationPolicy
       if user.is_admin?
         scope.all
       else
-        scope.joins(:window_schedule_repair).where(window_schedule_repairs: { user: user })
+        scope.joins(:work_order).where(work_orders: { user_id: user.id })
       end
     end
   end

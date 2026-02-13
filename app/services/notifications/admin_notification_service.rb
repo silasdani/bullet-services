@@ -5,7 +5,7 @@ module Notifications
     BATCH_SIZE = 50
     RATE_LIMIT_DELAY = 0.1 # seconds between batches
 
-    attribute :window_schedule_repair
+    attribute :work_order
     attribute :notification_type
     attribute :title
     attribute :message
@@ -30,7 +30,7 @@ module Notifications
     end
 
     def validate_attributes
-      add_error('Window schedule repair is required') unless window_schedule_repair
+      add_error('Work order is required') unless work_order
       add_error('Notification type is required') unless notification_type
       add_error('Title is required') unless title
       self
@@ -45,7 +45,7 @@ module Notifications
 
     def queue_batch_notification_job
       BatchAdminNotificationJob.perform_later(
-        window_schedule_repair_id: window_schedule_repair.id,
+        work_order_id: work_order.id,
         notification_type: notification_type,
         title: title,
         message: message,
@@ -56,7 +56,7 @@ module Notifications
     def create_notification_for(admin)
       Notifications::CreateService.new(
         user: admin,
-        window_schedule_repair: window_schedule_repair,
+        work_order: work_order,
         notification_type: notification_type,
         title: title,
         message: message,

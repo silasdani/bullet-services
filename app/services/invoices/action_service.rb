@@ -8,8 +8,15 @@ module Invoices
     attribute :notify_client
 
     def call
-      return add_error('Invoice is required') if invoice.nil?
-      return add_error('Action is required') if action.blank?
+      if invoice.nil?
+        add_error('Invoice is required')
+        return self
+      end
+
+      if action.blank?
+        add_error('Action is required')
+        return self
+      end
 
       case action.to_s
       when 'send'
@@ -23,6 +30,8 @@ module Invoices
       else
         add_error('Unsupported action')
       end
+
+      self
     end
 
     private
@@ -42,7 +51,7 @@ module Invoices
         )
 
         invoice.update!(status: 'sent')
-        @result = { action: 'send' }
+        self.result = { action: 'send' }
       end
     end
 
@@ -66,7 +75,7 @@ module Invoices
 
         send_void_confirmation_email!(fb_invoice) if notify_client
 
-        @result = { action: 'void', notify_client: notify_client }
+        self.result = { action: 'void', notify_client: notify_client }
       end
     end
 
@@ -79,7 +88,7 @@ module Invoices
         apply_discount_to_freshbooks(fb_invoice, amount)
         update_fb_invoice_amounts(fb_invoice, amount)
 
-        @result = { action: 'discount', discount_amount: amount.to_s }
+        self.result = { action: 'discount', discount_amount: amount.to_s }
       end
     end
 

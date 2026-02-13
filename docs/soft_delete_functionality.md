@@ -1,8 +1,8 @@
-# Soft Delete Functionality for Window Schedule Repairs (WRS)
+# Soft Delete Functionality for Work Orders (WRS)
 
 ## Overview
 
-This document describes the soft delete functionality implemented for Window Schedule Repairs (WRS) to prevent accidental data loss in production.
+This document describes the soft delete functionality implemented for Work Orders (including WRS type) to prevent accidental data loss in production.
 
 ## Features
 
@@ -12,7 +12,7 @@ This document describes the soft delete functionality implemented for Window Sch
 - Records with `deleted_at` set are excluded from normal queries by default
 
 ### 2. Database Changes
-- Added `deleted_at` datetime column to `window_schedule_repairs` table
+- Added `deleted_at` datetime column to `work_orders` table
 - Added index on `deleted_at` for better query performance
 
 ### 3. Model Changes
@@ -74,8 +74,8 @@ Response:
 ### Query Deleted Records
 ```ruby
 # In Rails console or service
-deleted_wrs = WindowScheduleRepair.deleted
-all_wrs = WindowScheduleRepair.with_deleted
+deleted_work_orders = WorkOrder.deleted
+all_work_orders = WorkOrder.with_deleted
 ```
 
 ## Security

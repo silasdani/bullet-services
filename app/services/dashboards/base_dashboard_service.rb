@@ -8,8 +8,8 @@ module Dashboards
 
     # Single source for empty/fallback contractor dashboard payload.
     EMPTY_PAYLOAD = {
-      assigned_wrs: [],
-      active_check_in: nil,
+      assigned_work_orders: [],
+      active_work_session: nil,
       pending_photos: 0,
       recent_activity: []
     }.freeze
@@ -32,13 +32,13 @@ module Dashboards
     end
 
     def cache_version
-      [user.updated_at.to_i, latest_wrs_updated_at].max
+      [user.updated_at.to_i, latest_work_order_updated_at].max
     end
 
-    def latest_wrs_updated_at
-      WindowScheduleRepair.where(user: user).maximum(:updated_at).to_i
+    def latest_work_order_updated_at
+      WorkOrder.where(user: user).maximum(:updated_at).to_i
     rescue StandardError => e
-      log_error("Error getting latest WRS updated_at: #{e.message}")
+      log_error("Error getting latest work order updated_at: #{e.message}")
       0
     end
 

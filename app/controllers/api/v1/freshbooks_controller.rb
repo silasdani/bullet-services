@@ -4,32 +4,6 @@ module Api
   module V1
     class FreshbooksController < Api::V1::BaseController
       before_action :ensure_admin
-
-      # Manual sync endpoints
-      def sync_clients
-        Freshbooks::SyncClientsJob.perform_later
-        render_success(
-          data: { message: 'Client sync job queued' },
-          status: :accepted
-        )
-      end
-
-      def sync_invoices
-        Freshbooks::SyncInvoicesJob.perform_later
-        render_success(
-          data: { message: 'Invoice sync job queued' },
-          status: :accepted
-        )
-      end
-
-      def sync_payments
-        Freshbooks::SyncPaymentsJob.perform_later
-        render_success(
-          data: { message: 'Payment sync job queued' },
-          status: :accepted
-        )
-      end
-
       # Create FreshBooks invoice from local Invoice
       def create_invoice
         invoice = find_invoice
@@ -85,48 +59,12 @@ module Api
         end
       end
 
-      # Get connection status
-      def status
-        token = FreshbooksToken.current
-        status_data = build_status_data(token)
-        render_success(data: status_data)
-      end
-
-      def build_status_data(token)
-        return disconnected_status if token.nil?
-        return expired_token_status(token) if token.expired?
-
-        connected_status(token)
-      end
-
-      def disconnected_status
-        {
-          connected: false,
-          message: 'FreshBooks not connected'
-        }
-      end
-
-      def expired_token_status(_token)
-        {
-          connected: true,
-          expired: true,
-          message: 'Token expired, refresh needed'
-        }
-      end
-
-      def connected_status(token)
-        {
-          connected: true,
-          expired: false,
-          business_id: token.business_id,
-          expires_at: token.token_expires_at
-        }
-      end
-
       private
 
       def ensure_admin
-        authorize :freshbooks, :manage?
+        return if current_user.admin?
+
+        render_error(message: 'Unauthorized', status: :unauthorized)
       end
     end
   end

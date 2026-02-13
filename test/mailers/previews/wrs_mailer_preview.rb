@@ -7,7 +7,7 @@ class WrsMailerPreview < ActionMailer::Preview
     invoice = create_sample_invoice(wrs)
 
     WrsMailer.with(
-      window_schedule_repair: wrs,
+      work_order: wrs,
       first_name: 'John',
       last_name: 'Doe',
       email: 'john.doe@example.com',
@@ -20,7 +20,7 @@ class WrsMailerPreview < ActionMailer::Preview
     wrs = create_sample_wrs
 
     WrsMailer.with(
-      window_schedule_repair: wrs,
+      work_order: wrs,
       first_name: 'Jane',
       last_name: 'Smith',
       email: 'jane.smith@example.com'
@@ -31,7 +31,7 @@ class WrsMailerPreview < ActionMailer::Preview
 
   def create_sample_wrs
     # Try to use existing WRS from database, otherwise create a mock
-    wrs = WindowScheduleRepair.first
+    wrs = WorkOrder.first
 
     return wrs if wrs.present?
 
@@ -39,7 +39,7 @@ class WrsMailerPreview < ActionMailer::Preview
     user = User.first || User.new(email: 'client@example.com', name: 'Test User', role: :client)
     building = Building.first || Building.new(name: 'Sample Building', street: '123 Main St', zipcode: 'SW1A 1AA')
 
-    wrs = WindowScheduleRepair.new(
+    wrs = WorkOrder.new(
       user: user,
       building: building,
       name: 'Sample Window Repair',

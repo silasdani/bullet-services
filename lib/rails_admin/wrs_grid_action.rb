@@ -25,9 +25,9 @@ module RailsAdmin
         register_instance_option :controller do
           proc do
             # Load WRS with eager loading (building, user, windows, tools)
-            @wrs_items = WindowScheduleRepair.includes(:building, :user, :windows, windows: :tools)
-                                             .where(is_archived: false, deleted_at: nil)
-                                             .order(created_at: :desc)
+            @wrs_items = WorkOrder.includes(:building, :user, :windows, windows: :tools)
+                                  .where(is_archived: false, deleted_at: nil)
+                                  .order(created_at: :desc)
 
             # Calculate statistics
             total_wrs = @wrs_items.count
@@ -63,7 +63,7 @@ module RailsAdmin
             @draft_count = status_counts[:draft]
             @total_value = total_value
 
-            render template: 'rails_admin/window_schedule_repairs/grid'
+            render template: 'rails_admin/work_orders/grid'
           end
         end
 

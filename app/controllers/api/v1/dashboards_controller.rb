@@ -24,7 +24,7 @@ module Api
       def render_dashboard(service)
         if service.success?
           render_success(data: service.result)
-        elsif current_user.contractor?
+        elsif current_user.contractor? || current_user.general_contractor?
           render_success(data: Dashboards::BaseDashboardService::EMPTY_PAYLOAD.dup)
         else
           render_error(message: 'Failed to load dashboard', details: service.errors)
@@ -32,7 +32,7 @@ module Api
       end
 
       def render_dashboard_error
-        if current_user.contractor?
+        if current_user.contractor? || current_user.general_contractor?
           render_success(data: Dashboards::BaseDashboardService::EMPTY_PAYLOAD.dup)
         else
           render_error(message: 'Failed to load dashboard', status: :internal_server_error)

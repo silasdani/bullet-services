@@ -4,7 +4,7 @@ module Avo
   module Resources
     class OngoingWork < Avo::BaseResource
       self.title = :id
-      self.includes = [:window_schedule_repair, :user, { window_schedule_repair: %i[building windows] }]
+      self.includes = [:work_order, :user, { work_order: %i[building windows] }]
       self.default_view_type = :table
       self.search = {
         query: -> { query.ransack(id_eq: params[:q], description_cont: params[:q], m: 'or').result(distinct: false) }
@@ -13,8 +13,10 @@ module Avo
       def fields
         field :id, as: :id, link_to_resource: true
         field :work_date, as: :date, required: true, sortable: true, filterable: true
-        field :window_schedule_repair, as: :belongs_to, required: true, filterable: true
+        field :work_order, as: :belongs_to, required: true, filterable: true
         field :user, as: :belongs_to, required: true, name: 'Contractor', filterable: true
+        field :user_status_badge, as: :user_status_badge, association: :user, only_on: %i[index show],
+                                  name: 'User Status'
         field :images_count, as: :text, name: 'Images', only_on: [:index] do
           count = record.images.count
           count.positive? ? "#{count} #{'image'.pluralize(count)}" : 'No images'

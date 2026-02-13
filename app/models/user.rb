@@ -11,13 +11,15 @@ class User < ApplicationRecord
          :recoverable, :rememberable, :validatable
 
   validates :role, presence: true
+  validates :first_name, presence: true
+  validates :last_name, presence: true
 
-  enum :role, client: 0, contractor: 1, admin: 2, surveyor: 3
+  enum :role, { client: 0, contractor: 1, admin: 2, surveyor: 3, general_contractor: 4, supervisor: 5 }
 
-  has_many :building_assignments, dependent: :destroy
-  has_many :assigned_buildings, through: :building_assignments, source: :building
-  has_many :window_schedule_repairs, dependent: :restrict_with_error
-  has_many :windows, through: :window_schedule_repairs
+  has_many :work_order_assignments, dependent: :destroy
+  has_many :assigned_work_orders, through: :work_order_assignments, source: :work_order
+  has_many :work_orders, dependent: :restrict_with_error
+  has_many :windows, through: :work_orders
   has_many :check_ins, dependent: :destroy
   has_many :ongoing_works, dependent: :destroy
   has_many :notifications, dependent: :destroy
@@ -39,19 +41,28 @@ class User < ApplicationRecord
     role == 'surveyor'
   end
 
-  def webflow_access?
-    admin?
+  def general_contractor?
+    role == 'general_contractor'
+  end
+
+  def supervisor?
+    role == 'supervisor'
   end
 
   # Deprecated: Use admin? instead
   # rubocop:disable Naming/PredicatePrefix
   def is_admin?
-    admin?
+    admin? || surveyor?
   end
 
-  # Deprecated: Use contractor? instead
+  # Deprecated: Use contractor? or general_contractor? instead
   def is_employee?
-    contractor?
+    contractor? || general_contractor?
+  end
+
+  # Deprecated: Surveyor acts as "super admin" in legacy code.
+  def is_super_admin?
+    surveyor?
   end
 
   # rubocop:enable Naming/PredicatePrefix
@@ -85,17 +96,23 @@ class User < ApplicationRecord
   }
 
   def self.ransackable_attributes(_auth_object = nil)
-    %w[name email role blocked created_at updated_at deleted_at]
+    %w[email role blocked created_at updated_at deleted_at first_name last_name phone_no]
   end
 
   def self.ransackable_associations(_auth_object = nil)
     []
   end
 
+  def name
+    [first_name, last_name].compact_blank.join(' ').presence
+  end
+
   private
 
   def set_default_role
-    self.role = :contractor if role.nil? || role == 'client' || role.zero?
+    # `role` is an enum; the getter returns a String key (e.g. "admin").
+    # Default new users to `client` unless explicitly set.
+    self.role = :client if role.nil?
   end
 
   def sync_uid_with_email

@@ -8,10 +8,10 @@ class BuildingPolicy < ApplicationPolicy
   def show?
     return false unless user.present?
 
-    if user.contractor? && !record.window_schedule_repairs
-                                  .where(is_draft: false, deleted_at: nil)
-                                  .merge(WindowScheduleRepair.contractor_visible_status)
-                                  .exists?
+    if (user.contractor? || user.general_contractor?) && !record.work_orders
+                                                                .where(is_draft: false, deleted_at: nil)
+                                                                .merge(WorkOrder.contractor_visible_status)
+                                                                .exists?
       return false
     end
 
@@ -23,8 +23,8 @@ class BuildingPolicy < ApplicationPolicy
   end
 
   def update?
-    # Contractors cannot update buildings
-    return false if user&.contractor?
+    # Contractors and general contractors cannot update buildings
+    return false if user&.contractor? || user&.general_contractor?
 
     user.present?
   end
@@ -35,19 +35,16 @@ class BuildingPolicy < ApplicationPolicy
 
   class Scope < Scope
     def resolve
-      # Contractors can see all buildings that have at least one non-draft WRS with approved/rejected/pending status
-      # After check-in, they will only see WRS from that building, but can still see all buildings in the list
-      if user.contractor?
-        # Show all buildings that have at least one non-draft WRS with the right status
-        scope.joins(:window_schedule_repairs)
-             .where(window_schedule_repairs: {
+      # Contractors see buildings with at least one visible (non-draft) work order
+      if user.contractor? || user.general_contractor?
+        scope.joins(:work_orders)
+             .where(work_orders: {
                       is_draft: false,
                       deleted_at: nil,
-                      status: WindowScheduleRepair.statuses.values_at(:pending, :approved, :rejected)
+                      status: WorkOrder.statuses.values_at(:pending, :approved, :rejected)
                     })
              .distinct
       else
-        # Admins, clients, and surveyors can see all buildings
         scope.all
       end
     end

@@ -1,13 +1,14 @@
 # frozen_string_literal: true
 
 class UserSerializer < ActiveModel::Serializer
-  attributes :id, :email, :name, :nickname, :role, :assigned_building_ids, :created_at, :updated_at
+  attributes :id, :email, :first_name, :last_name, :name, :phone_no, :nickname, :role,
+             :assigned_work_order_ids, :created_at, :updated_at
 
   attribute :image_url, if: :image_attached?
 
-  def assigned_building_ids
+  def assigned_work_order_ids
     # Keep payload small + stable (ids only). Use pluck to avoid N+1.
-    object.building_assignments.pluck(:building_id)
+    object.work_order_assignments.pluck(:work_order_id)
   rescue StandardError
     []
   end

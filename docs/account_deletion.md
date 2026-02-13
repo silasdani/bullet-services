@@ -23,7 +23,7 @@ User accounts are **soft-deleted** when a user (or admin) requests deletion. The
    - A recurring job runs daily (when using Solid Queue with `ACTIVE_JOB_ADAPTER=solid_queue`).  
    - It finds users where `deleted_at < 30.days.ago` and calls `destroy` on each.  
    - Those rows are permanently removed from the database.  
-   - If a user has associations that prevent deletion (e.g. `window_schedule_repairs` with `dependent: :restrict_with_error`), that user is skipped and a warning is logged.
+   - If a user has associations that prevent deletion (e.g. `work_orders` with `dependent: :restrict_with_error`), that user is skipped and a warning is logged.
 
 ## Configuration
 

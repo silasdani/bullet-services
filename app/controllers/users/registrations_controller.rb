@@ -37,7 +37,9 @@ module Users
     private
 
     def configure_permitted_parameters
-      devise_parameter_sanitizer.permit(:sign_up, keys: %i[nickname name role])
+      extra = %i[nickname name role first_name last_name phone_no]
+      devise_parameter_sanitizer.permit(:sign_up, keys: extra)
+      devise_parameter_sanitizer.permit(:account_update, keys: extra)
     end
 
     def formatted_errors

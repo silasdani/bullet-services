@@ -4,7 +4,7 @@ module CheckIns
   class CheckOutService < ApplicationService
     include AddressResolver
     attribute :user
-    attribute :window_schedule_repair
+    attribute :work_order
     attribute :latitude
     attribute :longitude
     attribute :address
@@ -56,7 +56,7 @@ module CheckIns
     end
 
     def check_in_record
-      @check_in_record ||= CheckIn.active_for(user, window_schedule_repair).first
+      @check_in_record ||= CheckIn.active_for(user, work_order).first
     end
 
     def photos_uploaded?
@@ -66,7 +66,7 @@ module CheckIns
 
       OngoingWork
         .where(
-          window_schedule_repair: window_schedule_repair,
+          work_order: work_order,
           user: user
         )
         .where('work_date >= ?', check_in_date)
@@ -80,7 +80,7 @@ module CheckIns
 
       OngoingWork
         .where(
-          window_schedule_repair: window_schedule_repair,
+          work_order: work_order,
           user: user
         )
         .where('work_date >= ?', check_in_record.timestamp.to_date)
@@ -92,7 +92,7 @@ module CheckIns
     def create_check_out
       @check_out = CheckIn.new(
         user: user,
-        window_schedule_repair: window_schedule_repair,
+        work_order: work_order,
         action: :check_out,
         latitude: latitude,
         longitude: longitude,
@@ -127,7 +127,7 @@ module CheckIns
       hours_worked = calculate_hours_worked
       if user.contractor?
         Notifications::AdminFcmNotificationService.new(
-          window_schedule_repair: window_schedule_repair,
+          work_order: work_order,
           notification_type: :check_out,
           title: 'Contractor Check-out',
           message: build_check_out_message(hours_worked),
@@ -135,7 +135,7 @@ module CheckIns
         ).call
       else
         Notifications::AdminNotificationService.new(
-          window_schedule_repair: window_schedule_repair,
+          work_order: work_order,
           notification_type: :check_out,
           title: 'Contractor Check-out',
           message: build_check_out_message(hours_worked),
@@ -145,7 +145,7 @@ module CheckIns
     end
 
     def build_check_out_message(hours_worked)
-      "#{user.name || user.email} checked out from #{window_schedule_repair.name}. " \
+      "#{user.name || user.email} checked out from #{work_order.name}. " \
         "Hours worked: #{hours_worked}"
     end
 

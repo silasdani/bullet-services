@@ -6,7 +6,7 @@ module CheckIns
     PROXIMITY_RADIUS_METERS = 50
 
     attribute :user
-    attribute :window_schedule_repair
+    attribute :work_order
     attribute :latitude
     attribute :longitude
     attribute :address
@@ -41,20 +41,20 @@ module CheckIns
     end
 
     def validate_contractor_assignment
+      # General contractors can check into any project; only contractors need assignment
       return self unless user&.contractor?
 
-      building_id = window_schedule_repair&.building_id
-      return self unless building_id
+      return self unless work_order
 
-      unless BuildingAssignment.exists?(user_id: user.id, building_id: building_id)
-        add_error('You are not assigned to this project. Please assign the project first.')
+      unless WorkOrderAssignment.exists?(user_id: user.id, work_order_id: work_order.id)
+        add_error('You are not assigned to this work order. Please assign the work order first.')
       end
       self
     end
 
     def validate_wrs_status
-      # Contractors can only check in to approved WRS
-      if user.contractor? && window_schedule_repair.status != 'approved'
+      # Contractors and general contractors can only check in to approved WRS
+      if (user.contractor? || user.general_contractor?) && work_order.status != 'approved'
         add_error('You can only check in to approved works.')
         return self
       end
@@ -70,24 +70,24 @@ module CheckIns
     end
 
     def proximity_checkable?
-      building = window_schedule_repair.building
+      building = work_order.building
       building&.latitude && building.longitude && latitude && longitude
     end
 
     def within_proximity?
-      window_schedule_repair.building.within_radius?(latitude, longitude, PROXIMITY_RADIUS_METERS)
+      work_order.building.within_radius?(latitude, longitude, PROXIMITY_RADIUS_METERS)
     end
 
     def add_proximity_errors
       add_error('You must be within 50 meters of the building to check in.')
-      distance = window_schedule_repair.building.distance_to(latitude, longitude)
+      distance = work_order.building.distance_to(latitude, longitude)
       add_error("Current distance: #{distance.round(1)} meters. Please move closer.") if distance
     end
 
     def create_check_in
       @check_in = CheckIn.new(
         user: user,
-        window_schedule_repair: window_schedule_repair,
+        work_order: work_order,
         action: :check_in,
         latitude: latitude,
         longitude: longitude,
@@ -105,10 +105,10 @@ module CheckIns
 
     # rubocop:disable Metrics/AbcSize
     def create_notification
-      if user.contractor?
+      if user.contractor? || user.general_contractor?
         log_info("Creating check-in notification for contractor: #{user.email}")
         result = Notifications::AdminFcmNotificationService.new(
-          window_schedule_repair: window_schedule_repair,
+          work_order: work_order,
           notification_type: :check_in,
           title: 'Contractor Check-in',
           message: build_check_in_message,
@@ -118,7 +118,7 @@ module CheckIns
       else
         log_info("Creating check-in notification for non-contractor: #{user.email}")
         Notifications::AdminNotificationService.new(
-          window_schedule_repair: window_schedule_repair,
+          work_order: work_order,
           notification_type: :check_in,
           title: 'Contractor Check-in',
           message: build_check_in_message,
@@ -133,7 +133,7 @@ module CheckIns
     # rubocop:enable Metrics/AbcSize
 
     def build_check_in_message
-      "#{user.name || user.email} checked in at #{window_schedule_repair.name}"
+      "#{user.name || user.email} checked in at #{work_order.name}"
     end
 
     def build_check_in_metadata

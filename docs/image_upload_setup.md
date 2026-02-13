@@ -2,7 +2,7 @@
 
 ## Overview
 
-The image upload system has been set up to handle images for windows and window schedule repairs, with automatic S3 storage and Webflow integration.
+The image upload system has been set up to handle images for windows and window schedule repairs, with automatic S3 storage.
 
 ## Components Implemented
 
@@ -10,19 +10,8 @@ The image upload system has been set up to handle images for windows and window 
 - **`upload_window_image`**: Uploads a single image to a specific window
 - **`upload_multiple_images`**: Uploads multiple images to a WRS
 - Automatic image naming: `window-{number}-image`
-- Automatic Webflow sync when collection info is present
 
-### 2. Webflow Upload Job (`app/jobs/webflow_upload_job.rb`)
-- Background job for asynchronous Webflow updates
-- Handles both creation and updates of Webflow items
-- Updates WRS with Webflow item ID after creation
-
-### 3. Enhanced Webflow Service (`app/services/webflow_service.rb`)
-- Updated to handle window-specific images
-- Sends structured image data to Webflow
-- Includes window location information
-
-### 4. Image Policy (`app/policies/image_policy.rb`)
+### 2. Image Policy (`app/policies/image_policy.rb`)
 - Authorization rules for image uploads
 - Role-based access control (admin, employee, client)
 
@@ -77,7 +66,6 @@ Response:
 ### S3 Storage
 - **Bucket**: `bullet-services`
 - **Region**: `eu-north-1`
-- **Public Access**: Enabled (for Webflow integration)
 - **Service**: `:amazon` (configured in development.rb)
 
 ### AWS Credentials
@@ -101,30 +89,6 @@ window-{number}-image.{extension}
 ```
 
 Where `{number}` represents the order of the window within the WRS (1-based indexing).
-
-## Webflow Integration
-
-### Data Structure Sent to Webflow
-```json
-{
-  "fieldData": {
-    "window-images": [
-      {
-        "name": "window-1-image",
-        "url": "https://s3.amazonaws.com/bucket/image1.jpg",
-        "window_location": "Living Room"
-      }
-    ],
-    "wrs-images": ["url1", "url2"]
-  }
-}
-```
-
-### Automatic Sync
-- Images are automatically sent to Webflow when:
-  - WRS has `webflow_collection_id` set
-  - Images are uploaded/updated
-- Uses background jobs to avoid blocking responses
 
 ## Testing
 
@@ -192,18 +156,16 @@ const takePhoto = async () => {
 - **Authorization**: Role-based access control
 - **File Validation**: Active Storage handles file types
 - **Secure URLs**: Rails storage proxy for controlled access
-- **Background Processing**: Webflow updates don't block uploads
 
 ## Error Handling
 
 - Comprehensive error logging
 - Graceful fallbacks for failed uploads
 - User-friendly error messages
-- Automatic retry for Webflow failures
+- Automatic retry for failures
 
 ## Performance Considerations
 
-- Asynchronous Webflow updates
 - Efficient S3 uploads
 - Image compression via Active Storage
 - Background job processing
@@ -212,5 +174,4 @@ const takePhoto = async () => {
 
 - Rails logging for all operations
 - S3 upload tracking
-- Webflow API response monitoring
 - Background job status tracking

@@ -22,9 +22,6 @@ en:
       update?: "You don't have permission to update this window schedule repair."
       destroy?: "You don't have permission to delete this window schedule repair."
       restore?: "You don't have permission to restore this window schedule repair."
-      send_to_webflow?: "You don't have Webflow access. Please contact an administrator to enable this feature."
-      publish_to_webflow?: "You don't have Webflow access. Please contact an administrator to enable this feature."
-      unpublish_from_webflow?: "You don't have Webflow access. Please contact an administrator to enable this feature."
     
     image_policy:
       upload_window_image?: "You don't have permission to upload images to this window."

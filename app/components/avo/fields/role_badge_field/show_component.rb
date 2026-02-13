@@ -19,6 +19,8 @@ class Avo::Fields::RoleBadgeField::ShowComponent < Avo::Fields::ShowComponent
       'bg-yellow-100 text-yellow-800'
     when 'surveyor'
       'bg-red-100 text-red-800'
+    when 'general_contractor'
+      'bg-indigo-100 text-indigo-800'
     else
       'bg-gray-100 text-gray-800'
     end

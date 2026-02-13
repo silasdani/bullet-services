@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class Window < ApplicationRecord
-  belongs_to :window_schedule_repair
+  belongs_to :work_order, foreign_key: :work_order_id
   has_many :tools, dependent: :destroy
   has_many_attached :images
 
@@ -26,7 +26,7 @@ class Window < ApplicationRecord
   def image_name
     return nil unless images.attached?
 
-    window_number = window_schedule_repair.windows.order(:created_at).index(self) + 1
+    window_number = work_order.windows.order(:created_at).index(self) + 1
     "window-#{window_number}-image"
   end
 
@@ -78,17 +78,12 @@ class Window < ApplicationRecord
     end
   end
 
-  # Prefer S3 URL if mirrored, otherwise fall back to Webflow URL
   # Returns first image URL for backwards compatibility
   def effective_image_url
-    if images.attached?
-      Rails.logger.debug "Window ##{id}: Using ActiveStorage image"
-      image_url
-    else
-      url = extract_webflow_url(webflow_image_url)
-      Rails.logger.debug "Window ##{id}: No ActiveStorage image, using webflow_image_url: #{url.inspect}"
-      url
-    end
+    return nil unless images.attached?
+
+    Rails.logger.debug "Window ##{id}: Using ActiveStorage image"
+    image_url
   rescue StandardError => e
     Rails.logger.error "Window ##{id}: Error in effective_image_url: #{e.message}"
     nil
@@ -96,44 +91,20 @@ class Window < ApplicationRecord
 
   # Returns all effective image URLs
   def effective_image_urls
-    urls = []
+    return [] unless images.attached?
 
-    urls.concat(image_urls) if images.attached?
-
-    webflow_url = extract_webflow_url(webflow_image_url)
-    urls << webflow_url if webflow_url.present?
-
-    urls.compact.uniq
+    image_urls
   rescue StandardError => e
     Rails.logger.error "Window ##{id}: Error in effective_image_urls: #{e.message}"
     []
   end
 
-  # Extract URL from webflow_image_url field
-  # Handles both string URLs and accidentally stringified hashes
-  def extract_webflow_url(value)
-    return nil if value.blank?
-
-    # If it's already a clean URL, return it
-    return value if value.is_a?(String) && value.start_with?('http')
-
-    # If it looks like a stringified hash, try to extract the URL
-    if value.is_a?(String) && value.include?('"url"')
-      # Extract URL from stringified hash like: {"url" => "https://...", ...}
-      match = value.match(/"url"\s*=>\s*"([^"]+)"/)
-      return match[1] if match
-    end
-
-    # Fallback: return as-is
-    value
-  end
-
   def self.ransackable_attributes(_auth_object = nil)
-    %w[location window_schedule_repair_id created_at updated_at]
+    %w[location work_order_id created_at updated_at]
   end
 
   def self.ransackable_associations(_auth_object = nil)
-    %w[window_schedule_repair tools]
+    %w[work_order tools]
   end
 
   private

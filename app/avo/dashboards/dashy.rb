@@ -5,12 +5,12 @@ module Avo
     class Dashy < Avo::Dashboards::BaseDashboard
       self.id = 'dashy'
       self.name = 'Dashboard'
-      self.description = 'Overview of users, WRS, and invoices'
+      self.description = 'Overview of users, work orders, and invoices'
       self.grid_cols = 3
 
       def cards
         card Avo::Cards::UsersCount
-        card Avo::Cards::WrsCount
+        card Avo::Cards::WorkOrderCount
         card Avo::Cards::OngoingWorksCount
 
         divider label: 'Invoices'

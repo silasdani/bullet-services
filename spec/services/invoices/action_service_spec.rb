@@ -27,14 +27,15 @@ RSpec.describe Invoices::ActionService do
 
     context 'when action is void' do
       it 'voids invoice in FreshBooks and updates local records' do
-        client = double('Freshbooks::Invoices', update: true)
+        client = double('Freshbooks::Invoices', void: true)
         allow(Freshbooks::Invoices).to receive(:new).and_return(client)
+        allow_any_instance_of(FreshbooksInvoice).to receive(:sync_from_freshbooks)
 
         service = described_class.new(invoice: invoice, action: 'void')
         result = service.call
 
         expect(result).to be_success
-        expect(invoice.reload.final_status).to eq('void')
+        expect(invoice.reload.final_status).to eq('voided')
       end
     end
 
