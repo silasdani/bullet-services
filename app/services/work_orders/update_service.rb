@@ -130,23 +130,40 @@ module WorkOrders
       end
     end
 
-    def tool_price(tool_attrs)
-      current_user&.supervisor? ? 0 : (tool_attrs[:price] || 0)
-    end
-
     def update_existing_tool(window, tool_attrs)
       tool = window.tools.find(tool_attrs[:id])
 
       if tool_attrs[:_destroy] == '1'
         tool.destroy
       else
-        unless tool.update(
-          name: tool_attrs[:name],
-          price: tool_price(tool_attrs)
-        )
+        update_attrs = { name: tool_attrs[:name] }
+        # Supervisors cannot change prices — preserve the existing price.
+        # If the tool name changed, update price to the default for the new name
+        # only if the supervisor changed it (keeps admin-set prices intact).
+        if current_user&.supervisor?
+          # If the tool name changed, use the default price for the new name
+          if tool.name != tool_attrs[:name]
+            update_attrs[:price] =
+              Tool.default_price_for_name(tool_attrs[:name]) || tool.price
+          end
+          # Otherwise keep existing price (don't include :price in update_attrs)
+        else
+          update_attrs[:price] = tool_attrs[:price] || 0
+        end
+
+        unless tool.update(update_attrs)
           add_errors(tool.errors.full_messages)
           raise ActiveRecord::Rollback
         end
+      end
+    end
+
+    # Price for new tools: supervisors get default price, others use submitted price.
+    def new_tool_price(tool_attrs)
+      if current_user&.supervisor?
+        Tool.default_price_for_name(tool_attrs[:name]) || 0
+      else
+        tool_attrs[:price] || 0
       end
     end
 
@@ -155,7 +172,7 @@ module WorkOrders
 
       tool = window.tools.build(
         name: tool_attrs[:name],
-        price: tool_price(tool_attrs)
+        price: new_tool_price(tool_attrs)
       )
 
       return if tool.save
@@ -170,7 +187,7 @@ module WorkOrders
 
         tool = window.tools.build(
           name: tool_attrs[:name],
-          price: tool_price(tool_attrs)
+          price: new_tool_price(tool_attrs)
         )
 
         unless tool.save

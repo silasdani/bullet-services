@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_12_000001) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_13_000003) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -204,6 +204,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_12_000001) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.datetime "deleted_at"
+    t.boolean "is_draft", default: true, null: false
     t.index ["deleted_at"], name: "index_ongoing_works_on_deleted_at"
     t.index ["user_id"], name: "index_ongoing_works_on_user_id"
     t.index ["work_order_id", "work_date", "user_id"], name: "index_ongoing_works_on_wrs_date_user"
@@ -370,8 +371,10 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_12_000001) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.datetime "deleted_at"
+    t.bigint "ongoing_work_id"
     t.index ["checked_in_at"], name: "index_work_sessions_on_checked_in_at"
     t.index ["deleted_at"], name: "index_work_sessions_on_deleted_at"
+    t.index ["ongoing_work_id"], name: "index_work_sessions_on_ongoing_work_id"
     t.index ["user_id", "work_order_id", "checked_out_at"], name: "index_work_sessions_on_user_wrs_checked_out"
     t.index ["user_id"], name: "index_work_sessions_on_user_id"
     t.index ["work_order_id", "checked_in_at"], name: "index_work_sessions_on_work_order_id_and_checked_in_at"
@@ -395,6 +398,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_12_000001) do
   add_foreign_key "work_order_decisions", "work_orders"
   add_foreign_key "work_orders", "buildings"
   add_foreign_key "work_orders", "users"
+  add_foreign_key "work_sessions", "ongoing_works"
   add_foreign_key "work_sessions", "users"
   add_foreign_key "work_sessions", "work_orders"
 end

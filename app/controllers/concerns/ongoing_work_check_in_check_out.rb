@@ -1,24 +1,26 @@
 # frozen_string_literal: true
 
-module WorkOrderCheckInCheckOut
+module OngoingWorkCheckInCheckOut
   extend ActiveSupport::Concern
 
   private
 
-  def build_check_in_service
+  def build_ongoing_work_check_in_service
     WorkSessions::CheckInService.new(
       user: current_user,
-      work_order: @work_order,
+      work_order: @ongoing_work.work_order,
+      ongoing_work: @ongoing_work,
       latitude: params[:latitude],
       longitude: params[:longitude],
       address: params[:address]
     )
   end
 
-  def build_check_out_service
+  def build_ongoing_work_check_out_service
     WorkSessions::CheckOutService.new(
       user: current_user,
-      work_order: @work_order,
+      work_order: @ongoing_work.work_order,
+      ongoing_work: @ongoing_work,
       latitude: params[:latitude],
       longitude: params[:longitude],
       address: params[:address]
@@ -35,7 +37,9 @@ module WorkOrderCheckInCheckOut
       latitude: session.latitude,
       longitude: session.longitude,
       address: session.address,
-      active: session.active?
+      active: session.active?,
+      duration_hours: session.duration_hours,
+      duration_minutes: session.duration_minutes
     }
   end
 

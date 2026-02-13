@@ -45,13 +45,14 @@ module WorkOrders
 
     def handle_accept
       with_error_handling do
-        # Prevent duplicate invoice creation
-        if work_order.invoices.exists?
-          add_error('An invoice already exists for this work order. A decision has already been made.')
+        # Prevent duplicate decisions / invoice creation
+        if work_order.work_order_decision.present?
+          add_error('A decision has already been recorded for this work order.')
           return
         end
 
         ActiveRecord::Base.transaction do
+          record_decision!('approved')
           fb_client = ensure_freshbooks_client!
           invoice = create_local_invoice!(fb_client)
           mark_work_order_as_approved!
@@ -66,11 +67,32 @@ module WorkOrders
 
     def handle_decline
       with_error_handling do
+        if work_order.work_order_decision.present?
+          add_error('A decision has already been recorded for this work order.')
+          return
+        end
+
         ActiveRecord::Base.transaction do
+          record_decision!('rejected')
           mark_work_order_as_rejected!
           send_admin_decline_email!
         end
       end
+    end
+
+    def record_decision!(resolved_decision)
+      WorkOrderDecision.create!(
+        work_order: work_order,
+        decision: resolved_decision,
+        decision_at: Time.current,
+        client_email: email,
+        client_name: "#{first_name} #{last_name}".strip,
+        terms_accepted_at: resolved_decision == 'approved' ? Time.current : nil,
+        decision_metadata: {
+          ip: nil, # caller can enrich later if needed
+          source: 'wrs_form'
+        }
+      )
     end
 
     def ensure_freshbooks_client!

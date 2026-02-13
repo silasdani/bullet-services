@@ -5,6 +5,7 @@ module WorkSessions
     include AddressResolver
     attribute :user
     attribute :work_order
+    attribute :ongoing_work
     attribute :latitude
     attribute :longitude
     attribute :address
@@ -14,6 +15,7 @@ module WorkSessions
     attr_accessor :work_session
 
     def call
+      derive_work_order_from_ongoing_work
       ActiveRecord::Base.transaction do
         return self if validate_active_session.failure?
         return self if validate_photos_uploaded.failure?
@@ -36,19 +38,32 @@ module WorkSessions
 
     private
 
+    def derive_work_order_from_ongoing_work
+      self.work_order ||= ongoing_work&.work_order
+    end
+
     def validate_active_session
       add_error('No active work session found. Please check in first.') unless active_session
       self
     end
 
     def validate_photos_uploaded
+      # When checking out via ongoing_work, validate photos on that specific record
+      if ongoing_work.present?
+        unless ongoing_work.images.attached?
+          add_error('Cannot check out. Please upload work photos first.')
+          add_error('At least one photo is required to document completed work.')
+        end
+        return self
+      end
+
+      # Legacy path: validate via work_order + date matching
       unless photos_uploaded?
         add_error('Cannot check out. Please upload work photos first.')
         add_error('At least one photo is required to document completed work.')
         return self
       end
 
-      # Additional validation: ensure photos are from today
       unless photos_from_today?
         add_error('Photos must be uploaded today to check out.')
         return self
@@ -58,7 +73,11 @@ module WorkSessions
     end
 
     def active_session
-      @active_session ||= WorkSession.active.for_user(user).for_work_order(work_order).first
+      @active_session ||= if ongoing_work.present?
+                            ongoing_work.work_sessions.active.for_user(user).first
+                          else
+                            WorkSession.active.for_user(user).for_work_order(work_order).first
+                          end
     end
 
     def photos_uploaded?
@@ -67,10 +86,7 @@ module WorkSessions
       check_in_date = active_session.checked_in_at.to_date
 
       OngoingWork
-        .where(
-          work_order: work_order,
-          user: user
-        )
+        .where(work_order: work_order, user: user)
         .where('work_date >= ?', check_in_date)
         .joins(:images_attachments)
         .where('active_storage_attachments.created_at >= ?', check_in_date.beginning_of_day)
@@ -81,10 +97,7 @@ module WorkSessions
       return false unless active_session
 
       OngoingWork
-        .where(
-          work_order: work_order,
-          user: user
-        )
+        .where(work_order: work_order, user: user)
         .where('work_date >= ?', active_session.checked_in_at.to_date)
         .joins(:images_attachments)
         .where('active_storage_attachments.created_at >= ?', Date.current.beginning_of_day)
@@ -147,6 +160,7 @@ module WorkSessions
         contractor_id: user.id,
         contractor_name: user.name || user.email,
         work_session_id: work_session&.id,
+        ongoing_work_id: ongoing_work&.id,
         hours_worked: hours_worked,
         location: build_location_string
       }

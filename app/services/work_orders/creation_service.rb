@@ -83,16 +83,25 @@ module WorkOrders
       tools_attributes.each_value do |tool_attrs|
         next if tool_attrs[:name].blank?
 
-        tool_price = user.supervisor? ? 0 : (tool_attrs[:price] || 0)
         tool = window.tools.build(
           name: tool_attrs[:name],
-          price: tool_price
+          price: supervisor_tool_price(tool_attrs)
         )
 
         unless tool.save
           add_errors(tool.errors.full_messages)
           raise ActiveRecord::Rollback
         end
+      end
+    end
+
+    # Supervisors don't input prices — use the default price for the tool name.
+    # Non-supervisors use the price sent from the frontend.
+    def supervisor_tool_price(tool_attrs)
+      if user.supervisor?
+        Tool.default_price_for_name(tool_attrs[:name]) || 0
+      else
+        tool_attrs[:price] || 0
       end
     end
 
@@ -121,8 +130,8 @@ module WorkOrders
       Notifications::AdminNotificationService.new(
         work_order: @work_order,
         notification_type: 'supervisor_wrs_created',
-        title: 'Work order created by supervisor (needs pricing)',
-        message: "#{user.name} created \"#{@work_order.name}\" without prices. Please add pricing.",
+        title: 'Work order created by supervisor (review pricing)',
+        message: "#{user.name} created \"#{@work_order.name}\" with default prices. Please review pricing.",
         metadata: { created_by_user_id: user.id }
       ).call
     end

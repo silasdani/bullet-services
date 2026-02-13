@@ -13,6 +13,10 @@ class WorkSessionPolicy < ApplicationPolicy
     user.present?
   end
 
+  def active?
+    user.present?
+  end
+
   def check_in?
     user.present? && (user.contractor? || user.general_contractor? || user.admin?)
   end

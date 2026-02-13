@@ -16,6 +16,7 @@ class WorkOrder < ApplicationRecord
   has_many :check_ins, dependent: :destroy, foreign_key: :work_order_id # Deprecated: Use work_sessions instead
   has_many :work_sessions, dependent: :destroy, foreign_key: :work_order_id
   has_many :ongoing_works, dependent: :destroy, foreign_key: :work_order_id
+  has_many :work_sessions_through_ongoing, through: :ongoing_works, source: :work_sessions
   has_many :notifications, dependent: :destroy, foreign_key: :work_order_id
   has_one :work_order_decision, dependent: :destroy, foreign_key: :work_order_id
   has_many :price_snapshots, dependent: :destroy, foreign_key: :work_order_id, inverse_of: :work_order

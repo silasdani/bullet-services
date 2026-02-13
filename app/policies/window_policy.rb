@@ -9,7 +9,7 @@ class WindowPolicy < ApplicationPolicy
     return false unless user.present?
 
     wo = record.work_order
-    return wo.user_id == user.id if user.supervisor?
+    return supervisor_can_access?(wo) if user.supervisor?
 
     user.is_admin? || user.is_employee? || wo.user == user
   end
@@ -22,16 +22,29 @@ class WindowPolicy < ApplicationPolicy
     return false unless user.present?
 
     wo = record.work_order
-    return wo.user_id == user.id if user.supervisor?
+    return supervisor_can_access?(wo) if user.supervisor?
 
     user.is_admin? || user.is_employee? || wo.user == user
   end
 
   def destroy?
     return false unless user.present?
-    return record.work_order.user_id == user.id if user.supervisor?
 
-    user.is_admin? || record.work_order.user == user
+    wo = record.work_order
+    return supervisor_can_access?(wo) if user.supervisor?
+
+    user.is_admin? || wo.user == user
+  end
+
+  private
+
+  def supervisor_can_access?(work_order)
+    work_order.user_id == user.id || supervisor_assigned_to_building?(work_order)
+  end
+
+  def supervisor_assigned_to_building?(work_order)
+    WorkOrderAssignment.where(user_id: user.id).joins(:work_order)
+                       .where(work_orders: { building_id: work_order.building_id }).exists?
   end
 
   class Scope < Scope

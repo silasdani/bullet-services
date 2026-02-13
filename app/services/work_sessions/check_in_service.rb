@@ -7,6 +7,7 @@ module WorkSessions
 
     attribute :user
     attribute :work_order
+    attribute :ongoing_work
     attribute :latitude
     attribute :longitude
     attribute :address
@@ -15,6 +16,7 @@ module WorkSessions
     attr_accessor :work_session
 
     def call
+      derive_work_order_from_ongoing_work
       return self if validate_active_session.failure?
       return self if validate_contractor_assignment.failure?
       return self if validate_work_order_status.failure?
@@ -26,6 +28,10 @@ module WorkSessions
     end
 
     private
+
+    def derive_work_order_from_ongoing_work
+      self.work_order ||= ongoing_work&.work_order
+    end
 
     def validate_active_session
       # Use pessimistic locking to prevent concurrent check-ins
@@ -88,6 +94,7 @@ module WorkSessions
       @work_session = WorkSession.new(
         user: user,
         work_order: work_order,
+        ongoing_work: ongoing_work,
         checked_in_at: checked_in_at,
         latitude: latitude,
         longitude: longitude,
@@ -140,6 +147,7 @@ module WorkSessions
         contractor_id: user.id,
         contractor_name: user.name || user.email,
         work_session_id: work_session.id,
+        ongoing_work_id: ongoing_work&.id,
         location: work_session.address || "#{latitude}, #{longitude}"
       }
     end

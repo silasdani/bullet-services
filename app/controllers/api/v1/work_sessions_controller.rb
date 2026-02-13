@@ -55,6 +55,7 @@ module Api
         {
           id: session.id,
           work_order_id: session.work_order_id,
+          ongoing_work_id: session.ongoing_work_id,
           work_order_name: session.work_order&.name || 'Unknown',
           checked_in_at: session.checked_in_at,
           checked_out_at: session.checked_out_at,

@@ -48,8 +48,8 @@ class WorkOrderPolicy < ApplicationPolicy
   def update?
     return false unless user.present?
     return true if contractor_or_general_contractor?
-    # Supervisor can only update work orders they created
-    return record.user_id == user.id if user.supervisor?
+    # Supervisor can update work orders they created or in buildings they're assigned to
+    return supervisor_can_show? if user.supervisor?
 
     admin_or_employee_or_owner?
   end
@@ -58,8 +58,8 @@ class WorkOrderPolicy < ApplicationPolicy
     return false unless user.present?
     # Contractors and general contractors cannot publish/unpublish
     return false if contractor_or_general_contractor?
-    # Supervisors can publish/unpublish work orders they created
-    return record.user_id == user.id if user.supervisor?
+    # Supervisors can publish/unpublish work orders they created or in assigned buildings
+    return supervisor_can_show? if user.supervisor?
 
     user.is_admin? || record.user == user
   end

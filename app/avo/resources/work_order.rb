@@ -16,7 +16,10 @@ module Avo
         field :id, as: :id, link_to_resource: true
         field :reference_number, as: :text, required: true, filterable: true
         field :name, as: :text, required: true, filterable: true
-        field :slug, as: :text, readonly: true, hide_on: [:index]
+        field :slug, as: :text, readonly: true, hide_on: [:index], as_html: true do
+          slug = record.slug
+          "<a href='/wrs/#{slug}' target='_blank' class='font-semibold text-blue-600 hover:text-blue-500 hover:underline'>#{slug}</a>"
+        end
         field :building, as: :belongs_to, required: true, filterable: true
         field :user, as: :belongs_to, required: true, filterable: true
         field :user_status_badge, as: :user_status_badge, association: :user, only_on: %i[index show],

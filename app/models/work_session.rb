@@ -5,6 +5,9 @@ class WorkSession < ApplicationRecord
 
   belongs_to :user
   belongs_to :work_order, foreign_key: :work_order_id
+  belongs_to :ongoing_work, optional: true
+
+  before_validation :set_work_order_from_ongoing_work
 
   validates :checked_in_at, presence: true
   validate :checked_out_after_check_in, if: -> { checked_out_at.present? }
@@ -14,6 +17,7 @@ class WorkSession < ApplicationRecord
   scope :completed, -> { where.not(checked_out_at: nil) }
   scope :for_user, ->(user) { where(user: user) }
   scope :for_work_order, ->(work_order) { where(work_order: work_order) }
+  scope :for_ongoing_work, ->(ongoing_work) { where(ongoing_work: ongoing_work) }
   scope :recent, -> { order(checked_in_at: :desc) }
 
   def active?
@@ -46,6 +50,12 @@ class WorkSession < ApplicationRecord
   end
 
   private
+
+  def set_work_order_from_ongoing_work
+    return unless ongoing_work.present? && work_order_id.blank?
+
+    self.work_order_id = ongoing_work.work_order_id
+  end
 
   def checked_out_after_check_in
     return unless checked_out_at && checked_in_at

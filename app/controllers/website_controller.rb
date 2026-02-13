@@ -81,7 +81,7 @@ class WebsiteController < ApplicationController
   end
 
   def wrs_decision_params
-    params.require(:wrs_decision_form).permit(:first_name, :last_name, :email, :decision, :accept_terms)
+    params.require(:work_order_decision_form).permit(:first_name, :last_name, :email, :decision, :accept_terms)
   end
 
   def process_wrs_decision
@@ -123,7 +123,7 @@ class WebsiteController < ApplicationController
   def verify_wrs_decision_request
     return if request.get? || request.head?
 
-    unless params[:wrs_decision_form].present?
+    unless params[:work_order_decision_form].present?
       Rails.logger.warn "WRS decision request missing form parameters from #{request.remote_ip}"
       redirect_to wrs_show_path(slug: params[:slug]),
                   alert: 'Invalid request. Please try again.',

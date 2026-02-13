@@ -94,7 +94,14 @@ Rails.application.routes.draw do
           get :active
         end
       end
-      resources :ongoing_works, only: [ :show, :update, :destroy ]
+      resources :ongoing_works, only: [ :show, :update, :destroy ] do
+        member do
+          post :check_in
+          post :check_out
+          post :publish
+        end
+        resources :work_sessions, only: [ :index ], controller: 'ongoing_works/work_sessions'
+      end
       resources :timesheets, only: [ :index ] do
         collection do
           get :export
