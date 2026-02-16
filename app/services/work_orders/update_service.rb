@@ -74,16 +74,31 @@ module WorkOrders
     end
 
     def update_window_attributes(window, window_attrs)
-      attach_window_image_if_provided(window, window_attrs[:image])
+      replace_window_images_if_provided(window, window_attrs[:image], window_attrs[:images])
       return unless update_window_fields?(window, window_attrs)
 
       update_window_tools(window, window_attrs[:tools_attributes]) if window_attrs[:tools_attributes]
     end
 
-    def attach_window_image_if_provided(window, image)
-      return unless image.present?
+    def replace_window_images_if_provided(window, image, images)
+      # Support both single image (backwards compatibility) and multiple images
+      images_to_attach = []
 
-      window.images.attach(image)
+      # Handle multiple images (array format: images[])
+      if images.present?
+        images_to_attach = images.is_a?(Array) ? images : [images]
+      # Handle single image (backwards compatibility: image)
+      elsif image.present?
+        images_to_attach = [image]
+      end
+
+      return if images_to_attach.empty?
+
+      # When updating with new images, replace all existing images
+      # This ensures the new image becomes the primary (first) image
+      # This prevents accumulation of old images when updating
+      window.images.purge if window.images.attached?
+      window.images.attach(images_to_attach)
     end
 
     def update_window_fields?(window, window_attrs)
@@ -101,7 +116,7 @@ module WorkOrders
       return if window_attrs[:location].blank?
 
       window = build_new_window(window_attrs)
-      attach_window_image_if_provided(window, window_attrs[:image])
+      replace_window_images_if_provided(window, window_attrs[:image], window_attrs[:images])
       return unless save_new_window?(window)
 
       create_window_tools(window, window_attrs[:tools_attributes]) if window_attrs[:tools_attributes]
