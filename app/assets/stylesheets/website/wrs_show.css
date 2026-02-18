@@ -81,6 +81,12 @@ body {
   pointer-events: auto;
 }
 
+/* Collapsible decision form header */
+.wrs-decision-collapsible summary::-webkit-details-marker,
+.wrs-decision-collapsible summary::marker {
+  display: none;
+}
+
 /* ============================================
    Form Field Groups
    ============================================ */

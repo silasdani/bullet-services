@@ -353,7 +353,12 @@
         <% unless @wrs.invoices.exists? %>
           <div id="floating-decision-form">
             <div class="bg-[var(--color-surface)] border-t border-[var(--color-border-divider)] shadow-[0_-8px_30px_rgba(0,0,0,0.12)]">
-              <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+              <details class="group wrs-decision-collapsible" open>
+                <summary class="flex justify-between items-center cursor-pointer px-4 sm:px-6 lg:px-8 py-4 list-none hover:bg-gray-50/50 transition-colors select-none">
+                  <h3 class="font-semibold text-[var(--color-primary-text)]">Confirm your decision</h3>
+                  <span class="material-symbols-outlined text-[var(--color-secondary-text)] group-open:rotate-180 transition-transform duration-200">expand_more</span>
+                </summary>
+              <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 border-t border-[var(--color-border-divider)]">
                 <% if flash[:alert].present? %>
                   <div class="mb-4 rounded-md bg-red-50 p-4 text-sm text-red-800 border border-red-200">
                     <%= flash[:alert] %>
@@ -431,6 +436,7 @@
                   </div>
                 <% end %>
               </div>
+              </details>
             </div>
           </div>
         <% end %>
