@@ -5,6 +5,7 @@ class Building < ApplicationRecord
   include Geocodable
 
   has_many :work_orders, dependent: :restrict_with_error
+  has_many_attached :schedule_of_condition_images
 
   validates :name, presence: true
   validates :street, presence: true

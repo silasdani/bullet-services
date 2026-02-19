@@ -89,6 +89,7 @@ Rails.application.routes.draw do
       resources :buildings do
         member do
           get :work_orders
+          put :schedule_of_condition
         end
       end
 

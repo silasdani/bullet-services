@@ -5,7 +5,7 @@ module Api
     class BuildingsController < Api::V1::BaseController
       include BuildingsWorkOrderListing
 
-      before_action :set_building, only: %i[show update destroy work_orders]
+      before_action :set_building, only: %i[show update destroy work_orders schedule_of_condition]
 
       def index
         authorize Building
@@ -148,6 +148,24 @@ module Api
         render_paginated_work_orders
       end
 
+      def schedule_of_condition
+        authorize @building, :update?
+
+        if update_schedule_of_condition
+          @building.reload
+          @building.schedule_of_condition_images.reload if @building.schedule_of_condition_images.attached?
+          render_success(
+            data: BuildingSerializer.new(@building).serializable_hash,
+            message: 'Schedule of Condition updated successfully'
+          )
+        else
+          render_error(
+            message: 'Failed to update Schedule of Condition',
+            details: @building.errors.full_messages
+          )
+        end
+      end
+
       def render_paginated_work_orders
         collection = work_order_collection_for_building.page(@page).per(@per_page)
         render_success(data: serialize_work_order_page(collection), meta: pagination_meta(collection))
@@ -168,13 +186,61 @@ module Api
       private
 
       def set_building
-        @building = Building.includes(:work_orders).find(params[:id])
+        @building = Building.includes(:work_orders, schedule_of_condition_images_attachments: :blob).find(params[:id])
       end
 
       def building_params
         params.require(:building).permit(
-          :name, :street, :city, :country, :zipcode
+          :name, :street, :city, :country, :zipcode,
+          :schedule_of_condition_notes,
+          :purge_all_images,
+          purge_image_ids: [],
+          schedule_of_condition_images: []
         )
+      end
+
+      def update_schedule_of_condition
+        if building_params.key?(:schedule_of_condition_notes)
+          @building.schedule_of_condition_notes = building_params[:schedule_of_condition_notes]
+        end
+
+        if ['true', true].include?(building_params[:purge_all_images])
+          @building.schedule_of_condition_images.purge if @building.schedule_of_condition_images.attached?
+        else
+          # Purge specific images by ID if provided
+          if building_params[:purge_image_ids].present?
+            purge_specific_images(building_params[:purge_image_ids])
+          end
+
+          # Attach new images if provided
+          if building_params[:schedule_of_condition_images].present?
+            building_params[:schedule_of_condition_images].each do |image|
+              next unless image.present?
+              next if image.is_a?(String) && image.empty?
+
+              @building.schedule_of_condition_images.attach(image)
+            end
+          end
+        end
+
+        if @building.save
+          @building.schedule_of_condition_images.reload if @building.schedule_of_condition_images.attached?
+          true
+        else
+          false
+        end
+      end
+
+      def purge_specific_images(image_ids)
+        return unless @building.schedule_of_condition_images.attached?
+
+        # Convert string IDs to integers
+        ids_to_purge = Array(image_ids).map(&:to_i).compact
+        return if ids_to_purge.empty?
+
+        # Find and purge only the specified attachments
+        attachments_to_purge = @building.schedule_of_condition_images_attachments.where(id: ids_to_purge)
+        attachments_to_purge.each(&:purge)
       end
 
       def should_show_all_work_orders?(user)

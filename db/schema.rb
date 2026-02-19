@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_13_000003) do
+ActiveRecord::Schema[8.0].define(version: 2026_02_18_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -53,6 +53,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_13_000003) do
     t.datetime "deleted_at"
     t.decimal "latitude", precision: 10, scale: 7
     t.decimal "longitude", precision: 10, scale: 7
+    t.text "schedule_of_condition_notes"
     t.index "lower(TRIM(BOTH FROM street)), lower(TRIM(BOTH FROM city)), lower(TRIM(BOTH FROM COALESCE(zipcode, ''::character varying)))", name: "index_buildings_on_unique_address", unique: true, where: "(deleted_at IS NULL)"
     t.index ["deleted_at"], name: "index_buildings_on_deleted_at"
     t.index ["latitude", "longitude"], name: "index_buildings_on_latitude_and_longitude"
