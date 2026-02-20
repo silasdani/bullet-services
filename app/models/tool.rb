@@ -49,7 +49,7 @@ class Tool < ApplicationRecord
       '3 sets epoxy resin' => 450,
       '500mm timber splice repair' => 90,
       '1000mm timber splice repair' => 150,
-      'Conservation joint repair' => 25,
+      'Conservation joint repair' => 10,
       'Easing and adjusting of sash window' => 100,
       'Front face repair to timber cill' => 225,
       'New bottom rail to window casement' => 130,

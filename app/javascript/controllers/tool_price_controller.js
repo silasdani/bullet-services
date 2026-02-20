@@ -4,22 +4,22 @@ document.addEventListener('DOMContentLoaded', function () {
       connect() {
         const prices = {
           'No Works Required': 0,
-          '½ set epoxy resin': 60,
-          '1 set epoxy resin': 100,
-          '2 sets epoxy resin': 200,
-          '3 sets epoxy resin': 300,
-          '500mm timber splice repair': 70,
-          '1000mm timber splice repair': 120,
-          'Conservation joint repair': 25,
-          'Easing and adjusting of sash window': 288,
-          'Front face repair to timber cill': 221,
-          'New bottom rail to window casement': 221,
-          'New glazing panel': 288,
-          'New timber cill complete': 221,
-          'New timber sash complete': 1210,
-          'Replacement sash cords': 144,
-          'Splice repair to window jamb': 145,
-          'Whole tube of epoxy resin': 100
+          '½ set epoxy resin': 90,
+          '1 set epoxy resin': 150,
+          '2 sets epoxy resin': 300,
+          '3 sets epoxy resin': 450,
+          '500mm timber splice repair': 90,
+          '1000mm timber splice repair': 150,
+          'Conservation joint repair': 10,
+          'Easing and adjusting of sash window': 100,
+          'Front face repair to timber cill': 225,
+          'New bottom rail to window casement': 130,
+          'New glazing panel': 275,
+          'New timber cill complete': 285,
+          'New timber sash complete': 375,
+          'Replacement sash cords': 100,
+          'Splice repair to window jamb': 100,
+          'Whole tube of epoxy resin': 150
         }
 
         const findFields = () => {

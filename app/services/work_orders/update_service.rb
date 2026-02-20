@@ -213,6 +213,8 @@ module WorkOrders
     end
 
     def calculate_totals
+      # Reload so in-memory windows/tools have the updated prices before recalculating
+      work_order.reload
       work_order.save! # This will trigger the before_save callback to recalculate totals
     end
 

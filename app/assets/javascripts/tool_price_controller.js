@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
   if (window.Stimulus) {
     window.Stimulus.register("tool-price", class extends window.Stimulus.Controller {
       connect() {
@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
           '3 sets epoxy resin': 300,
           '500mm timber splice repair': 70,
           '1000mm timber splice repair': 120,
-          'Conservation joint repair': 25,
+          'Conservation joint repair': 10,
           'Easing and adjusting of sash window': 288,
           'Front face repair to timber cill': 221,
           'New bottom rail to window casement': 221,
@@ -25,19 +25,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const findFields = () => {
           const form = this.element.closest('form') || document.querySelector('form')
           if (!form) return { nameSelect: null, priceInput: null }
-          
-          const nameSelect = form.querySelector('select[name*="name"]') || 
-                             form.querySelector('select[id*="name"]')
-          
+
+          const nameSelect = form.querySelector('select[name*="name"]') ||
+            form.querySelector('select[id*="name"]')
+
           const priceInput = form.querySelector('input[name*="price"]') ||
-                            form.querySelector('input[id*="price"]')
-          
+            form.querySelector('input[id*="price"]')
+
           return { nameSelect, priceInput }
         }
 
         const setupPriceUpdate = () => {
           const { nameSelect, priceInput } = findFields()
-          
+
           if (nameSelect && priceInput) {
             const updatePrice = () => {
               const selectedName = nameSelect.value
@@ -47,13 +47,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 priceInput.dispatchEvent(new Event("change", { bubbles: true }))
               }
             }
-            
+
             nameSelect.addEventListener('change', updatePrice)
-            
+
             if (nameSelect.value) {
               updatePrice()
             }
-            
+
             return true
           }
           return false
