@@ -83,8 +83,10 @@ Rails.application.configure do
     config.cache_store = :memory_store
   end
 
-  # Active Job adapter (default to inline for low traffic; can toggle via ENV)
-  active_job_adapter = ENV.fetch("ACTIVE_JOB_ADAPTER", "inline").to_sym
+  # Active Job adapter: async runs jobs in background threads and supports retries.
+  # Inline does NOT support retries (raises NotImplementedError on enqueue_at).
+  # Use solid_queue for persistent queues.
+  active_job_adapter = ENV.fetch("ACTIVE_JOB_ADAPTER", "async").to_sym
   config.active_job.queue_adapter = active_job_adapter
   if active_job_adapter == :solid_queue
     config.solid_queue.connects_to = { database: { writing: :queue } }
