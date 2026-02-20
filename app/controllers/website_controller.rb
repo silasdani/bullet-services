@@ -96,7 +96,7 @@ class WebsiteController < ApplicationController
 
   def render_invalid_wrs_decision
     flash.now[:alert] = 'Please correct the errors below.'
-    render :wrs_show, status: :unprocessable_entity
+    render :wrs_show, status: :unprocessable_content
   end
 
   def handle_wrs_decision_result(result)
@@ -106,7 +106,7 @@ class WebsiteController < ApplicationController
     end
 
     flash.now[:alert] = 'Something went wrong while processing your decision. Please try again.'
-    render :wrs_show, status: :unprocessable_entity
+    render :wrs_show, status: :unprocessable_content
   end
 
   def verify_contact_form_request

@@ -14,4 +14,16 @@ class WorkOrderDecisionForm
   validates :decision, presence: true, inclusion: { in: %w[accept decline] }
   validates :accept_terms, acceptance: { accept: true }
   validates :email, format: { with: URI::MailTo::EMAIL_REGEXP, message: 'is invalid' }
+
+  def first_name=(value)
+    super(value.to_s.strip)
+  end
+
+  def last_name=(value)
+    super(value.to_s.strip)
+  end
+
+  def email=(value)
+    super(value.to_s.strip)
+  end
 end
