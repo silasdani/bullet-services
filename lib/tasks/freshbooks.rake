@@ -206,25 +206,33 @@ namespace :freshbooks do
 
   desc 'Refresh access token using refresh token'
   task refresh_token: :environment do
-    refresh_token = ENV.fetch('FRESHBOOKS_REFRESH_TOKEN', nil)
-    client_id = ENV.fetch('FRESHBOOKS_CLIENT_ID', nil)
-    client_secret = ENV.fetch('FRESHBOOKS_CLIENT_SECRET', nil)
+    config = Rails.application.config.freshbooks
+    refresh_token = ENV.fetch('FRESHBOOKS_REFRESH_TOKEN', nil) || FreshbooksToken.current&.refresh_token
+    client_id = config[:client_id]
+    client_secret = config[:client_secret]
+    redirect_uri = config[:redirect_uri]
 
     if refresh_token.blank? || client_id.blank? || client_secret.blank?
       puts 'Error: FRESHBOOKS_REFRESH_TOKEN, FRESHBOOKS_CLIENT_ID, and FRESHBOOKS_CLIENT_SECRET must be set'
       exit 1
     end
 
+    if redirect_uri.blank?
+      puts 'Error: FRESHBOOKS_REDIRECT_URI must be set (required by FreshBooks for token refresh)'
+      exit 1
+    end
+
     puts 'Refreshing access token...'
 
     response = HTTParty.post(
-      'https://auth.freshbooks.com/oauth/token',
+      "#{config[:auth_base_url]}/oauth/token",
       body: {
         grant_type: 'refresh_token',
         refresh_token: refresh_token,
         client_id: client_id,
-        client_secret: client_secret
-      },
+        client_secret: client_secret,
+        redirect_uri: redirect_uri
+      }.to_json,
       headers: { 'Content-Type' => 'application/json' }
     )
 
@@ -234,11 +242,22 @@ namespace :freshbooks do
       new_refresh_token = data['refresh_token'] || refresh_token
       expires_in = data['expires_in']
 
-      puts "\n✅ Token refreshed!\n\n"
-      puts "Update your .env file:\n\n"
-      puts "FRESHBOOKS_ACCESS_TOKEN=#{access_token}"
-      puts "FRESHBOOKS_REFRESH_TOKEN=#{new_refresh_token}" if new_refresh_token != refresh_token
-      puts "\nToken expires in: #{expires_in} seconds (#{(expires_in / 3600.0).round(2)} hours)"
+      # Update database if we have a token record
+      token = FreshbooksToken.current
+      if token
+        token.update!(
+          access_token: access_token,
+          refresh_token: new_refresh_token,
+          token_expires_at: Time.current + expires_in.seconds
+        )
+        puts "\n✅ Token refreshed and saved to database!\n\n"
+      else
+        puts "\n✅ Token refreshed!\n\n"
+        puts "Update your .env file:\n\n"
+        puts "FRESHBOOKS_ACCESS_TOKEN=#{access_token}"
+        puts "FRESHBOOKS_REFRESH_TOKEN=#{new_refresh_token}" if new_refresh_token != refresh_token
+      end
+      puts "Token expires in: #{expires_in} seconds (#{(expires_in / 3600.0).round(2)} hours)"
     else
       puts "❌ Error: #{response.code}"
       puts response.body

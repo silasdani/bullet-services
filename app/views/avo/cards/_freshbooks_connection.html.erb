@@ -1,0 +1,41 @@
+<% token = FreshbooksToken.current %>
+<% oauth_configured = Rails.application.config.freshbooks[:client_id].present? && Rails.application.config.freshbooks[:redirect_uri].present? %>
+
+<div class="space-y-3">
+  <% if token %>
+    <div class="flex items-center gap-2">
+      <% if token.expired? %>
+        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+          Expired
+        </span>
+      <% elsif token.expires_soon? %>
+        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800">
+          Expiring soon
+        </span>
+      <% else %>
+        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+          Connected
+        </span>
+      <% end %>
+      <span class="text-sm text-gray-600">Business: <%= token.business_id %></span>
+    </div>
+    <p class="text-xs text-gray-500">
+      Expires: <%= token.token_expires_at.strftime('%b %d, %Y %H:%M') %>
+    </p>
+  <% else %>
+    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+      Not connected
+    </span>
+  <% end %>
+
+  <% if oauth_configured %>
+    <%= link_to freshbooks_reconnect_path,
+                class: "inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md",
+                data: { turbo: false } do %>
+      <%= token&.expired? ? 'Reconnect' : 'Reconnect' %>
+    <% end %>
+    <p class="text-xs text-gray-500 mt-1">One click → authorize on FreshBooks → done</p>
+  <% else %>
+    <p class="text-xs text-amber-600">Set FRESHBOOKS_CLIENT_ID and FRESHBOOKS_REDIRECT_URI to enable</p>
+  <% end %>
+</div>

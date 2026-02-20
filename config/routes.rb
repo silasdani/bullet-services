@@ -10,7 +10,8 @@ Rails.application.routes.draw do
   get "/wrs/:slug", to: "website#wrs_show", as: :wrs_show
   post "/wrs/:slug/decision", to: "website#wrs_decision", as: :wrs_decision
 
-  # FreshBooks OAuth callback
+  # FreshBooks OAuth: one-click reconnect redirects to FreshBooks; callback exchanges code for tokens
+  get "/freshbooks/reconnect", to: "freshbooks#reconnect", as: :freshbooks_reconnect
   get "/freshbooks/callback", to: "freshbooks_callback#callback", as: :freshbooks_callback
 
   # HTML Devise routes for admin/superadmin browser login (keep default helpers like new_user_session_path)

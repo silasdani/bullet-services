@@ -6,6 +6,23 @@ module Freshbooks
       new.exchange_code(code)
     end
 
+    def self.auth_url
+      new.auth_url
+    end
+
+    def auth_url
+      config = Rails.application.config.freshbooks
+      raise FreshbooksError, 'FRESHBOOKS_CLIENT_ID and FRESHBOOKS_REDIRECT_URI required' if config[:client_id].blank? || config[:redirect_uri].blank?
+
+      base = config[:auth_base_url] || 'https://auth.freshbooks.com'
+      params = {
+        client_id: config[:client_id],
+        response_type: 'code',
+        redirect_uri: config[:redirect_uri]
+      }
+      "#{base}/oauth/authorize?#{params.to_query}"
+    end
+
     def exchange_code(code)
       validate_oauth_config
       response = request_token_exchange(code)

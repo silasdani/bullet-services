@@ -9,6 +9,8 @@ module Avo
       self.grid_cols = 3
 
       def cards
+        card Avo::Cards::FreshbooksConnection
+
         card Avo::Cards::UsersCount
         card Avo::Cards::WorkOrderCount
         card Avo::Cards::OngoingWorksCount

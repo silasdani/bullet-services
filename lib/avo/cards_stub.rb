@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Stub for Avo::Cards::MetricCard when Avo Pro (dashboards) is not installed.
+# Stub for Avo::Cards when Avo Pro (dashboards) is not installed.
 # This allows the app to boot. Add the avo_pro gem for full dashboard support.
 # See: https://docs.avohq.io/3.0/installation.html
 
@@ -19,6 +19,17 @@ module Avo
         def result(value)
           value
         end
+      end
+    end
+
+    unless const_defined?(:PartialCard, false)
+      class PartialCard
+        class_attribute :id, :label, :description, :cols, :rows, :partial,
+                        :display_header, :visible, instance_accessor: false, default: nil
+
+        self.cols = 1
+        self.rows = 1
+        self.display_header = true
       end
     end
   end
