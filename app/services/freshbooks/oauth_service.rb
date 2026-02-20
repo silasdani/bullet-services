@@ -38,8 +38,10 @@ module Freshbooks
 
     def request_token_exchange(code)
       config = Rails.application.config.freshbooks
+      # Token endpoint is api.freshbooks.com per https://www.freshbooks.com/api/authentication
+      token_url = "#{config[:api_base_url]}/auth/oauth/token"
       HTTParty.post(
-        "#{config[:auth_base_url]}/oauth/token",
+        token_url,
         body: {
           grant_type: 'authorization_code',
           code: code,

@@ -224,8 +224,9 @@ namespace :freshbooks do
 
     puts 'Refreshing access token...'
 
+    token_url = "#{config[:api_base_url]}/auth/oauth/token"
     response = HTTParty.post(
-      "#{config[:auth_base_url]}/oauth/token",
+      token_url,
       body: {
         grant_type: 'refresh_token',
         refresh_token: refresh_token,

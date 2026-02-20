@@ -35,19 +35,20 @@ module Freshbooks
           nil
         )
       end
-      if config[:redirect_uri].blank?
-        raise FreshbooksError.new(
-          'FRESHBOOKS_REDIRECT_URI required for token refresh (must match the redirect URI used during authorization)',
-          nil,
-          nil
-        )
-      end
+      return unless config[:redirect_uri].blank?
+
+      raise FreshbooksError.new(
+        'FRESHBOOKS_REDIRECT_URI required for token refresh (must match the redirect URI used during authorization)',
+        nil,
+        nil
+      )
     end
 
     def request_token_refresh
       config = Rails.application.config.freshbooks
-      # Per FreshBooks docs: refresh request must include redirect_uri (same as authorization)
-      # https://www.freshbooks.com/api/get-authenticated-on-the-freshbooks-api
+      # Per FreshBooks docs: token endpoint is api.freshbooks.com (not auth.freshbooks.com)
+      # https://www.freshbooks.com/api/authentication
+      token_url = "#{config[:api_base_url]}/auth/oauth/token"
       body = {
         grant_type: 'refresh_token',
         refresh_token: @refresh_token,
@@ -56,7 +57,7 @@ module Freshbooks
         redirect_uri: config[:redirect_uri]
       }
       HTTParty.post(
-        "#{config[:auth_base_url]}/oauth/token",
+        token_url,
         body: body.to_json,
         headers: { 'Content-Type' => 'application/json' }
       )
