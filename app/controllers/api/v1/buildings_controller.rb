@@ -208,9 +208,7 @@ module Api
           @building.schedule_of_condition_images.purge if @building.schedule_of_condition_images.attached?
         else
           # Purge specific images by ID if provided
-          if building_params[:purge_image_ids].present?
-            purge_specific_images(building_params[:purge_image_ids])
-          end
+          purge_specific_images(building_params[:purge_image_ids]) if building_params[:purge_image_ids].present?
 
           # Attach new images if provided
           if building_params[:schedule_of_condition_images].present?

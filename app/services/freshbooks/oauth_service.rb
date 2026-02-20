@@ -12,7 +12,10 @@ module Freshbooks
 
     def auth_url
       config = Rails.application.config.freshbooks
-      raise FreshbooksError, 'FRESHBOOKS_CLIENT_ID and FRESHBOOKS_REDIRECT_URI required' if config[:client_id].blank? || config[:redirect_uri].blank?
+      if config[:client_id].blank? || config[:redirect_uri].blank?
+        raise FreshbooksError,
+              'FRESHBOOKS_CLIENT_ID and FRESHBOOKS_REDIRECT_URI required'
+      end
 
       base = config[:auth_base_url] || 'https://auth.freshbooks.com'
       params = {
