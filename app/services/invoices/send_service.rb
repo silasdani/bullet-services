@@ -56,6 +56,8 @@ module Invoices
 
       raise StandardError, 'Could not retrieve invoice from FreshBooks' unless current_invoice
 
+      enable_online_payments(freshbooks_invoice.freshbooks_id)
+
       lines = build_lines(current_invoice)
 
       updated_invoice = invoices_client.update(
@@ -127,6 +129,22 @@ module Invoices
 
     def log_error(message)
       Rails.logger.error("Failed to send invoice: #{message}")
+    end
+
+    # Enable online payments so FreshBooks email shows "Pay Invoice" instead of "View Invoice"
+    # Uses account's configured gateway if available, otherwise tries stripe → paypal → fbpay
+    def enable_online_payments(invoice_id)
+      payment_options = Freshbooks::PaymentOptions.new
+      gateways = [payment_options.list&.dig('gateway_name')].compact
+      gateways = %w[stripe paypal fbpay] if gateways.empty?
+
+      gateways.find do |gateway|
+        payment_options.enable_for_invoice(invoice_id, gateway_name: gateway, has_credit_card: true)
+        true
+      rescue FreshbooksError, StandardError => e
+        Rails.logger.debug("Payment gateway #{gateway} not available: #{e.message}")
+        false
+      end
     end
   end
 end

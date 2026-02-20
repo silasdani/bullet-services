@@ -340,6 +340,19 @@ FRESHBOOKS_BUSINESS_ID=your_business_id
    - Set up alerts for token expiration
    - Automate token refresh where possible
 
+## Online Payments ("Pay Invoice" in Emails)
+
+To show **Pay Invoice** instead of **View Invoice** when sending invoices:
+
+1. **Enable Advanced Payments** in FreshBooks (Add-ons → Advanced Payments)
+2. **Connect a payment gateway** (Stripe or PayPal) in FreshBooks Settings
+3. **Add OAuth scopes** in your app at https://my.freshbooks.com/#/developer:
+   - `user:online_payments:read`
+   - `user:online_payments:write`
+4. **Re-authorize** the app (revoke existing token, then run `rails freshbooks:show_auth_url` and complete OAuth again)
+
+Without these, invoices will still send but emails will show "View Invoice" instead of "Pay Invoice".
+
 ## Next Steps
 
 After successful setup:
