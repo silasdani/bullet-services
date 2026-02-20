@@ -32,7 +32,7 @@ module Freshbooks
     def build_unit_cost(line)
       {
         amount: line[:cost] || line[:unit_cost],
-        code: line[:currency] || 'USD'
+        code: line[:currency] || 'GBP'
       }
     end
 

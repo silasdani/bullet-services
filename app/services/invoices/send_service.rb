@@ -51,23 +51,28 @@ module Invoices
     # rubocop:disable Metrics/AbcSize
     def send_to_freshbooks(email_address)
       invoices_client = Freshbooks::Invoices.new
-      current_invoice = invoices_client.get(freshbooks_invoice.freshbooks_id)
+      # Include lines so we preserve them when updating (API requires all lines in PUT)
+      current_invoice = invoices_client.get(freshbooks_invoice.freshbooks_id, includes: ['lines'])
 
       raise StandardError, 'Could not retrieve invoice from FreshBooks' unless current_invoice
 
       lines = build_lines(current_invoice)
 
-      invoices_client.update(
+      updated_invoice = invoices_client.update(
         freshbooks_invoice.freshbooks_id,
         client_id: current_invoice['customerid'] || invoice.freshbooks_client_id,
         date: current_invoice['create_date'] || invoice.created_at&.to_date&.to_s,
         due_date: current_invoice['due_date'],
-        currency: current_invoice['currency_code'] || 'USD',
+        currency: current_invoice['currency_code'] || 'GBP',
         notes: current_invoice['notes'],
         lines: lines,
         action_email: true,
-        email_recipients: [email_address]
+        email_recipients: [email_address],
+        email_include_pdf: true
       )
+
+      # Use update response to sync status immediately (FreshBooks marks as sent when email is sent)
+      sync_status_from_response(updated_invoice) if updated_invoice.present?
     end
     # rubocop:enable Metrics/AbcSize
 
@@ -78,10 +83,33 @@ module Invoices
           description: line['description'],
           quantity: line['qty'] || 1,
           cost: line.dig('unit_cost', 'amount') || line['unit_cost'],
-          currency: line.dig('unit_cost', 'code') || 'USD',
+          currency: line.dig('unit_cost', 'code') || 'GBP',
           type: line['type'] || 0
         }
       end
+    end
+
+    def sync_status_from_response(freshbooks_data)
+      return unless freshbooks_invoice
+
+      normalized_status = determine_status(freshbooks_data)
+      return if normalized_status.blank?
+
+      freshbooks_invoice.update!(status: normalized_status)
+      invoice.update!(status: normalized_status, final_status: normalized_status)
+    end
+
+    def determine_status(invoice_data)
+      return 'voided' if invoice_data['vis_state'] == 1
+
+      raw_status = invoice_data['status'] || invoice_data['v3_status']
+      return nil if raw_status.blank?
+
+      # Handle numeric status (1=draft, 2=sent, 3=viewed, 4=paid, 5=void)
+      return Freshbooks::InvoiceStatusConverter.to_string_safe(raw_status) if raw_status.is_a?(Integer)
+      return raw_status.to_s.downcase if %w[draft sent viewed paid void voided].include?(raw_status.to_s.downcase)
+
+      Freshbooks::InvoiceStatusConverter.to_string_safe(raw_status) || raw_status.to_s.downcase
     end
 
     def sync_status

@@ -66,7 +66,7 @@ module Freshbooks
         date: invoice.created_at&.to_date || Date.current,
         # NOTE: FreshBooks API doesn't allow setting due_date during invoice creation
         # The due_date will be set by FreshBooks based on their default payment terms
-        currency: 'USD',
+        currency: 'GBP',
         notes: build_notes,
         tax_included: 'yes', # VAT is already included in the price
         tax_calculation: 'item',

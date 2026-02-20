@@ -23,9 +23,10 @@ module Freshbooks
       }
     end
 
-    def get(invoice_id)
+    def get(invoice_id, includes: [])
       path = build_path("invoices/invoices/#{invoice_id}")
-      response = make_request(:get, path)
+      query = includes.any? ? { 'include[]' => includes } : {}
+      response = make_request(:get, path, query: query)
       response.dig('response', 'result', 'invoice')
     end
 
@@ -88,7 +89,8 @@ module Freshbooks
         tax_calculation: params[:tax_calculation] || 'item',
         lines: build_lines(params[:lines] || []),
         action_email: params[:action_email],
-        email_recipients: params[:email_recipients]
+        email_recipients: params[:email_recipients],
+        email_include_pdf: params[:email_include_pdf]
       }
     end
 
@@ -113,7 +115,7 @@ module Freshbooks
     end
 
     def extract_currency_code(params)
-      params[:currency] || params[:currency_code] || 'USD'
+      params[:currency] || params[:currency_code] || 'GBP'
     end
 
     def add_status_if_present(payload, params)

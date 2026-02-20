@@ -8,7 +8,7 @@ This guide walks you through setting up FreshBooks OAuth authentication in produ
    - Go to https://my.freshbooks.com/#/developer
    - Create a new OAuth application
    - Note your `CLIENT_ID` and `CLIENT_SECRET`
-v
+
 2. **Production Environment Variables**
    Ensure these are set in your production environment:
    ```bash
@@ -149,11 +149,21 @@ If you see errors:
 
 ## Token Management
 
+### Token Lifecycle (FreshBooks)
+
+| Token Type        | Lifespan              | Notes                                                                 |
+|-------------------|-----------------------|-----------------------------------------------------------------------|
+| **Access token**  | 12 hours              | API calls return 401 Unauthorized after expiry                       |
+| **Authorization code** | 5 minutes         | One-time use; exchange for tokens immediately                        |
+| **Refresh token** | One-time use          | Each refresh returns a new refresh token; store it for next refresh   |
+
+**Best practice:** Refresh the access token proactively (at least once every 12 hours). This app refreshes 1 hour before expiry.
+
 ### Automatic Token Refresh
 
 Tokens are automatically refreshed when:
 - API calls return 401 Unauthorized
-- Token is about to expire (within 5 minutes)
+- Token is about to expire (within 1 hour)
 - Using `Freshbooks::BaseClient` services
 
 ### Manual Token Refresh
@@ -165,9 +175,10 @@ rails freshbooks:refresh_token
 ```
 
 **Required Environment Variables:**
-- `FRESHBOOKS_REFRESH_TOKEN` - Your current refresh token
+- `FRESHBOOKS_REFRESH_TOKEN` - Your current refresh token (or stored in database)
 - `FRESHBOOKS_CLIENT_ID` - Your OAuth client ID
 - `FRESHBOOKS_CLIENT_SECRET` - Your OAuth client secret
+- `FRESHBOOKS_REDIRECT_URI` - Must match the URI used during authorization
 
 **Expected Output:**
 ```
