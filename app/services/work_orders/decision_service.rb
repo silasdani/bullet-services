@@ -51,13 +51,16 @@ module WorkOrders
           return
         end
 
+        # Create WorkOrderDecision first in its own transaction so it's never lost
+        # even if later steps (invoice, background job) fail
+        record_decision!('approved')
+
         ActiveRecord::Base.transaction do
-          record_decision!('approved')
           fb_client = ensure_freshbooks_client!
           invoice = create_local_invoice!(fb_client)
           mark_work_order_as_approved!
 
-          # Queue FreshBooks invoice creation as background job
+          # Queue FreshBooks invoice creation as background job (perform_later)
           queue_freshbooks_invoice_creation(invoice, fb_client)
 
           self.result = { invoice_id: invoice.id }
@@ -72,8 +75,10 @@ module WorkOrders
           return
         end
 
+        # Create WorkOrderDecision first in its own transaction so it's never lost
+        record_decision!('rejected')
+
         ActiveRecord::Base.transaction do
-          record_decision!('rejected')
           mark_work_order_as_rejected!
           send_admin_decline_email!
         end

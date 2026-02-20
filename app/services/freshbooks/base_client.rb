@@ -52,6 +52,7 @@ module Freshbooks
     end
 
     def make_request(method, path, options = {})
+      refresh_token_if_needed
       prepare_request(method, path, options)
       response = execute_request(method, path, options)
 

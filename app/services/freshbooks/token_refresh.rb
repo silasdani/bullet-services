@@ -5,10 +5,11 @@ module Freshbooks
     def refresh_token_if_needed
       return unless @refresh_token.present?
 
-      # Check if token is expired (if we have expiry info)
       token = FreshbooksToken.current
-      return unless token&.expires_soon?
+      # Refresh if token is expired or expires within 5 minutes
+      return unless token&.expires_soon? || token&.expired?
 
+      Rails.logger.info 'FreshBooks token expired or expiring soon, refreshing proactively...'
       refresh_access_token
     end
 

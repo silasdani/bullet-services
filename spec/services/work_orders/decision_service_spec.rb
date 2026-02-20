@@ -8,7 +8,7 @@ RSpec.describe WorkOrders::DecisionService do
 
   describe '#call' do
     context 'when decision is accept' do
-      it 'creates a FreshBooks client and invoice and marks work order as approved' do
+      it 'creates WorkOrderDecision, FreshBooks client and invoice and marks work order as approved' do
         allow(Freshbooks::Clients).to receive(:new).and_return(double(create: { 'id' => '123' }))
         allow_any_instance_of(Invoice)
           .to receive(:create_in_freshbooks!)
@@ -27,11 +27,13 @@ RSpec.describe WorkOrders::DecisionService do
 
         expect(result).to be_success
         expect(work_order.reload.status).to eq('approved')
+        expect(work_order.work_order_decision).to be_present
+        expect(work_order.work_order_decision.decision).to eq('approved')
       end
     end
 
     context 'when decision is decline' do
-      it 'marks work order as rejected and sends admin email' do
+      it 'creates WorkOrderDecision, marks work order as rejected and sends admin email' do
         allow(MailerSendEmailService).to receive(:new).and_return(double(call: true))
 
         service = described_class.new(
@@ -46,6 +48,8 @@ RSpec.describe WorkOrders::DecisionService do
 
         expect(result).to be_success
         expect(work_order.reload.status).to eq('rejected')
+        expect(work_order.work_order_decision).to be_present
+        expect(work_order.work_order_decision.decision).to eq('rejected')
       end
     end
   end
