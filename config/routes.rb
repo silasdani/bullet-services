@@ -41,6 +41,8 @@ Rails.application.routes.draw do
     namespace :v1 do
       post "webhooks/freshbooks", to: "freshbooks_webhooks#create"
 
+      resources :tools, only: [:index]
+
       resources :work_orders do
         member do
           post :restore
