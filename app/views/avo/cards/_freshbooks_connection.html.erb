@@ -1,5 +1,6 @@
 <% token = FreshbooksToken.current %>
 <% oauth_configured = Rails.application.config.freshbooks[:client_id].present? && Rails.application.config.freshbooks[:redirect_uri].present? %>
+<% api_check = (token && !token.expired?) ? Freshbooks::ConnectionCheckService.check : nil %>
 
 <div class="space-y-3">
   <% if token %>
@@ -17,11 +18,29 @@
           Connected
         </span>
       <% end %>
+      <% if api_check %>
+        <% if api_check[:ok] %>
+          <span class="inline-flex items-center gap-1 text-xs text-green-600" title="API connection verified">
+            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+            API OK
+          </span>
+        <% else %>
+          <span class="inline-flex items-center gap-1 text-xs text-red-600" title="<%= api_check[:error] %>">
+            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
+            API error
+          </span>
+        <% end %>
+      <% end %>
       <span class="text-sm text-gray-600">Business: <%= token.business_id %></span>
     </div>
     <p class="text-xs text-gray-500">
       Expires: <%= token.token_expires_at.strftime('%b %d, %Y %H:%M') %>
     </p>
+    <% if api_check && !api_check[:ok] %>
+      <p class="text-xs text-red-600" title="<%= api_check[:error] %>">
+        Connection check failed: <%= truncate(api_check[:error], length: 50) %>
+      </p>
+    <% end %>
   <% else %>
     <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
       Not connected
@@ -29,8 +48,9 @@
   <% end %>
 
   <% if oauth_configured %>
-    <%= link_to freshbooks_reconnect_path,
-                class: "inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md",
+    <%= link_to main_app.freshbooks_reconnect_path,
+                class: "inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md no-underline",
+                style: "background-color: #2563eb; color: white;",
                 data: { turbo: false } do %>
       <%= token&.expired? ? 'Reconnect' : 'Reconnect' %>
     <% end %>

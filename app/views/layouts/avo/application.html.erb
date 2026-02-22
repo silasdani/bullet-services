@@ -2,12 +2,12 @@
 <!-- ✨ Built with Avo • https://www.avohq.io/ -->
 <html lang="<%= I18n.default_locale %>" data-theme-controller="theme-toggle">
   <head>
-    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="icon" type="image/png" href="<%= asset_path('BLogo.png') %>">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <% if !Avo.configuration.turbo[:instant_click] %>
       <meta name="turbo-prefetch" content="false">
     <% end %>
-    <%= display_meta_tags site: Avo.configuration.app_name, reverse: true, separator: "—", icon: "/favicon.png" %>
+    <%= display_meta_tags site: Avo.configuration.app_name, reverse: true, separator: "—", icon: asset_path('BLogo.png') %>
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
     <%= javascript_tag nonce: true do %>

@@ -1,6 +1,13 @@
 <div class="flex flex-col space-y-8">
   <%= render Avo::PanelComponent.new(name: "Dashboard", description: "Overview of users, WRS, and invoices") do |c| %>
     <% c.with_body do %>
+      <div class="px-6 pt-6">
+        <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">FreshBooks</h3>
+        <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm max-w-md">
+          <%= render partial: "avo/cards/freshbooks_connection" %>
+        </div>
+      </div>
+
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
         <div class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 shadow-sm">
           <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Users</p>

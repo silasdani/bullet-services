@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= content_for?(:title) ? yield(:title) : "Admin - Bullet Services" %></title>
+    <link rel="icon" type="image/png" href="<%= asset_path('BLogo.png') %>">
     <%= csrf_meta_tags %>
     <%= stylesheet_link_tag "fonts", "admin_theme_variables", "admin_login", "data-turbo-track": "reload" %>
     <%= javascript_tag nonce: true do %>
