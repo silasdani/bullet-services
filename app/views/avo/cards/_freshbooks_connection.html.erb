@@ -47,15 +47,15 @@
     </span>
   <% end %>
 
-  <% if oauth_configured %>
+  <% if oauth_configured && !(token && api_check&.dig(:ok)) %>
     <%= link_to main_app.freshbooks_reconnect_path,
                 class: "inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md no-underline",
                 style: "background-color: #2563eb; color: white;",
                 data: { turbo: false } do %>
-      <%= token&.expired? ? 'Reconnect' : 'Reconnect' %>
+      Reconnect
     <% end %>
     <p class="text-xs text-gray-500 mt-1">One click → authorize on FreshBooks → done</p>
-  <% else %>
+  <% elsif !oauth_configured %>
     <p class="text-xs text-amber-600">Set FRESHBOOKS_CLIENT_ID and FRESHBOOKS_REDIRECT_URI to enable</p>
   <% end %>
 </div>
