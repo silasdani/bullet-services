@@ -350,7 +350,7 @@
         </main>
 
         <!-- Floating Decision Form (appears between schedule and approval sections) -->
-        <% unless @wrs.invoices.exists? %>
+        <% unless @wrs.decision? %>
           <div id="floating-decision-form">
             <div class="bg-[var(--color-surface)] border-t border-[var(--color-border-divider)] shadow-[0_-8px_30px_rgba(0,0,0,0.12)]">
               <details class="group wrs-decision-collapsible" open>
