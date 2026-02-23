@@ -8,7 +8,7 @@ class WorkOrderMailer < ApplicationMailer
 
     mail(
       to: admin_email,
-      bcc: MailerSendEmailService::CONFIRMATION_COPY_EMAILS,
+      cc: MailerSendEmailService::CONFIRMATION_COPY_EMAILS,
       subject: "ACTION REQUIRED | Invoice #{@invoice_number} for #{@address}"
     )
   end
@@ -24,7 +24,7 @@ class WorkOrderMailer < ApplicationMailer
 
     mail(
       to: admin_email,
-      bcc: MailerSendEmailService::CONFIRMATION_COPY_EMAILS,
+      cc: MailerSendEmailService::CONFIRMATION_COPY_EMAILS,
       subject: "WRS declined for #{@address}"
     )
   end
