@@ -26,7 +26,7 @@ Devise.setup do |config|
   # ==> Mailer Configuration
   # Configure the e-mail address which will be shown in Devise::Mailer.
   # This should be a verified sender in your MailerSend (or SMTP) account.
-  config.mailer_sender = ENV.fetch('MAILERSEND_FROM_EMAIL', 'no-reply@example.com')
+  config.mailer_sender = ENV.fetch('MAILERSEND_FROM_EMAIL', 'no-reply@bulletservices.co.uk')
 
   # Configure the class responsible to send e-mails.
   # config.mailer = 'Devise::Mailer'

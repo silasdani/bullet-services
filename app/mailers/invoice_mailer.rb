@@ -55,7 +55,7 @@ class InvoiceMailer < ApplicationMailer
 
   def mailer_from_address
     from_name = ENV.fetch('MAILERSEND_FROM_NAME', 'Bullet Services')
-    from_email = ENV.fetch('MAILERSEND_FROM_EMAIL', 'no-reply@example.com')
+    from_email = ENV.fetch('MAILERSEND_FROM_EMAIL', 'no-reply@bulletservices.co.uk')
     "#{from_name} <#{from_email}>"
   end
 

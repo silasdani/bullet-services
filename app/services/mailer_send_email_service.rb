@@ -22,6 +22,12 @@ class MailerSendEmailService < ApplicationService
   #     variables: { "name" => user.name }
   #   ).call
 
+  # Addresses that receive a separate copy email (from noreply) for client decision and contact form
+  CONFIRMATION_COPY_EMAILS = %w[
+    mm@bulletservices.co.uk
+    admin@bulletservices.co.uk
+  ].freeze
+
   attr_accessor :to, :subject, :text, :html, :from_email, :from_name, :template_id, :variables
 
   def initialize(to:, **options)
@@ -30,7 +36,7 @@ class MailerSendEmailService < ApplicationService
     @subject    = options[:subject]
     @text       = options[:text]
     @html       = options[:html]
-    @from_email = options[:from_email] || ENV.fetch('MAILERSEND_FROM_EMAIL', 'no-reply@example.com')
+    @from_email = options[:from_email] || ENV.fetch('MAILERSEND_FROM_EMAIL', 'no-reply@bulletservices.co.uk')
     @from_name  = options[:from_name] || ENV.fetch('MAILERSEND_FROM_NAME', 'Bullet Services')
     @template_id = options[:template_id]
     @variables   = options[:variables] || {}

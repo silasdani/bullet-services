@@ -98,14 +98,14 @@ Rails.application.configure do
 
   # Set host to be used by links generated in mailer templates.
   config.action_mailer.default_url_options = {
-    host: ENV.fetch("DEFAULT_URL_HOST", "example.com"),
+    host: ENV.fetch("DEFAULT_URL_HOST", "bulletservices.co.uk"),
     port: ENV.fetch("DEFAULT_URL_PORT", 443)
   }
 
   # Set ActiveStorage URL options for production
   # This ensures ActiveStorage proxy URLs use the correct host
   config.active_storage.default_url_options = {
-    host: ENV.fetch("DEFAULT_URL_HOST", "example.com"),
+    host: ENV.fetch("DEFAULT_URL_HOST", "bulletservices.co.uk"),
     protocol: "https"
   }
 

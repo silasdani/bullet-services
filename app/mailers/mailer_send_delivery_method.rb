@@ -28,7 +28,7 @@ class MailerSendDeliveryMethod
   end
 
   def extract_from_email(mail)
-    mail.from&.first || ENV.fetch('MAILERSEND_FROM_EMAIL', 'no-reply@example.com')
+    mail.from&.first || ENV.fetch('MAILERSEND_FROM_EMAIL', 'no-reply@bulletservices.co.uk')
   end
 
   def extract_from_name(mail)

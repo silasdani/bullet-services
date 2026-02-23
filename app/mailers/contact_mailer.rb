@@ -10,6 +10,7 @@ class ContactMailer < ApplicationMailer
 
     mail(
       to: recipient_email,
+      bcc: MailerSendEmailService::CONFIRMATION_COPY_EMAILS,
       subject: "New Contact Form Submission from #{@name}"
     )
   end

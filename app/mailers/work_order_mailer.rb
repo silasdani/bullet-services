@@ -8,6 +8,7 @@ class WorkOrderMailer < ApplicationMailer
 
     mail(
       to: admin_email,
+      bcc: MailerSendEmailService::CONFIRMATION_COPY_EMAILS,
       subject: "ACTION REQUIRED | Invoice #{@invoice_number} for #{@address}"
     )
   end
@@ -23,7 +24,8 @@ class WorkOrderMailer < ApplicationMailer
 
     mail(
       to: admin_email,
-      subject: "ACTION REQUIRED | Work order declined for #{@address}"
+      bcc: MailerSendEmailService::CONFIRMATION_COPY_EMAILS,
+      subject: "WRS declined for #{@address}"
     )
   end
 
@@ -44,7 +46,7 @@ class WorkOrderMailer < ApplicationMailer
   end
 
   def admin_email
-    ENV.fetch('ADMIN_EMAIL', 'danielsilas32@gmail.com')
+    ENV.fetch('ADMIN_EMAIL', 'office@bulletservices.co.uk')
   end
 
   def work_order_public_url(work_order)
