@@ -5,6 +5,7 @@ module Avo
     class User < Avo::BaseResource
       self.title = :email
       self.includes = []
+      self.record_selector = false
       self.search = {
         query: lambda {
           query.ransack(
@@ -18,11 +19,11 @@ module Avo
 
       def fields
         field :id, as: :id, link_to_resource: true
+        field :email, as: :text, required: true, filterable: true
+        field :status_badge, as: :user_status_badge, only_on: %i[index show], name: 'Status'
         field :first_name, as: :text, required: true, filterable: true
         field :last_name, as: :text, required: true, filterable: true
-        field :email, as: :text, required: true, filterable: true
         field :phone_no, as: :text, filterable: true
-        field :status_badge, as: :user_status_badge, only_on: %i[index show], name: 'Status'
         field :role, as: :select, enum: ::User.roles, required: true, filterable: true, hide_on: %i[index show]
         field :blocked, as: :boolean, filterable: true
         field :image, as: :file, is_image: true, hide_on: [:index]

@@ -3,6 +3,12 @@ html {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+/* Avo gradient background (matches mobile app) – light mode only */
+html:not(.dark) body.bg-application {
+  background: linear-gradient(to top, #EAEFFF, #F3F4F6) !important;
+  min-height: 100vh;
+}
+
 /* Header logo: light theme = colored logo, dark theme = white logo */
 .logo-placeholder .avo-logo-light {
   display: block;
