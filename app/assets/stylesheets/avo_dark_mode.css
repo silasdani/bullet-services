@@ -1,4 +1,13 @@
 /* Avo theme – uses admin_theme_variables.css (load first). .dark on html = dark mode. */
+
+/* Navbar: ensure solid background (arbitrary Tailwind values may not compile from ERB) */
+.avo-navbar {
+  background-color: #F3F4F6 !important;
+}
+html.dark .avo-navbar {
+  background-color: var(--admin-surface-alt) !important;
+}
+
 html {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
