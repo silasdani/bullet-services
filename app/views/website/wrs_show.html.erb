@@ -100,7 +100,7 @@
                             <span class="w-1.5 h-1.5 rounded-full bg-gray-300 flex-shrink-0"></span>
                             <span><%= tool.name %></span>
                           </div>
-                          <span class="font-medium font-mono text-[var(--color-primary-text)] md:hidden">£ <%= number_with_precision(tool_price || 0, precision: 0) %></span>
+                          <span class="font-medium font-mono text-[var(--color-primary-text)] md:hidden"><%= number_with_precision(tool_price || 0, precision: 0) %>£</span>
                         </div>
                       <% end %>
                     </div>
@@ -109,7 +109,7 @@
                       <div class="text-sm text-[var(--color-secondary-text)] italic bg-gray-100/50 inline-block px-2 py-1 rounded">
                         No Works Required
                       </div>
-                      <span class="font-mono text-[var(--color-secondary-text)] md:hidden">£ 0</span>
+                      <span class="font-mono text-[var(--color-secondary-text)] md:hidden">0£</span>
                     </div>
                   <% end %>
                 </div>
@@ -452,17 +452,11 @@
         <script>
           document.addEventListener('DOMContentLoaded', () => {
             const scheduleSection = document.getElementById('schedule-section');
-            const approvalSection = document.getElementById('approval-section');
             const floatingForm = document.getElementById('floating-decision-form');
             const decisionField = document.getElementById('decision-field');
             const form = document.getElementById('wrs-decision-form');
 
-            if (!floatingForm) {
-              console.error('Floating form not found');
-              return;
-            }
-
-            // Handle image zoom on click
+            // Handle image zoom on click (runs regardless of floating form)
             document.querySelectorAll('.image-zoom-container').forEach(container => {
               const img = container.querySelector('.wrs-window-image');
               if (!img) return;
@@ -500,22 +494,20 @@
               });
             });
 
-            // Handle Accept/Decline button clicks
-            document.querySelectorAll('[data-decision]').forEach(button => {
-              button.addEventListener('click', (e) => {
-                e.preventDefault();
-                const decision = button.getAttribute('data-decision');
-                if (decisionField) {
-                  decisionField.value = decision;
-                }
-                if (form) {
-                  form.submit();
-                }
+            // Handle Accept/Decline button clicks (only when form exists)
+            if (floatingForm) {
+              document.querySelectorAll('[data-decision]').forEach(button => {
+                button.addEventListener('click', (e) => {
+                  e.preventDefault();
+                  const decision = button.getAttribute('data-decision');
+                  if (decisionField) decisionField.value = decision;
+                  if (form) form.submit();
+                });
               });
-            });
+            }
 
             // Show/hide floating form based on scroll position
-            if (scheduleSection) {
+            if (scheduleSection && floatingForm) {
               const updateFormVisibility = () => {
                 const scheduleRect = scheduleSection.getBoundingClientRect();
                 const viewportHeight = window.innerHeight;
