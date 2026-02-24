@@ -85,53 +85,61 @@
                   <% end %>
                 </div>
 
-                        <!-- Scope of Work -->
-                        <div class="md:col-span-6 pt-1">
-                          <span class="md:hidden text-xs font-bold text-[var(--color-secondary-text)] uppercase mb-1 block">Scope</span>
-                          <% if window.tools.any? %>
-                            <div class="space-y-2 text-sm text-[var(--color-primary-text)]">
-                              <% window.tools.each do |tool| %>
-                                <div class="flex items-center gap-2">
-                                  <span class="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
-                                  <span><%= tool.name %></span>
-                                </div>
-                              <% end %>
-                            </div>
-                          <% else %>
-                            <div class="text-sm text-[var(--color-secondary-text)] italic bg-gray-100/50 inline-block px-2 py-1 rounded">
-                              No Works Required
-                            </div>
-                          <% end %>
-                        </div>
-
-                        <!-- Price -->
-                        <div class="md:col-span-2 text-right pt-1">
-                          <span class="md:hidden text-xs font-bold text-[var(--color-secondary-text)] uppercase mb-1 block">Price</span>
-                          <% if window.tools.any? %>
-                            <div class="space-y-1 text-sm font-medium font-mono text-[var(--color-primary-text)]">
-                              <% window.tools.each do |tool| %>
-                                <%
+                <!-- Scope & Price: mobile = aligned pairs, desktop = separate columns -->
+                <div class="md:col-span-6 pt-1">
+                  <span class="md:hidden text-xs font-bold text-[var(--color-secondary-text)] uppercase mb-1 block">Scope</span>
+                  <% if window.tools.any? %>
+                    <div class="space-y-2 text-sm text-[var(--color-primary-text)]">
+                      <% window.tools.each do |tool| %>
+                        <%
                           tool_price = tool.price
                           tool_price = tool_price / 100.0 if tool_price && tool_price > 1000
                         %>
-                                <div>£ <%= number_with_precision(tool_price || 0, precision: 0) %></div>
-                              <% end %>
-                            </div>
-                          <% else %>
-                            <div class="text-sm font-medium font-mono text-[var(--color-secondary-text)]">
-                              £ 0
-                            </div>
-                          <% end %>
+                        <div class="flex justify-between items-center gap-4 md:block">
+                          <div class="flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-gray-300 flex-shrink-0"></span>
+                            <span><%= tool.name %></span>
+                          </div>
+                          <span class="font-medium font-mono text-[var(--color-primary-text)] md:hidden">£ <%= number_with_precision(tool_price || 0, precision: 0) %></span>
                         </div>
+                      <% end %>
+                    </div>
+                  <% else %>
+                    <div class="flex justify-between items-center gap-4 md:block">
+                      <div class="text-sm text-[var(--color-secondary-text)] italic bg-gray-100/50 inline-block px-2 py-1 rounded">
+                        No Works Required
                       </div>
+                      <span class="font-mono text-[var(--color-secondary-text)] md:hidden">£ 0</span>
+                    </div>
+                  <% end %>
+                </div>
+
+                <!-- Price (desktop only) -->
+                <div class="hidden md:block md:col-span-2 text-right pt-1">
+                  <% if window.tools.any? %>
+                    <div class="space-y-1 text-sm font-medium font-mono text-[var(--color-primary-text)]">
+                      <% window.tools.each do |tool| %>
+                        <%
+                          tool_price = tool.price
+                          tool_price = tool_price / 100.0 if tool_price && tool_price > 1000
+                        %>
+                        <div>£ <%= number_with_precision(tool_price || 0, precision: 0) %></div>
+                      <% end %>
+                    </div>
+                  <% else %>
+                    <div class="text-sm font-medium font-mono text-[var(--color-secondary-text)]">
+                      £ 0
                     </div>
                   <% end %>
                 </div>
               </div>
             </div>
+          <% end %>
+        </div>
+      </div>
 
-            <!-- Approval Section -->
-            <div class="lg:col-span-12 mb-8" id="approval-section">
+      <!-- Approval Section -->
+      <div class="lg:col-span-12 mb-8" id="approval-section">
               <div class="bg-[var(--color-surface)] border border-[var(--color-border-divider)] shadow-sm">
                 <div class="px-6 py-5 border-b border-[var(--color-border-divider)]">
                   <h2 class="text-lg font-bold text-[var(--color-primary-text)]">Approval of works</h2>

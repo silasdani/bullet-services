@@ -4,11 +4,11 @@
     <!-- Gradient overlay from top to bottom (black) - only on home page -->
     <div class="absolute inset-0 bg-gradient-to-b from-black/80 to-transparent pointer-events-none"></div>
   <% end %>
-  <div class="relative flex items-center justify-between w-full">
-    <!-- Logo on the left -->
-    <div class="flex items-center">
-      <%= link_to root_path, class: "flex items-center z-10 relative ml-20" do %>
-        <%= image_tag "bll-logo_white.svg", alt: "Bullet Services", class: "h-10" %>
+  <div class="relative flex items-center w-full lg:justify-between">
+    <!-- Logo: centered on mobile (between edges), left-aligned on desktop -->
+    <div class="absolute left-0 right-0 flex justify-center pointer-events-none lg:static lg:pointer-events-auto lg:flex-1 lg:justify-start">
+      <%= link_to root_path, class: "flex items-center z-10 relative pointer-events-auto lg:ml-20" do %>
+        <%= image_tag "bll-logo_white.svg", alt: "Bullet Services", class: "h-7 md:h-10 w-auto max-w-[140px] md:max-w-none object-contain" %>
       <% end %>
     </div>
     <!-- Desktop Navigation links on the right (hidden on mobile) -->
@@ -20,7 +20,7 @@
     <!-- Mobile Menu Button (visible on mobile only) - Animated Hamburger -->
     <button
       data-mobile-menu-button
-      class="mobile-menu-button lg:hidden relative z-10"
+      class="mobile-menu-button lg:hidden relative z-20"
       aria-label="Toggle navigation menu"
       aria-expanded="false"
       aria-controls="mobile-menu-panel"
