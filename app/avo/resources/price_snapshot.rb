@@ -5,6 +5,7 @@ module Avo
     class PriceSnapshot < Avo::BaseResource
       self.title = :snapshot_at
       self.includes = %i[work_order]
+      self.visible_on_sidebar = false
       self.search = {
         query: lambda {
           query.ransack(priceable_type_cont: params[:q], m: 'or').result(distinct: false)

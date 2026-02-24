@@ -5,6 +5,7 @@ module Avo
     class CheckIn < Avo::BaseResource
       self.title = :id
       self.includes = %i[user work_order]
+      self.visible_on_sidebar = false
       self.search = {
         query: -> { query.ransack(id_eq: params[:q], address_cont: params[:q], m: 'or').result(distinct: false) }
       }

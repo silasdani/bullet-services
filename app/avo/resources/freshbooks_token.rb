@@ -4,6 +4,7 @@ module Avo
   module Resources
     class FreshbooksToken < Avo::BaseResource
       self.title = :business_id
+      self.visible_on_sidebar = false
       self.includes = []
       self.search = {
         query: -> { query.ransack(business_id_cont: params[:q], m: 'or').result(distinct: false) }

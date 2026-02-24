@@ -4,6 +4,7 @@ module Avo
   module Resources
     class FreshbooksPayment < Avo::BaseResource
       self.title = :freshbooks_id
+      self.visible_on_sidebar = false
       self.includes = %i[freshbooks_invoice]
       self.search = {
         query: lambda {

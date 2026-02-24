@@ -5,6 +5,7 @@ module Avo
     class Tool < Avo::BaseResource
       self.title = :name
       self.includes = [:window]
+      self.visible_on_sidebar = false
       self.search = {
         query: -> { query.ransack(name_cont: params[:q], m: 'or').result(distinct: false) }
       }

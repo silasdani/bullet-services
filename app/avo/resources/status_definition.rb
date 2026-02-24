@@ -5,6 +5,7 @@ module Avo
     class StatusDefinition < Avo::BaseResource
       self.title = :status_label
       self.includes = []
+      self.visible_on_sidebar = false
       self.search = {
         query: lambda {
           query.ransack(entity_type_cont: params[:q], status_key_cont: params[:q], status_label_cont: params[:q],

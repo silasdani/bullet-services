@@ -5,6 +5,7 @@ module Avo
     class Building < Avo::BaseResource
       self.title = :name
       self.includes = []
+      self.visible_on_sidebar = false
       self.search = {
         query: lambda {
           query.ransack(name_cont: params[:q], street_cont: params[:q], city_cont: params[:q],

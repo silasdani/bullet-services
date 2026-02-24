@@ -5,6 +5,7 @@ module Avo
     class Notification < Avo::BaseResource
       self.title = :title
       self.includes = %i[user work_order]
+      self.visible_on_sidebar = false
       self.search = {
         query: lambda {
           query.ransack(title_cont: params[:q], message_cont: params[:q], m: 'or').result(distinct: false)

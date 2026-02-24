@@ -5,6 +5,7 @@ module Avo
     class Window < Avo::BaseResource
       self.title = :location
       self.includes = %i[work_order tools]
+      self.visible_on_sidebar = false
       self.search = {
         query: -> { query.ransack(location_cont: params[:q], m: 'or').result(distinct: false) }
       }
