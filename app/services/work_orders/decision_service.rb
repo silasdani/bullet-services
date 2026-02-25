@@ -63,6 +63,12 @@ module WorkOrders
           # Queue FreshBooks invoice creation as background job (perform_later)
           queue_freshbooks_invoice_creation(invoice, fb_client)
 
+          notify_admins_of_decision!(
+            notification_type: :work_order_accepted,
+            invoice: invoice,
+            fb_client_data: fb_client
+          )
+
           self.result = { invoice_id: invoice.id }
         end
       end
@@ -81,6 +87,7 @@ module WorkOrders
         ActiveRecord::Base.transaction do
           mark_work_order_as_rejected!
           send_admin_decline_email!
+          notify_admins_of_decision!(notification_type: :work_order_declined)
         end
       end
     end
@@ -166,6 +173,49 @@ module WorkOrders
 
     def email_notifier
       @email_notifier ||= EmailNotifier.new(work_order, first_name, last_name, email)
+    end
+
+    def notify_admins_of_decision!(notification_type:, invoice: nil, fb_client_data: nil)
+      message = build_decision_message(notification_type)
+      metadata = build_decision_metadata(notification_type, invoice: invoice, fb_client_data: fb_client_data)
+
+      result = Notifications::AdminNotificationService.new(
+        work_order: work_order,
+        notification_type: notification_type,
+        title: 'Work order decision',
+        message: message,
+        metadata: metadata
+      ).call
+
+      log_error("Failed to send work order decision notification: #{result.errors.join(', ')}") if result.failure?
+    rescue StandardError => e
+      log_error("Exception while sending work order decision notification: #{e.message}")
+      log_error(e.backtrace.join("\n")) if e.backtrace
+    end
+
+    def build_decision_message(notification_type)
+      client_name = "#{first_name} #{last_name}".strip.presence || email
+
+      case notification_type.to_sym
+      when :work_order_accepted
+        "#{client_name} accepted work order #{work_order.name}"
+      when :work_order_declined
+        "#{client_name} declined work order #{work_order.name}"
+      else
+        "#{client_name} updated decision for work order #{work_order.name}"
+      end
+    end
+
+    def build_decision_metadata(notification_type, invoice: nil, fb_client_data: nil)
+      {
+        work_order_id: work_order.id,
+        work_order_status: work_order.status,
+        decision: notification_type.to_s,
+        client_email: email,
+        client_name: "#{first_name} #{last_name}".strip.presence || email,
+        invoice_id: invoice&.id,
+        freshbooks_client_id: fb_client_data&.[]('id') || fb_client_data&.[]('clientid')
+      }.compact
     end
 
     def work_order_public_url

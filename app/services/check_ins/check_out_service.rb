@@ -125,23 +125,14 @@ module CheckIns
 
     def create_notification
       hours_worked = calculate_hours_worked
-      if user.contractor?
-        Notifications::AdminFcmNotificationService.new(
-          work_order: work_order,
-          notification_type: :check_out,
-          title: 'Contractor Check-out',
-          message: build_check_out_message(hours_worked),
-          metadata: build_check_out_metadata(hours_worked)
-        ).call
-      else
-        Notifications::AdminNotificationService.new(
-          work_order: work_order,
-          notification_type: :check_out,
-          title: 'Contractor Check-out',
-          message: build_check_out_message(hours_worked),
-          metadata: build_check_out_metadata(hours_worked)
-        ).call
-      end
+      result = Notifications::AdminNotificationService.new(
+        work_order: work_order,
+        notification_type: :check_out,
+        title: 'Contractor Check-out',
+        message: build_check_out_message(hours_worked),
+        metadata: build_check_out_metadata(hours_worked)
+      ).call
+      log_error("Failed to send check-out notification: #{result.errors.join(', ')}") if result.failure?
     end
 
     def build_check_out_message(hours_worked)
