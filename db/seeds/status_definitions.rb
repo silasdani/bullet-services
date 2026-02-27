@@ -44,6 +44,21 @@ StatusDefinition.find_or_create_by!(entity_type: 'WorkOrder', status_key: 'archi
   sd.is_active = true
 end
 
+# Seed status definitions for WorkOrderDecision
+StatusDefinition.find_or_create_by!(entity_type: 'WorkOrderDecision', status_key: 'approved') do |sd|
+  sd.status_label = 'Approved'
+  sd.status_color = '#24a148' # Carbon Green - indicates success/completion
+  sd.display_order = 0
+  sd.is_active = true
+end
+
+StatusDefinition.find_or_create_by!(entity_type: 'WorkOrderDecision', status_key: 'rejected') do |sd|
+  sd.status_label = 'Rejected'
+  sd.status_color = '#da1e28' # Carbon Red - indicates error/declined
+  sd.display_order = 1
+  sd.is_active = true
+end
+
 # Seed status definitions for Invoice
 # Colors based on IBM Carbon Design System and Material Design best practices
 StatusDefinition.find_or_create_by!(entity_type: 'Invoice', status_key: 'draft') do |sd|

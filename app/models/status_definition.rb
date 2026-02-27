@@ -19,9 +19,9 @@ class StatusDefinition < ApplicationRecord
   def clear_cache
     # Clear cache for this entity type
     Rails.cache.delete("status_definitions/#{entity_type}")
-    # Also clear any model-level caches
-    entity_type.constantize.clear_status_cache! if defined?(entity_type.constantize)
-  rescue NameError
-    # Entity type might not exist yet, ignore
+
+    # Also clear any model-level caches (if the model exists and supports it)
+    model_class = entity_type.safe_constantize
+    model_class.clear_status_cache! if model_class && model_class.respond_to?(:clear_status_cache!)
   end
 end

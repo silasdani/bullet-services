@@ -2,6 +2,7 @@
 
 class WorkOrderDecision < ApplicationRecord
   include SoftDeletable
+  include StatusMetadata
 
   belongs_to :work_order, foreign_key: :work_order_id
 

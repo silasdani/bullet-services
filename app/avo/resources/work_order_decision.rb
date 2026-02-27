@@ -14,8 +14,12 @@ module Avo
       def fields
         field :id, as: :id, link_to_resource: true
         field :work_order, as: :belongs_to, required: true, filterable: true
-        field :decision, as: :select, options: { approved: 'approved', rejected: 'rejected' }, required: true,
-                         filterable: true
+        field :decision_badge, as: :work_order_decision_status_badge, only_on: %i[index show], name: 'Decision'
+        field :decision, as: :select,
+                         options: { approved: 'approved', rejected: 'rejected' },
+                         required: true,
+                         filterable: true,
+                         hide_on: %i[index show]
         field :decision_at, as: :date_time, required: true, sortable: true, filterable: true
         field :client_name, as: :text, hide_on: [:index]
         field :client_email, as: :text, hide_on: [:index]
