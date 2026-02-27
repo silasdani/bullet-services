@@ -7,7 +7,7 @@ FactoryBot.define do
     last_name { Faker::Name.last_name }
     password { 'password123' }
     password_confirmation { 'password123' }
-    role { :client }
+    role { :contractor }
     confirmed_at { Time.current }
 
     trait :admin do

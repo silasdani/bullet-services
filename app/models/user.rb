@@ -111,8 +111,8 @@ class User < ApplicationRecord
 
   def set_default_role
     # `role` is an enum; the getter returns a String key (e.g. "admin").
-    # Default new users to `client` unless explicitly set.
-    self.role = :client if role.nil?
+    # Default new users to `contractor` unless explicitly set.
+    self.role = :contractor if role.nil?
   end
 
   def sync_uid_with_email
