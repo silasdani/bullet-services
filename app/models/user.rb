@@ -14,10 +14,12 @@ class User < ApplicationRecord
   validates :first_name, presence: true
   validates :last_name, presence: true
 
-  enum :role, { client: 0, contractor: 1, admin: 2, surveyor: 3, general_contractor: 4, supervisor: 5 }
+  enum :role,
+       { client: 0, contractor: 1, admin: 2, surveyor: 3, general_contractor: 4, supervisor: 5, contract_manager: 6 }
 
-  has_many :work_order_assignments, dependent: :destroy
-  has_many :assigned_work_orders, through: :work_order_assignments, source: :work_order
+  has_many :assignments, dependent: :destroy
+  has_many :assigned_buildings, through: :assignments, source: :building
+  has_many :time_entries, dependent: :destroy
   has_many :work_orders, dependent: :restrict_with_error
   has_many :windows, through: :work_orders
   has_many :check_ins, dependent: :destroy
@@ -30,7 +32,11 @@ class User < ApplicationRecord
 
   # Role helper methods - optimized to use enum values directly
   def admin?
-    role.in?(%w[admin])
+    role.in?(%w[admin contract_manager])
+  end
+
+  def contract_manager?
+    role == 'contract_manager'
   end
 
   def contractor?
@@ -52,7 +58,7 @@ class User < ApplicationRecord
   # Deprecated: Use admin? instead
   # rubocop:disable Naming/PredicatePrefix
   def is_admin?
-    admin? || surveyor?
+    admin?
   end
 
   # Deprecated: Use contractor? or general_contractor? instead
@@ -62,7 +68,7 @@ class User < ApplicationRecord
 
   # Deprecated: Surveyor acts as "super admin" in legacy code.
   def is_super_admin?
-    surveyor?
+    false
   end
 
   # rubocop:enable Naming/PredicatePrefix
@@ -108,6 +114,14 @@ class User < ApplicationRecord
   end
 
   private
+
+  # Allow updating user details without requiring password,
+  # but still require password on create or when changing it.
+  def password_required?
+    return true if new_record?
+
+    password.present? || password_confirmation.present?
+  end
 
   def set_default_role
     # `role` is an enum; the getter returns a String key (e.g. "admin").

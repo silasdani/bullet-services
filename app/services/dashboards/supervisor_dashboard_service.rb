@@ -45,10 +45,7 @@ module Dashboards
     end
 
     def assigned_project_building_ids
-      WorkOrderAssignment.where(user_id: user.id)
-                         .joins(:work_order)
-                         .pluck('work_orders.building_id')
-                         .uniq
+      Assignment.where(user_id: user.id).pluck(:building_id)
     end
 
     def fetch_project_work_orders(building_ids)
@@ -92,10 +89,7 @@ module Dashboards
     end
 
     def latest_work_order_updated_at
-      assigned_building_ids = WorkOrderAssignment.where(user_id: user.id)
-                                                 .joins(:work_order)
-                                                 .pluck('work_orders.building_id')
-                                                 .uniq
+      assigned_building_ids = Assignment.where(user_id: user.id).pluck(:building_id)
       base = WorkOrder.where(user_id: user.id)
       base = base.or(WorkOrder.where(building_id: assigned_building_ids)) if assigned_building_ids.any?
       base.maximum(:updated_at).to_i

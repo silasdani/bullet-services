@@ -1,6 +1,6 @@
 <% ongoing_work = @resource&.record %>
 <% if ongoing_work %>
-<% wrs = ongoing_work.window_schedule_repair %>
+<% wrs = ongoing_work.work_order %>
 <% windows = wrs&.windows&.order(:created_at) || [] %>
 
 <% if windows.any? %>

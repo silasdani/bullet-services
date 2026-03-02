@@ -3,36 +3,34 @@
 # InvoicePolicy for managing invoice access permissions
 class InvoicePolicy < ApplicationPolicy
   def index?
-    user.is_admin? || user.is_employee?
+    user.admin?
   end
 
   def show?
-    user.is_admin? || user.is_employee?
+    user.admin?
   end
 
   def create?
-    user.is_admin? || user.is_employee?
+    user.admin?
   end
 
   def update?
-    user.is_admin? || user.is_employee?
+    user.admin?
   end
 
   def destroy?
-    user.is_admin?
+    user.admin?
   end
 
   def csv_import?
-    user.is_admin? || user.is_employee?
+    user.admin?
   end
 
   class Scope < Scope
     def resolve
-      if user.is_admin? || user.is_employee?
-        scope.all
-      else
-        scope.none
-      end
+      return scope.all if user.admin?
+
+      scope.none
     end
   end
 end

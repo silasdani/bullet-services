@@ -2,10 +2,11 @@
 
 module Api
   module V1
+    # rubocop:disable Metrics/ClassLength, Metrics/AbcSize
     class OngoingWorksController < Api::V1::BaseController
       include OngoingWorkCheckInCheckOut
 
-      before_action :set_work_order, only: %i[index create]
+      before_action :set_work_order, only: %i[index create my_ongoing_work start_work]
       before_action :set_ongoing_work, only: %i[show update destroy check_in check_out publish]
 
       # GET /api/v1/work_orders/:work_order_id/ongoing_works
@@ -13,7 +14,7 @@ module Api
         authorize @work_order, :show?
 
         ongoing_works = OngoingWork.where(work_order: @work_order)
-                                   .includes(:user, work_sessions: [])
+                                   .includes(:user, time_entries: [])
                                    .order(work_date: :desc, created_at: :desc)
                                    .page(@page)
                                    .per(@per_page)
@@ -33,20 +34,76 @@ module Api
         )
       end
 
-      # POST /api/v1/work_orders/:work_order_id/ongoing_works
+      # GET /api/v1/work_orders/:id/my_ongoing_work — one ongoing work per user per work order (find or create)
+      def my_ongoing_work
+        authorize @work_order, :show?
+        authorize OngoingWork, :create? if current_user.contractor? || current_user.general_contractor?
+
+        ongoing_work = OngoingWork.find_or_initialize_by(
+          work_order_id: @work_order.id,
+          user_id: current_user.id
+        )
+        if ongoing_work.new_record?
+          ongoing_work.work_date = params[:work_date].presence&.then { |d| Time.zone.parse(d) } || Date.current
+          ongoing_work.is_draft = true
+          ongoing_work.save!
+        end
+        ongoing_work = OngoingWork.includes(:user, time_entries: []).find(ongoing_work.id)
+
+        render_success(data: serialize_ongoing_work(ongoing_work))
+      end
+
+      # POST /api/v1/work_orders/:id/start_work — find or create ongoing_work + check in (one tap for contractors)
+      def start_work
+        authorize @work_order, :show?
+        authorize TimeEntry, :check_in?
+
+        ongoing_work = find_or_create_my_ongoing_work
+        @ongoing_work = ongoing_work
+
+        service = build_ongoing_work_check_in_service
+        service.call
+
+        if service.success?
+          render_success(
+            data: {
+              ongoing_work: serialize_ongoing_work(ongoing_work.reload),
+              time_entry: time_entry_payload(service.time_entry)
+            },
+            message: 'Work started',
+            status: :created
+          )
+        else
+          render_error(message: 'Failed to start work', details: service.errors)
+        end
+      end
+
+      # POST /api/v1/work_orders/:work_order_id/ongoing_works — find or create one per user per work order
       def create
         authorize OngoingWork, :create?
         authorize @work_order, :show?
 
-        ongoing_work = build_ongoing_work
-
-        if ongoing_work.save
+        ongoing_work = OngoingWork.find_or_initialize_by(
+          work_order_id: @work_order.id,
+          user_id: current_user.id
+        )
+        if ongoing_work.new_record?
+          ongoing_work.assign_attributes(
+            work_date: params[:work_date].presence&.then { |d| Time.zone.parse(d) } || Date.current,
+            description: params[:description],
+            is_draft: params[:is_draft].nil? || ActiveModel::Type::Boolean.new.cast(params[:is_draft])
+          )
+          ongoing_work.save!
           attach_images(ongoing_work) if params[:images].present?
           create_work_update_notification(ongoing_work) unless ongoing_work.is_draft?
-          render_create_success(ongoing_work)
-        else
-          render_create_error(ongoing_work)
         end
+        ongoing_work = OngoingWork.includes(:user, time_entries: []).find(ongoing_work.id)
+
+        render_success(
+          data: serialize_ongoing_work(ongoing_work),
+          message: 'Ongoing work created successfully',
+          status: :created
+        )
       end
 
       # PATCH /api/v1/ongoing_works/:id
@@ -77,7 +134,7 @@ module Api
       # POST /api/v1/ongoing_works/:id/check_in
       def check_in
         authorize @ongoing_work.work_order, :show?
-        authorize WorkSession, :check_in?
+        authorize TimeEntry, :check_in?
 
         service = build_ongoing_work_check_in_service
         service.call
@@ -92,7 +149,7 @@ module Api
       # POST /api/v1/ongoing_works/:id/check_out
       def check_out
         authorize @ongoing_work.work_order, :show?
-        authorize WorkSession, :check_out?
+        authorize TimeEntry, :check_out?
 
         service = build_ongoing_work_check_out_service
         service.call
@@ -108,12 +165,18 @@ module Api
       def publish
         authorize @ongoing_work
 
-        @ongoing_work.publish!
-
-        render_success(
-          data: serialize_ongoing_work(@ongoing_work.reload),
-          message: 'Ongoing work published successfully'
-        )
+        if @ongoing_work.publish!
+          render_success(
+            data: serialize_ongoing_work(@ongoing_work.reload),
+            message: 'Ongoing work published successfully'
+          )
+        else
+          render_error(
+            message: 'Failed to publish ongoing work',
+            details: @ongoing_work.errors.full_messages,
+            status: :unprocessable_entity
+          )
+        end
       rescue StandardError => e
         Rails.logger.error "Error publishing ongoing work: #{e.message}"
         render_error(message: 'Failed to publish ongoing work', status: :unprocessable_entity)
@@ -122,14 +185,30 @@ module Api
       private
 
       def set_work_order
-        @work_order = WorkOrder.find(params[:work_order_id])
+        @work_order = WorkOrder.find(params[:work_order_id] || params[:id])
+      end
+
+      def find_or_create_my_ongoing_work
+        authorize OngoingWork, :create? if current_user.contractor? || current_user.general_contractor?
+
+        ongoing_work = OngoingWork.find_or_initialize_by(
+          work_order_id: @work_order.id,
+          user_id: current_user.id
+        )
+        if ongoing_work.new_record?
+          ongoing_work.work_date = params[:work_date].presence&.then { |d| Time.zone.parse(d) } || Date.current
+          ongoing_work.is_draft = true
+          ongoing_work.save!
+        end
+        OngoingWork.includes(:user, time_entries: []).find(ongoing_work.id)
       end
 
       def set_ongoing_work
-        @ongoing_work = OngoingWork.includes(work_sessions: []).find(params[:id])
+        @ongoing_work = OngoingWork.includes(time_entries: []).find(params[:id])
       end
 
       def serialize_ongoing_work(ongoing_work)
+        entries = ongoing_work.time_entries.reload.recent
         {
           id: ongoing_work.id,
           work_order_id: ongoing_work.work_order_id,
@@ -139,7 +218,7 @@ module Api
           user_name: ongoing_work.user.name || ongoing_work.user.email,
           is_draft: ongoing_work.is_draft?,
           images: ongoing_work.image_urls,
-          work_sessions: ongoing_work.work_sessions.recent.map { |ws| serialize_session(ws) },
+          time_entries: entries.map { |te| serialize_time_entry(te) },
           total_hours: ongoing_work.total_hours,
           checked_in: ongoing_work.checked_in?,
           created_at: ongoing_work.created_at,
@@ -147,19 +226,22 @@ module Api
         }
       end
 
-      def serialize_session(session)
+      def serialize_time_entry(entry)
         {
-          id: session.id,
-          work_order_id: session.work_order_id,
-          ongoing_work_id: session.ongoing_work_id,
-          checked_in_at: session.checked_in_at,
-          checked_out_at: session.checked_out_at,
-          address: session.address,
-          latitude: session.latitude,
-          longitude: session.longitude,
-          active: session.active?,
-          duration_hours: session.duration_hours,
-          duration_minutes: session.duration_minutes
+          id: entry.id,
+          work_order_id: entry.work_order_id,
+          ongoing_work_id: entry.ongoing_work_id,
+          starts_at: entry.starts_at,
+          ends_at: entry.ends_at,
+          start_address: entry.start_address,
+          end_address: entry.end_address,
+          start_lat: entry.start_lat,
+          start_lng: entry.start_lng,
+          end_lat: entry.end_lat,
+          end_lng: entry.end_lng,
+          active: entry.clocked_in?,
+          duration_hours: entry.duration_hours,
+          duration_minutes: entry.duration_minutes
         }
       end
 
@@ -253,5 +335,6 @@ module Api
         )
       end
     end
+    # rubocop:enable Metrics/ClassLength, Metrics/AbcSize
   end
 end

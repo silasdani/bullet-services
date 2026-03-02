@@ -6,7 +6,7 @@ module OngoingWorkCheckInCheckOut
   private
 
   def build_ongoing_work_check_in_service
-    WorkSessions::CheckInService.new(
+    TimeEntries::CheckInService.new(
       user: current_user,
       work_order: @ongoing_work.work_order,
       ongoing_work: @ongoing_work,
@@ -17,7 +17,7 @@ module OngoingWorkCheckInCheckOut
   end
 
   def build_ongoing_work_check_out_service
-    WorkSessions::CheckOutService.new(
+    TimeEntries::CheckOutService.new(
       user: current_user,
       work_order: @ongoing_work.work_order,
       ongoing_work: @ongoing_work,
@@ -27,25 +27,28 @@ module OngoingWorkCheckInCheckOut
     )
   end
 
-  def work_session_payload(session)
+  def time_entry_payload(entry)
     {
-      id: session.id,
-      work_order_id: session.work_order_id,
-      ongoing_work_id: session.ongoing_work_id,
-      checked_in_at: session.checked_in_at,
-      checked_out_at: session.checked_out_at,
-      latitude: session.latitude,
-      longitude: session.longitude,
-      address: session.address,
-      active: session.active?,
-      duration_hours: session.duration_hours,
-      duration_minutes: session.duration_minutes
+      id: entry.id,
+      work_order_id: entry.work_order_id,
+      ongoing_work_id: entry.ongoing_work_id,
+      starts_at: entry.starts_at,
+      ends_at: entry.ends_at,
+      start_lat: entry.start_lat,
+      start_lng: entry.start_lng,
+      end_lat: entry.end_lat,
+      end_lng: entry.end_lng,
+      start_address: entry.start_address,
+      end_address: entry.end_address,
+      active: entry.clocked_in?,
+      duration_hours: entry.duration_hours,
+      duration_minutes: entry.duration_minutes
     }
   end
 
   def render_check_in_success(service)
     render_success(
-      data: work_session_payload(service.work_session),
+      data: time_entry_payload(service.time_entry),
       message: 'Checked in successfully',
       status: :created
     )
@@ -53,7 +56,7 @@ module OngoingWorkCheckInCheckOut
 
   def render_check_out_success(service)
     render_success(
-      data: work_session_payload(service.work_session).merge(hours_worked: service.hours_worked),
+      data: time_entry_payload(service.time_entry).merge(hours_worked: service.hours_worked),
       message: 'Checked out successfully',
       status: :created
     )

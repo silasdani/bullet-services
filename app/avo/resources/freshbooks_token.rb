@@ -10,16 +10,19 @@ module Avo
         query: -> { query.ransack(business_id_cont: params[:q], m: 'or').result(distinct: false) }
       }
 
+      # rubocop:disable Metrics/AbcSize
       def fields
         field :id, as: :id, link_to_resource: true
         field :reconnect_link, as: :text, only_on: [:show], as_html: true do
-          if Rails.application.config.freshbooks[:client_id].present? && Rails.application.config.freshbooks[:redirect_uri].present?
+          fb = Rails.application.config.freshbooks
+          if fb[:client_id].present? && fb[:redirect_uri].present?
             link_to 'Reconnect FreshBooks', main_app.freshbooks_reconnect_path,
                     class: 'text-blue-600 hover:underline', data: { turbo: false }
           else
             'Set FRESHBOOKS_CLIENT_ID and FRESHBOOKS_REDIRECT_URI to enable'
           end
         end
+        # rubocop:enable Metrics/AbcSize
         field :business_id, as: :text, required: true, filterable: true
         field :user_freshbooks_id, as: :text, hide_on: [:index]
         field :token_expires_at, as: :date_time, required: true, sortable: true, filterable: true

@@ -8,19 +8,17 @@ class WorkOrder < ApplicationRecord
 
   belongs_to :user
   belongs_to :building
-  has_many :work_order_assignments, dependent: :destroy, foreign_key: :work_order_id
-  has_many :assigned_users, through: :work_order_assignments, source: :user
   has_many :windows, dependent: :destroy, foreign_key: :work_order_id
   has_many :tools, through: :windows
   has_many :invoices, dependent: :nullify, foreign_key: :work_order_id
-  has_many :check_ins, dependent: :destroy, foreign_key: :work_order_id # Deprecated: Use work_sessions instead
-  has_many :work_sessions, dependent: :destroy, foreign_key: :work_order_id
+  has_many :check_ins, dependent: :destroy, foreign_key: :work_order_id
+  has_many :time_entries, dependent: :destroy, foreign_key: :work_order_id
   has_many :ongoing_works, dependent: :destroy, foreign_key: :work_order_id
-  has_many :work_sessions_through_ongoing, through: :ongoing_works, source: :work_sessions
   has_many :notifications, dependent: :destroy, foreign_key: :work_order_id
-  has_one :work_order_decision, dependent: :destroy, foreign_key: :work_order_id
-  has_many :price_snapshots, dependent: :destroy, foreign_key: :work_order_id, inverse_of: :work_order
+  has_one :decision, dependent: :destroy, foreign_key: :work_order_id
   has_many_attached :images
+
+  delegate :assigned_users, to: :building, prefix: true
 
   accepts_nested_attributes_for :windows, allow_destroy: true, reject_if: :all_blank
 
@@ -98,25 +96,25 @@ class WorkOrder < ApplicationRecord
     building&.full_address || building&.address_string
   end
 
-  # Decision helpers
-  def decision
-    work_order_decision&.decision
+  # Decision helpers (association is :decision; these return the outcome string or timestamps)
+  def decision_outcome
+    decision&.decision
   end
 
   def decision_at
-    work_order_decision&.decision_at
+    decision&.decision_at
   end
 
   def approved?
-    decision == 'approved'
+    decision_outcome == 'approved'
   end
 
   def rejected?
-    decision == 'rejected'
+    decision_outcome == 'rejected'
   end
 
   def decision?
-    work_order_decision.present?
+    decision.present?
   end
 
   # Grand total alias for backwards compatibility (removed from DB)

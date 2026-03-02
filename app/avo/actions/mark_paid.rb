@@ -8,6 +8,7 @@ module Avo
       self.confirm_button_label = 'Mark as Paid'
       self.cancel_button_label = 'Cancel'
 
+      # rubocop:disable Metrics/AbcSize
       def handle(query:, **)
         invoice = extract_invoice(query)
         return error('No invoice selected') unless invoice
@@ -23,6 +24,7 @@ module Avo
         Rails.logger.error("MarkPaid: #{e.message}\n#{e.backtrace.first(5).join("\n")}")
         error("Failed to mark invoice as paid: #{e.message}")
       end
+      # rubocop:enable Metrics/AbcSize
 
       def visible?(resource:, **)
         invoice = resource&.record

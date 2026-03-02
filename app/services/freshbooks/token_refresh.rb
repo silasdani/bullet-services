@@ -81,6 +81,7 @@ module Freshbooks
       )
     end
 
+    # rubocop:disable Metrics/AbcSize
     def handle_refresh_error(response)
       error_message = build_error_message("Failed to refresh access token: #{response.code}", response)
       Rails.logger.error "FreshBooks token refresh failed: #{error_message}"
@@ -101,6 +102,7 @@ module Freshbooks
 
       raise FreshbooksError.new(error_message, response.code, response.body)
     end
+    # rubocop:enable Metrics/AbcSize
 
     def refresh_token_invalid?(response)
       return false unless response.code == 400

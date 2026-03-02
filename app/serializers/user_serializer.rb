@@ -2,13 +2,12 @@
 
 class UserSerializer < ActiveModel::Serializer
   attributes :id, :email, :first_name, :last_name, :name, :phone_no, :nickname, :role,
-             :assigned_work_order_ids, :created_at, :updated_at
+             :assigned_building_ids, :created_at, :updated_at
 
   attribute :image_url, if: :image_attached?
 
-  def assigned_work_order_ids
-    # Keep payload small + stable (ids only). Use pluck to avoid N+1.
-    object.work_order_assignments.pluck(:work_order_id)
+  def assigned_building_ids
+    object.assignments.pluck(:building_id)
   rescue StandardError
     []
   end

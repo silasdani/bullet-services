@@ -13,6 +13,7 @@ module Avo
                       help: 'Optional: Override the client email address'
       end
 
+      # rubocop:disable Metrics/AbcSize
       def handle(query:, fields: {}, **)
         invoice = extract_invoice(query)
         return error('No invoice selected') unless invoice
@@ -28,6 +29,7 @@ module Avo
         Rails.logger.error("SendInvoice: #{e.message}\n#{e.backtrace.first(5).join("\n")}")
         error("Failed to send invoice: #{e.message}")
       end
+      # rubocop:enable Metrics/AbcSize
 
       def visible?(resource:, **)
         invoice = resource&.record

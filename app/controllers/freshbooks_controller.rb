@@ -11,7 +11,8 @@ class FreshbooksController < ApplicationController
   rescue FreshbooksError => e
     Rails.logger.error "FreshBooks reconnect failed: #{e.message}"
     redirect_to avo_dashboard_path,
-                alert: "FreshBooks OAuth not configured: #{e.message}. Set FRESHBOOKS_CLIENT_ID and FRESHBOOKS_REDIRECT_URI."
+                alert: "FreshBooks OAuth not configured: #{e.message}. " \
+                       'Set FRESHBOOKS_CLIENT_ID and FRESHBOOKS_REDIRECT_URI.'
   end
 
   private

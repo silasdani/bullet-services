@@ -145,6 +145,7 @@ module WorkOrders
       end
     end
 
+    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     def update_existing_tool(window, tool_attrs)
       tool = window.tools.find(tool_attrs[:id])
 
@@ -152,19 +153,13 @@ module WorkOrders
         tool.destroy
       else
         update_attrs = { name: tool_attrs[:name] }
-        # Supervisors cannot change prices — preserve the existing price.
-        # If the tool name changed, update price to the default for the new name
-        # only if the supervisor changed it (keeps admin-set prices intact).
-        if current_user&.supervisor?
-          # If the tool name changed, use the default price for the new name
-          if tool.name != tool_attrs[:name]
-            update_attrs[:price] =
-              Tool.default_price_for_name(tool_attrs[:name]) || tool.price
-          end
-          # Otherwise keep existing price (don't include :price in update_attrs)
-        else
+        # Only Admin can set prices. Everyone else: preserve existing or use default for new name.
+        if current_user&.role == 'admin'
           update_attrs[:price] = tool_attrs[:price] || 0
+        elsif tool.name != tool_attrs[:name]
+          update_attrs[:price] = Tool.default_price_for_name(tool_attrs[:name]) || tool.price
         end
+        # else: keep existing price (omit :price)
 
         unless tool.update(update_attrs)
           add_errors(tool.errors.full_messages)
@@ -172,13 +167,14 @@ module WorkOrders
         end
       end
     end
+    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
-    # Price for new tools: supervisors get default price, others use submitted price.
+    # Only Admin can set tool price. All other roles get default for the tool name.
     def new_tool_price(tool_attrs)
-      if current_user&.supervisor?
-        Tool.default_price_for_name(tool_attrs[:name]) || 0
-      else
+      if current_user&.role == 'admin'
         tool_attrs[:price] || 0
+      else
+        Tool.default_price_for_name(tool_attrs[:name]) || 0
       end
     end
 

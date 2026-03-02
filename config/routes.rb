@@ -23,8 +23,9 @@ Rails.application.routes.draw do
   }
 
   # Admin panel - Avo (mounted after Devise routes to ensure route helpers are available)
-  # Custom dashboard route must be before the mount so /avo/dashboard is handled by the app
+  # Custom dashboard and timesheets (before mount so they are under /admin)
   get "#{Avo.configuration.root_path}/dashboard", to: "avo/dashboard#index", as: :avo_dashboard
+  get "#{Avo.configuration.root_path}/timesheets", to: "avo/timesheets#index", as: :avo_timesheets
 
   mount Avo::Engine, at: Avo.configuration.root_path
 
@@ -46,6 +47,8 @@ Rails.application.routes.draw do
 
       resources :work_orders do
         member do
+          get :my_ongoing_work, to: 'ongoing_works#my_ongoing_work'
+          post :start_work, to: 'ongoing_works#start_work'
           post :restore
           post :publish
           post :unpublish
@@ -90,13 +93,16 @@ Rails.application.routes.draw do
       end
 
       resources :buildings do
+        collection do
+          get :assigned
+        end
         member do
           get :work_orders
           put :schedule_of_condition
         end
       end
 
-      resources :work_sessions, only: [ :index, :show ] do
+      resources :time_entries, only: [ :index, :show ] do
         collection do
           get :active
         end
@@ -107,7 +113,7 @@ Rails.application.routes.draw do
           post :check_out
           post :publish
         end
-        resources :work_sessions, only: [ :index ], controller: 'ongoing_works/work_sessions'
+        resources :time_entries, only: [ :index ], controller: 'ongoing_works/time_entries'
       end
       resources :timesheets, only: [ :index ] do
         collection do

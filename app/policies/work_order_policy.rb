@@ -7,7 +7,10 @@ class WorkOrderPolicy < ApplicationPolicy
 
   def show?
     return false unless user.present?
+    # Contractors and general contractors can view work orders,
+    # but with additional visibility constraints enforced via scope and serializers.
     return true if contractor_or_general_contractor?
+    # Supervisors can view work orders they created or in buildings they're assigned to.
     return true if user.supervisor? && supervisor_can_show?
 
     admin_or_employee_or_owner?
@@ -18,23 +21,21 @@ class WorkOrderPolicy < ApplicationPolicy
   end
 
   def supervisor_assigned_to_building?
-    WorkOrderAssignment.where(user_id: user.id).joins(:work_order)
-                       .where(work_orders: { building_id: record.building_id }).exists?
+    Assignment.exists?(user_id: user.id, building_id: record.building_id)
   end
 
   def contractor_can_show?
     return false if record.draft? || record.is_archived?
-    # General contractors can show any visible work order (they see all projects)
     return true if user.general_contractor?
 
     active_building_id = contractor_active_building_id
     return record.building_id == active_building_id if active_building_id
 
-    WorkOrderAssignment.exists?(user_id: user.id, work_order_id: record.id)
+    Assignment.exists?(user_id: user.id, building_id: record.building_id)
   end
 
   def contractor_active_building_id
-    active = WorkSession.active.for_user(user).includes(:work_order).first
+    active = TimeEntry.clocked_in.for_user(user).includes(:work_order).first
     active&.work_order&.building_id
   end
 
@@ -47,8 +48,10 @@ class WorkOrderPolicy < ApplicationPolicy
 
   def update?
     return false unless user.present?
-    return true if contractor_or_general_contractor?
-    # Supervisor can update work orders they created or in buildings they're assigned to
+    # Contractors and general contractors cannot update work orders.
+    return false if contractor_or_general_contractor?
+    # Supervisors can update work orders they created or in buildings they're assigned to,
+    # but price editing is enforced at the service/serializer layer.
     return supervisor_can_show? if user.supervisor?
 
     admin_or_employee_or_owner?
@@ -83,17 +86,27 @@ class WorkOrderPolicy < ApplicationPolicy
   end
 
   class Scope < Scope
+    # rubocop:disable Metrics/AbcSize
     def resolve
       return scope.none unless user.present?
       return scope.all if user.is_admin?
       return general_contractor_scope if user.general_contractor?
       return supervisor_scope if user.supervisor?
+      return contractor_scope if user.contractor?
 
       owner_scope
     end
+    # rubocop:enable Metrics/AbcSize
 
     def owner_scope
       scope.where(user: user)
+    end
+
+    def contractor_scope
+      scope
+        .where(building_id: user.assigned_buildings.select(:id))
+        .where(is_draft: false)
+        .contractor_visible_status
     end
 
     # General contractors see all visible (non-draft) work orders
@@ -102,10 +115,7 @@ class WorkOrderPolicy < ApplicationPolicy
     end
 
     def supervisor_scope
-      assigned_building_ids = WorkOrderAssignment.where(user_id: user.id)
-                                                 .joins(:work_order)
-                                                 .pluck('work_orders.building_id')
-                                                 .uniq
+      assigned_building_ids = Assignment.where(user_id: user.id).pluck(:building_id)
       scope.where(user_id: user.id).or(scope.where(building_id: assigned_building_ids))
     end
   end

@@ -22,6 +22,6 @@ class StatusDefinition < ApplicationRecord
 
     # Also clear any model-level caches (if the model exists and supports it)
     model_class = entity_type.safe_constantize
-    model_class.clear_status_cache! if model_class && model_class.respond_to?(:clear_status_cache!)
+    model_class.clear_status_cache! if model_class.respond_to?(:clear_status_cache!)
   end
 end

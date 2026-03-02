@@ -48,7 +48,7 @@ module Invoices
       client&.email
     end
 
-    # rubocop:disable Metrics/AbcSize
+    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity
     def send_to_freshbooks(email_address)
       invoices_client = Freshbooks::Invoices.new
       # Include lines so we preserve them when updating (API requires all lines in PUT)
@@ -76,7 +76,7 @@ module Invoices
       # Use update response to sync status immediately (FreshBooks marks as sent when email is sent)
       sync_status_from_response(updated_invoice) if updated_invoice.present?
     end
-    # rubocop:enable Metrics/AbcSize
+    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity
 
     def build_lines(current_invoice)
       (current_invoice['lines'] || []).map do |line|

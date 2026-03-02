@@ -4,6 +4,8 @@ class Building < ApplicationRecord
   include SoftDeletable
   include Geocodable
 
+  has_many :assignments, dependent: :destroy
+  has_many :assigned_users, through: :assignments, source: :user
   has_many :work_orders, dependent: :restrict_with_error
   has_many_attached :schedule_of_condition_images
 
@@ -52,14 +54,18 @@ class Building < ApplicationRecord
     )
   end
 
-  def within_radius?(latitude, longitude, radius_meters = 15)
+  # Default radius (meters) for check-in proximity validation; override per call if needed.
+  CHECK_IN_RADIUS_METERS = 50
+
+  def within_radius?(latitude, longitude, radius_meters = CHECK_IN_RADIUS_METERS)
     return false unless self.latitude && self.longitude
+    return false if latitude.blank? || longitude.blank?
 
     Location::DistanceCalculator.within_radius?(
-      self.latitude,
-      self.longitude,
-      latitude,
-      longitude,
+      self.latitude.to_f,
+      self.longitude.to_f,
+      latitude.to_f,
+      longitude.to_f,
       radius_meters
     )
   end

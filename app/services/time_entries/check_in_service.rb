@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
-module WorkSessions
+module TimeEntries
   class CheckInService < ApplicationService
     include AddressResolver
+
     PROXIMITY_RADIUS_METERS = 50
 
     attribute :user
@@ -11,17 +12,17 @@ module WorkSessions
     attribute :latitude
     attribute :longitude
     attribute :address
-    attribute :checked_in_at, default: -> { Time.current }
+    attribute :starts_at, default: -> { Time.current }
 
-    attr_accessor :work_session
+    attr_accessor :time_entry
 
     def call
       derive_work_order_from_ongoing_work
-      return self if validate_active_session.failure?
+      return self if validate_active_entry.failure?
       return self if validate_contractor_assignment.failure?
       return self if validate_work_order_status.failure?
       return self if validate_proximity.failure?
-      return self if create_work_session.failure?
+      return self if create_time_entry.failure?
 
       create_notification
       self
@@ -33,33 +34,28 @@ module WorkSessions
       self.work_order ||= ongoing_work&.work_order
     end
 
-    def validate_active_session
-      # Use pessimistic locking to prevent concurrent check-ins
+    def validate_active_entry
       ActiveRecord::Base.transaction do
-        add_error('You already have an active work session. Please check out first.') if active_session_exists?
+        add_error('You already have an active time entry. Please check out first.') if active_entry_exists?
       end
       self
     end
 
-    def active_session_exists?
-      # Only allow ONE active session across all work orders
-      WorkSession.active.for_user(user).lock.exists?
+    def active_entry_exists?
+      TimeEntry.clocked_in.for_user(user).lock.exists?
     end
 
     def validate_contractor_assignment
-      # General contractors can check into any project; only contractors need assignment
       return self unless user&.contractor?
-
       return self unless work_order
 
-      unless WorkOrderAssignment.exists?(user_id: user.id, work_order_id: work_order.id)
-        add_error('You are not assigned to this work order. Please assign the work order first.')
+      unless Assignment.exists?(user_id: user.id, building_id: work_order.building_id)
+        add_error('You are not assigned to this project. Please get assigned to the building first.')
       end
       self
     end
 
     def validate_work_order_status
-      # Contractors and general contractors can only check in to approved work orders
       if (user.contractor? || user.general_contractor?) && work_order.status != 'approved'
         add_error('You can only check in to approved works.')
         return self
@@ -77,7 +73,7 @@ module WorkSessions
 
     def proximity_checkable?
       building = work_order.building
-      building&.latitude && building.longitude && latitude && longitude
+      building&.latitude.present? && building.longitude.present? && latitude.present? && longitude.present?
     end
 
     def within_proximity?
@@ -85,47 +81,40 @@ module WorkSessions
     end
 
     def add_proximity_errors
-      add_error('You must be within 50 meters of the building to check in.')
+      add_error('Check-in must be within 50m of the project site.')
       distance = work_order.building.distance_to(latitude, longitude)
       add_error("Current distance: #{distance.round(1)} meters. Please move closer.") if distance
     end
 
-    def create_work_session
-      @work_session = WorkSession.new(
+    def create_time_entry
+      @time_entry = TimeEntry.new(
         user: user,
         work_order: work_order,
         ongoing_work: ongoing_work,
-        checked_in_at: checked_in_at,
-        latitude: latitude,
-        longitude: longitude,
-        address: resolve_address
+        starts_at: starts_at,
+        start_lat: latitude,
+        start_lng: longitude,
+        start_address: resolve_address
       )
 
-      if @work_session.save
-        log_info("Work session created: #{@work_session.id}")
+      if @time_entry.save
+        log_info("Time entry created: #{@time_entry.id}")
       else
-        add_errors(@work_session.errors.full_messages)
+        add_errors(@time_entry.errors.full_messages)
       end
       self
     end
 
-    # rubocop:disable Metrics/AbcSize
     def create_notification
-      log_info("Creating check-in notification for user: #{user.email}")
-      result = Notifications::AdminNotificationService.new(
-        work_order: work_order,
-        notification_type: :check_in,
-        title: 'Contractor Check-in',
-        message: build_check_in_message,
-        metadata: build_check_in_metadata
-      ).call
-      log_error("Failed to send check-in notification: #{result.errors.join(', ')}") if result.failure?
+      if user.contractor?
+        create_contractor_notification
+      else
+        create_admin_notification
+      end
     rescue StandardError => e
       log_error("Exception creating check-in notification: #{e.message}")
       log_error(e.backtrace.join("\n")) if e.backtrace
-      # Don't fail the check-in if notification fails
     end
-    # rubocop:enable Metrics/AbcSize
 
     def build_check_in_message
       "#{user.name || user.email} checked in at #{work_order.name}"
@@ -135,10 +124,37 @@ module WorkSessions
       {
         contractor_id: user.id,
         contractor_name: user.name || user.email,
-        work_session_id: work_session.id,
+        time_entry_id: time_entry.id,
         ongoing_work_id: ongoing_work&.id,
-        location: work_session.address || "#{latitude}, #{longitude}"
+        location: time_entry.start_address || "#{latitude}, #{longitude}"
       }
+    end
+
+    def create_admin_notification
+      result = Notifications::AdminNotificationService.new(
+        work_order: work_order,
+        notification_type: :check_in,
+        title: 'Contractor Check-in',
+        message: build_check_in_message,
+        metadata: build_check_in_metadata
+      ).call
+      log_error("Failed to send check-in notification: #{result.errors.join(', ')}") if result.failure?
+    end
+
+    def create_contractor_notification
+      target_user = ::NotificationRecipients.contractor_recipient
+      return unless target_user
+
+      Notifications::CreateService.new(
+        user: target_user,
+        work_order: work_order,
+        notification_type: :check_in,
+        title: 'Contractor Check-in',
+        message: build_check_in_message,
+        metadata: build_check_in_metadata.merge(delivery: 'contractor_only')
+      ).call
+    rescue StandardError => e
+      log_error("Failed to create contractor check-in notification: #{e.message}")
     end
   end
 end

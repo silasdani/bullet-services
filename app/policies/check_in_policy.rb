@@ -14,11 +14,11 @@ class CheckInPolicy < ApplicationPolicy
   end
 
   def check_in?
-    user.present? && user.contractor?
+    user.present? && (user.contractor? || user.general_contractor? || user.admin?)
   end
 
   def check_out?
-    user.present? && user.contractor?
+    user.present? && (user.contractor? || user.general_contractor? || user.admin?)
   end
 
   class Scope < Scope

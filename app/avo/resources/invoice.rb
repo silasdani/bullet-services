@@ -40,6 +40,7 @@ module Avo
       # rubocop:enable Metrics/AbcSize
 
       def actions
+        super
         action Avo::Actions::SendInvoice
         action Avo::Actions::VoidInvoice
         action Avo::Actions::VoidInvoiceWithEmail

@@ -15,7 +15,7 @@ class WorkOrderSerializer < ActiveModel::Serializer
     address_fallback
   end
 
-  # Hide prices for contractors, general contractors, and supervisors
+  # Prices visible only to Admin role
   def total_vat_included_price
     return nil if hide_prices?
 
@@ -118,7 +118,7 @@ class WorkOrderSerializer < ActiveModel::Serializer
   private
 
   def hide_prices?
-    scope&.contractor? || scope&.general_contractor? || scope&.supervisor?
+    scope&.role != 'admin'
   end
 
   def computed_total

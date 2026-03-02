@@ -5,6 +5,11 @@ class BuildingPolicy < ApplicationPolicy
     user.present?
   end
 
+  # GET /buildings/assigned — list buildings where user has work order assignments
+  def assigned?
+    user.present?
+  end
+
   def show?
     return false unless user.present?
 
@@ -19,18 +24,18 @@ class BuildingPolicy < ApplicationPolicy
   end
 
   def create?
-    user.present?
+    user.present? && user.admin?
   end
 
   def update?
     # Contractors and general contractors cannot update buildings
     return false if user&.contractor? || user&.general_contractor?
 
-    user.present?
+    user.present? && user.admin?
   end
 
   def destroy?
-    user.present? && (user.is_admin? || user.is_employee?)
+    user.present? && user.admin?
   end
 
   class Scope < Scope

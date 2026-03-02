@@ -6,9 +6,12 @@ module Freshbooks
       new.check
     end
 
+    # rubocop:disable Metrics/AbcSize
     def check
       token = FreshbooksToken.current
-      access_token = token&.access_token || ENV['FRESHBOOKS_ACCESS_TOKEN'] || Rails.application.config.freshbooks[:access_token]
+      access_token = token&.access_token ||
+                     ENV['FRESHBOOKS_ACCESS_TOKEN'] ||
+                     Rails.application.config.freshbooks[:access_token]
 
       return { ok: false, error: 'No token configured' } if access_token.blank?
 
@@ -28,6 +31,7 @@ module Freshbooks
     rescue HTTParty::Error, StandardError => e
       { ok: false, error: e.message }
     end
+    # rubocop:enable Metrics/AbcSize
 
     private
 

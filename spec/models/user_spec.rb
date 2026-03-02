@@ -35,7 +35,8 @@ RSpec.describe User, type: :model do
                                  'admin' => 2,
                                  'surveyor' => 3,
                                  'general_contractor' => 4,
-                                 'supervisor' => 5
+                                 'supervisor' => 5,
+                                 'contract_manager' => 6
                                })
     end
   end
@@ -66,16 +67,28 @@ RSpec.describe User, type: :model do
     context 'when user is surveyor' do
       let(:surveyor_user) { create(:user, :surveyor) }
 
-      it 'returns true for is_admin? (surveyor is included in admin)' do
-        expect(surveyor_user.is_admin?).to be true
-      end
-
       it 'returns true for surveyor?' do
         expect(surveyor_user.surveyor?).to be true
       end
 
-      it 'returns true for is_super_admin? (deprecated alias)' do
-        expect(surveyor_user.is_super_admin?).to be true
+      it 'returns false for is_admin? (surveyor is no longer admin-level)' do
+        expect(surveyor_user.is_admin?).to be false
+      end
+
+      it 'returns false for is_super_admin? (deprecated alias)' do
+        expect(surveyor_user.is_super_admin?).to be false
+      end
+    end
+
+    context 'when user is contract_manager' do
+      let(:cm_user) { create(:user, role: :contract_manager) }
+
+      it 'returns true for admin? (admin-level access)' do
+        expect(cm_user.admin?).to be true
+      end
+
+      it 'returns true for is_admin? (deprecated alias)' do
+        expect(cm_user.is_admin?).to be true
       end
     end
 

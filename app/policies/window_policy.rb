@@ -11,7 +11,7 @@ class WindowPolicy < ApplicationPolicy
     wo = record.work_order
     return supervisor_can_access?(wo) if user.supervisor?
 
-    user.is_admin? || user.is_employee? || wo.user == user
+    user.admin? || wo.user == user
   end
 
   def create?
@@ -24,7 +24,7 @@ class WindowPolicy < ApplicationPolicy
     wo = record.work_order
     return supervisor_can_access?(wo) if user.supervisor?
 
-    user.is_admin? || user.is_employee? || wo.user == user
+    user.admin? || wo.user == user
   end
 
   def destroy?
@@ -33,7 +33,7 @@ class WindowPolicy < ApplicationPolicy
     wo = record.work_order
     return supervisor_can_access?(wo) if user.supervisor?
 
-    user.is_admin? || wo.user == user
+    user.admin? || wo.user == user
   end
 
   private
@@ -43,17 +43,14 @@ class WindowPolicy < ApplicationPolicy
   end
 
   def supervisor_assigned_to_building?(work_order)
-    WorkOrderAssignment.where(user_id: user.id).joins(:work_order)
-                       .where(work_orders: { building_id: work_order.building_id }).exists?
+    Assignment.exists?(user_id: user.id, building_id: work_order.building_id)
   end
 
   class Scope < Scope
     def resolve
-      if user.is_admin?
-        scope.all
-      else
-        scope.joins(:work_order).where(work_orders: { user_id: user.id })
-      end
+      return scope.all if user.admin?
+
+      scope.joins(:work_order).where(work_orders: { user_id: user.id })
     end
   end
 end
