@@ -2,7 +2,6 @@
 
 module TimeEntries
   module AddressResolver
-    # rubocop:disable Metrics/AbcSize
     def resolve_address
       return nil unless latitude.present? && longitude.present?
 
@@ -15,6 +14,5 @@ module TimeEntries
         "#{latitude}, #{longitude}"
       end
     end
-    # rubocop:enable Metrics/AbcSize
   end
 end

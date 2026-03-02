@@ -2,7 +2,7 @@
 
 module Api
   module V1
-    # rubocop:disable Metrics/ClassLength, Metrics/AbcSize
+    # rubocop:disable Metrics/ClassLength
     class OngoingWorksController < Api::V1::BaseController
       include OngoingWorkCheckInCheckOut
 

@@ -10,8 +10,7 @@ module Avo
           query.ransack(name_cont: params[:q], reference_number_cont: params[:q], m: 'or').result(distinct: false)
         }
       }
-
-      # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
+      # rubocop:disable Metrics/MethodLength
       def fields
         field :id, as: :id, link_to_resource: true
         field :reference_number, as: :text, required: true, filterable: true
@@ -44,7 +43,7 @@ module Avo
         field :created_at, as: :date_time, readonly: true, sortable: true, filterable: true
         field :updated_at, as: :date_time, readonly: true, sortable: true
       end
-      # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
+      # rubocop:enable Metrics/MethodLength
     end
   end
 end

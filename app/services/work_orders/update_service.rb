@@ -145,29 +145,12 @@ module WorkOrders
       end
     end
 
-    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     def update_existing_tool(window, tool_attrs)
       tool = window.tools.find(tool_attrs[:id])
+      return destroy_tool(tool) if destroy_tool?(tool_attrs)
 
-      if tool_attrs[:_destroy] == '1'
-        tool.destroy
-      else
-        update_attrs = { name: tool_attrs[:name] }
-        # Only Admin can set prices. Everyone else: preserve existing or use default for new name.
-        if current_user&.role == 'admin'
-          update_attrs[:price] = tool_attrs[:price] || 0
-        elsif tool.name != tool_attrs[:name]
-          update_attrs[:price] = Tool.default_price_for_name(tool_attrs[:name]) || tool.price
-        end
-        # else: keep existing price (omit :price)
-
-        unless tool.update(update_attrs)
-          add_errors(tool.errors.full_messages)
-          raise ActiveRecord::Rollback
-        end
-      end
+      update_tool_with_attributes(tool, tool_attrs)
     end
-    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
     # Only Admin can set tool price. All other roles get default for the tool name.
     def new_tool_price(tool_attrs)
@@ -176,6 +159,33 @@ module WorkOrders
       else
         Tool.default_price_for_name(tool_attrs[:name]) || 0
       end
+    end
+
+    def destroy_tool?(tool_attrs)
+      tool_attrs[:_destroy] == '1'
+    end
+
+    def destroy_tool(tool)
+      tool.destroy
+    end
+
+    def update_tool_with_attributes(tool, tool_attrs)
+      update_attrs = { name: tool_attrs[:name] }
+      apply_price_update!(update_attrs, tool, tool_attrs)
+      return if tool.update(update_attrs)
+
+      add_errors(tool.errors.full_messages)
+      raise ActiveRecord::Rollback
+    end
+
+    def apply_price_update!(update_attrs, tool, tool_attrs)
+      # Only Admin can set prices. Everyone else: preserve existing or use default for new name.
+      if current_user&.role == 'admin'
+        update_attrs[:price] = tool_attrs[:price] || 0
+      elsif tool.name != tool_attrs[:name]
+        update_attrs[:price] = Tool.default_price_for_name(tool_attrs[:name]) || tool.price
+      end
+      # else: keep existing price (omit :price)
     end
 
     def create_new_tool(window, tool_attrs)

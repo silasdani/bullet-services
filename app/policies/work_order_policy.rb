@@ -86,7 +86,6 @@ class WorkOrderPolicy < ApplicationPolicy
   end
 
   class Scope < Scope
-    # rubocop:disable Metrics/AbcSize
     def resolve
       return scope.none unless user.present?
       return scope.all if user.is_admin?
@@ -96,7 +95,6 @@ class WorkOrderPolicy < ApplicationPolicy
 
       owner_scope
     end
-    # rubocop:enable Metrics/AbcSize
 
     def owner_scope
       scope.where(user: user)

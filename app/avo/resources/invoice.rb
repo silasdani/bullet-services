@@ -14,7 +14,6 @@ module Avo
         }
       }
 
-      # rubocop:disable Metrics/AbcSize
       def fields
         field :id, as: :id, link_to_resource: true
         field :name, as: :text, required: true, filterable: true
@@ -37,7 +36,6 @@ module Avo
         field :created_at, as: :date_time, readonly: true, sortable: true, filterable: true
         field :updated_at, as: :date_time, readonly: true, sortable: true
       end
-      # rubocop:enable Metrics/AbcSize
 
       def actions
         super

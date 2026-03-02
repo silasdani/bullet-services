@@ -10,7 +10,6 @@ module Avo
         query: -> { query.ransack(id_eq: params[:q], description_cont: params[:q], m: 'or').result(distinct: false) }
       }
 
-      # rubocop:disable Metrics/AbcSize
       def fields
         field :id, as: :id, link_to_resource: true
         field :work_date, as: :date, required: true, sortable: true, filterable: true
@@ -30,7 +29,6 @@ module Avo
         field :created_at, as: :date_time, readonly: true, sortable: true
         field :updated_at, as: :date_time, readonly: true, sortable: true
       end
-      # rubocop:enable Metrics/AbcSize
     end
   end
 end

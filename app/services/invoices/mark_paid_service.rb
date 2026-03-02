@@ -35,17 +35,27 @@ module Invoices
       invoice.update!(status: 'paid', final_status: 'paid')
     end
 
-    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     def update_freshbooks_status
-      return unless freshbooks_invoice&.freshbooks_id.present?
+      return unless can_update_freshbooks_status?
 
-      invoices_client = Freshbooks::Invoices.new
-      current_invoice = invoices_client.get(freshbooks_invoice.freshbooks_id)
-
+      current_invoice = fetch_current_invoice
       return unless current_invoice
 
       lines = build_lines(current_invoice)
+      update_remote_invoice(current_invoice, lines)
+    rescue StandardError => e
+      Rails.logger.warn("Failed to update FreshBooks invoice: #{e.message}")
+    end
 
+    def can_update_freshbooks_status?
+      freshbooks_invoice&.freshbooks_id.present?
+    end
+
+    def fetch_current_invoice
+      invoices_client.get(freshbooks_invoice.freshbooks_id)
+    end
+
+    def update_remote_invoice(current_invoice, lines)
       invoices_client.update(
         freshbooks_invoice.freshbooks_id,
         client_id: current_invoice['customerid'] || invoice.freshbooks_client_id,
@@ -56,10 +66,11 @@ module Invoices
         lines: lines,
         status: 'paid'
       )
-    rescue StandardError => e
-      Rails.logger.warn("Failed to update FreshBooks invoice: #{e.message}")
     end
-    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+
+    def invoices_client
+      @invoices_client ||= Freshbooks::Invoices.new
+    end
 
     def build_lines(current_invoice)
       (current_invoice['lines'] || []).map do |line|

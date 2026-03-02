@@ -149,7 +149,7 @@ module Api
       def schedule_of_condition
         authorize @building, :update?
 
-        if update_schedule_of_condition
+        if schedule_of_condition_updated?
           @building.reload
           @building.schedule_of_condition_images.reload if @building.schedule_of_condition_images.attached?
           render_success(
@@ -197,48 +197,11 @@ module Api
         )
       end
 
-      # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Naming/PredicateMethod
-      def update_schedule_of_condition
-        if building_params.key?(:schedule_of_condition_notes)
-          @building.schedule_of_condition_notes = building_params[:schedule_of_condition_notes]
-        end
-
-        if ['true', true].include?(building_params[:purge_all_images])
-          @building.schedule_of_condition_images.purge if @building.schedule_of_condition_images.attached?
-        else
-          # Purge specific images by ID if provided
-          purge_specific_images(building_params[:purge_image_ids]) if building_params[:purge_image_ids].present?
-
-          # Attach new images if provided
-          if building_params[:schedule_of_condition_images].present?
-            building_params[:schedule_of_condition_images].each do |image|
-              next unless image.present?
-              next if image.is_a?(String) && image.empty?
-
-              @building.schedule_of_condition_images.attach(image)
-            end
-          end
-        end
-
-        if @building.save
-          @building.schedule_of_condition_images.reload if @building.schedule_of_condition_images.attached?
-          true
-        else
-          false
-        end
-      end
-      # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity, Naming/PredicateMethod
-
-      def purge_specific_images(image_ids)
-        return unless @building.schedule_of_condition_images.attached?
-
-        # Convert string IDs to integers
-        ids_to_purge = Array(image_ids).map(&:to_i).compact
-        return if ids_to_purge.empty?
-
-        # Find and purge only the specified attachments
-        attachments_to_purge = @building.schedule_of_condition_images_attachments.where(id: ids_to_purge)
-        attachments_to_purge.each(&:purge)
+      def schedule_of_condition_updated?
+        Buildings::UpdateScheduleOfConditionService.new(
+          building: @building,
+          params: building_params.to_h
+        ).call
       end
 
       def should_show_all_work_orders?(user)

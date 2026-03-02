@@ -175,7 +175,6 @@ module Invoices
       }
     end
 
-    # rubocop:disable Metrics/AbcSize
     def sync_amounts
       sleep(0.5)
       freshbooks_invoice.sync_from_freshbooks
@@ -190,7 +189,6 @@ module Invoices
         updated_at: Time.current
       )
     end
-    # rubocop:enable Metrics/AbcSize
 
     def calculate_amounts(updated_invoice)
       if updated_invoice

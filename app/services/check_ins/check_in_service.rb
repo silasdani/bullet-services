@@ -103,7 +103,6 @@ module CheckIns
       self
     end
 
-    # rubocop:disable Metrics/AbcSize
     def create_notification
       log_info("Creating check-in notification for user: #{user.email}")
       result = Notifications::AdminNotificationService.new(
@@ -119,7 +118,6 @@ module CheckIns
       log_error(e.backtrace.join("\n")) if e.backtrace
       # Don't fail the check-in if notification fails
     end
-    # rubocop:enable Metrics/AbcSize
 
     def build_check_in_message
       "#{user.name || user.email} checked in at #{work_order.name}"

@@ -6,7 +6,6 @@ module Freshbooks
       new.check
     end
 
-    # rubocop:disable Metrics/AbcSize
     def check
       token = FreshbooksToken.current
       access_token = token&.access_token ||
@@ -31,7 +30,6 @@ module Freshbooks
     rescue HTTParty::Error, StandardError => e
       { ok: false, error: e.message }
     end
-    # rubocop:enable Metrics/AbcSize
 
     private
 

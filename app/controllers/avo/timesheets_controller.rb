@@ -2,7 +2,6 @@
 
 module Avo
   class TimesheetsController < Avo::ApplicationController
-    # rubocop:disable Metrics/AbcSize
     def index
       @year = (params[:year] || Time.current.year).to_i
       @month = (params[:month] || Time.current.month).to_i
@@ -13,6 +12,5 @@ module Avo
       @rows = result.rows
       @page_title = 'Timesheets'
     end
-    # rubocop:enable Metrics/AbcSize
   end
 end

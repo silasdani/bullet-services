@@ -18,18 +18,41 @@ module Timesheets
 
     private
 
-    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity
     def build_rows
       return [] unless valid_month?
 
-      ids = TimeEntry.in_month(year, month).distinct.pluck(:user_id)
+      ids = user_ids_for_month
       return [] if ids.empty?
 
-      users_by_id = User.where(id: ids).index_by(&:id)
-      counts = TimeEntry.in_month(year, month).group(:user_id).count
-      hours_sql = Arel.sql('EXTRACT(EPOCH FROM (ends_at - starts_at)) / 3600')
-      hours_by_id = TimeEntry.in_month(year, month).group(:user_id).sum(hours_sql)
+      users_by_id = users_for_ids(ids)
+      counts = session_counts_by_user
+      hours_by_id = hours_by_user
 
+      build_user_rows(ids, users_by_id, counts, hours_by_id)
+    end
+
+    def valid_month?
+      month.to_i.between?(1, 12) && year.to_i.positive?
+    end
+
+    def user_ids_for_month
+      TimeEntry.in_month(year, month).distinct.pluck(:user_id)
+    end
+
+    def users_for_ids(ids)
+      User.where(id: ids).index_by(&:id)
+    end
+
+    def session_counts_by_user
+      TimeEntry.in_month(year, month).group(:user_id).count
+    end
+
+    def hours_by_user
+      hours_sql = Arel.sql('EXTRACT(EPOCH FROM (ends_at - starts_at)) / 3600')
+      TimeEntry.in_month(year, month).group(:user_id).sum(hours_sql)
+    end
+
+    def build_user_rows(ids, users_by_id, counts, hours_by_id)
       rows = ids.map do |uid|
         user = users_by_id[uid]
         next unless user
@@ -40,12 +63,8 @@ module Timesheets
           total_hours: (hours_by_id[uid] || 0).round(2)
         }
       end
-      rows.compact.sort_by { |r| r[:user].name.to_s.downcase }
-    end
-    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity
 
-    def valid_month?
-      month.to_i.between?(1, 12) && year.to_i.positive?
+      rows.compact.sort_by { |r| r[:user].name.to_s.downcase }
     end
   end
 end

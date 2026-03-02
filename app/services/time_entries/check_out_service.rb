@@ -131,20 +131,16 @@ module TimeEntries
       "#{user.name || user.email} checked out from #{work_order.name}. Hours worked: #{hours_worked.round(2)}"
     end
 
-    # rubocop:disable Metrics/AbcSize, Metrics/CyclomaticComplexity
     def build_check_out_metadata(hours_worked)
-      loc = time_entry&.end_address
-      loc ||= (latitude.present? && longitude.present? ? "#{latitude}, #{longitude}" : nil)
       {
         contractor_id: user.id,
         contractor_name: user.name || user.email,
         time_entry_id: time_entry&.id,
         ongoing_work_id: ongoing_work&.id,
         hours_worked: hours_worked,
-        location: loc
+        location: check_out_location
       }
     end
-    # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity
 
     def create_admin_notification(hours_worked)
       result = Notifications::AdminNotificationService.new(
@@ -171,6 +167,13 @@ module TimeEntries
       ).call
     rescue StandardError => e
       log_error("Failed to create contractor check-out notification: #{e.message}")
+    end
+
+    def check_out_location
+      return time_entry.end_address if time_entry&.end_address.present?
+      return "#{latitude}, #{longitude}" if latitude.present? && longitude.present?
+
+      nil
     end
   end
 end
