@@ -1,6 +1,6 @@
- # frozen_string_literal: true
+# frozen_string_literal: true
 
- module Freshbooks
+module Freshbooks
   # Proactively refreshes the FreshBooks access token when it is expired
   # or within the TokenRefresh::REFRESH_BUFFER_SECONDS window of expiring.
   class ProactiveTokenRefreshService
@@ -25,5 +25,4 @@
       Rails.logger.error "Unexpected error during FreshBooks proactive token refresh: #{e.class} - #{e.message}"
     end
   end
- end
-
+end

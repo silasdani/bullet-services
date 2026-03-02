@@ -360,6 +360,28 @@ module Api
 
         after_by_window_id = window_after_images_for(ongoing_work)
 
+        # Fallback: if there is exactly one window and we have images attached to the ongoing work
+        # but none of them are tagged with a window id, treat all images as "after" for that window.
+        if after_by_window_id.empty? && windows.size == 1 && ongoing_work.images.attached?
+          urls = ongoing_work.image_urls
+          return windows.map.with_index do |win, idx|
+            # Prefer explicit effective_image_urls; fall back to images array
+            before =
+              if win.key?(:effective_image_urls) && win[:effective_image_urls].respond_to?(:to_a)
+                Array(win[:effective_image_urls]).compact
+              elsif win.key?(:images) && win[:images].respond_to?(:to_a)
+                Array(win[:images]).compact
+              else
+                []
+              end
+
+            win.merge(
+              before_images: before,
+              after_images: idx.zero? ? urls : []
+            )
+          end
+        end
+
         windows.map do |win|
           window_id = win[:id]
           # Prefer explicit effective_image_urls; fall back to images array
@@ -392,8 +414,17 @@ module Api
 
         ongoing_work.images.each do |img|
           filename = img.blob.filename.to_s
-          # Extract window id from filename pattern "window_{id}_..."
-          window_id_str = filename[/window_(\d+)_/, 1]
+          # Extract window id from filename.
+          # Supported patterns (to be tolerant with frontend naming):
+          # - "window_{id}_..."  (e.g. "window_12_1700000000.jpg")
+          # - "window-{id}-..."  (e.g. "window-12-1700000000.jpg")
+          # - "window_{id}..."   (no extra underscore)
+          # - "window-{id}..."   (no extra dash)
+          window_id_str =
+            filename[/window_(\d+)_/, 1] ||
+            filename[/window-(\d+)-/, 1] ||
+            filename[/window_(\d+)/, 1] ||
+            filename[/window-(\d+)/, 1]
           next unless window_id_str
 
           window_id = window_id_str.to_i
