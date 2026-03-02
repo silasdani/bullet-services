@@ -1,3 +1,4 @@
 <div class="pt-2 border-t border-gray-200 dark:border-gray-700">
   <%= render Avo::Sidebar::LinkComponent.new label: 'Dashboard', path: main_app.avo_dashboard_path, active: :exclusive %>
+  <%= render Avo::Sidebar::LinkComponent.new label: 'Timesheets', path: main_app.avo_timesheets_path, active: :exclusive %>
 </div>

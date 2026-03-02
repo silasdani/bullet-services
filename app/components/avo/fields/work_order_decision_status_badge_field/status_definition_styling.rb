@@ -4,16 +4,17 @@ module Avo
   module Fields
     class WorkOrderDecisionStatusBadgeField
       module StatusDefinitionStyling
-        ENTITY_TYPE = 'WorkOrderDecision'
+        ENTITY_TYPE = 'Decision'
 
-        def work_order_decision
-          @resource&.record
+        def decision_record
+          record = @resource&.record
+          record.is_a?(::Decision) ? record : record&.try(:decision)
         end
 
         def effective_status_key
-          return nil unless work_order_decision
+          return nil unless decision_record
 
-          (work_order_decision.decision || 'approved').to_s
+          (decision_record.decision || 'approved').to_s
         end
 
         def status_definition
@@ -65,4 +66,3 @@ module Avo
     end
   end
 end
-

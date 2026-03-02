@@ -28,55 +28,56 @@ module Timesheets
     end
 
     def generate_entries
-      sessions = find_completed_sessions
+      entries = find_completed_entries
 
-      @timesheet_entries = sessions.map { |session| build_timesheet_entry(session) }
+      @timesheet_entries = entries.map { |entry| build_timesheet_entry(entry) }
 
       log_info("Generated #{@timesheet_entries.count} timesheet entries")
       self
     end
 
-    def find_completed_sessions
-      WorkSession
+    def find_completed_entries
+      TimeEntry
         .completed
         .where(user: user)
-        .where(checked_in_at: start_date.beginning_of_day..end_date.end_of_day)
+        .where(starts_at: start_date.beginning_of_day..end_date.end_of_day)
         .includes(:work_order)
-        .order(checked_in_at: :asc)
+        .order(starts_at: :asc)
     end
 
-    def build_timesheet_entry(session)
-      hours_worked = session.duration_hours || 0
-      hourly_rate = calculate_hourly_rate(session)
+    def build_timesheet_entry(entry)
+      hours_worked = entry.duration_hours || 0
+      hourly_rate = calculate_hourly_rate(entry)
       total_amount = calculate_total_amount(hours_worked, hourly_rate)
 
-      build_entry_hash(session, hours_worked, hourly_rate, total_amount)
+      build_entry_hash(entry, hours_worked, hourly_rate, total_amount)
     end
 
-    def build_entry_hash(session, hours_worked, hourly_rate, total_amount)
+    def build_entry_hash(entry, hours_worked, hourly_rate, total_amount)
       {
-        work_session_id: session.id,
-        work_order_id: session.work_order_id,
-        work_order_name: session.work_order&.name,
-        date: session.checked_in_at.to_date,
-        check_in_time: session.checked_in_at,
-        check_out_time: session.checked_out_at,
+        time_entry_id: entry.id,
+        work_order_id: entry.work_order_id,
+        work_order_name: entry.work_order&.name,
+        date: entry.starts_at.to_date,
+        check_in_time: entry.starts_at,
+        check_out_time: entry.ends_at,
         hours_worked: hours_worked,
         hours_worked_minutes: (hours_worked * 60).to_i,
         hourly_rate: hourly_rate,
         total_amount: total_amount,
-        location: build_location_string(session)
+        location: build_location_string(entry)
       }
     end
 
-    def build_location_string(session)
-      session.address || "#{session.latitude}, #{session.longitude}"
+    def build_location_string(entry)
+      entry.end_address.presence || entry.start_address.presence ||
+        (entry.end_lat.present? && entry.end_lng.present? ? "#{entry.end_lat}, #{entry.end_lng}" : nil)
     end
 
-    def calculate_hourly_rate(session)
+    def calculate_hourly_rate(entry)
       return 0 unless hourly_rate_calculator
 
-      hourly_rate_calculator.call(session)
+      hourly_rate_calculator.call(entry)
     rescue StandardError => e
       log_warn("Hourly rate calculation failed: #{e.message}")
       0

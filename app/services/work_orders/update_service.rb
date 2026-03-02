@@ -147,39 +147,45 @@ module WorkOrders
 
     def update_existing_tool(window, tool_attrs)
       tool = window.tools.find(tool_attrs[:id])
+      return destroy_tool(tool) if destroy_tool?(tool_attrs)
 
-      if tool_attrs[:_destroy] == '1'
-        tool.destroy
+      update_tool_with_attributes(tool, tool_attrs)
+    end
+
+    # Only Admin can set tool price. All other roles get default for the tool name.
+    def new_tool_price(tool_attrs)
+      if current_user&.role == 'admin'
+        tool_attrs[:price] || 0
       else
-        update_attrs = { name: tool_attrs[:name] }
-        # Supervisors cannot change prices — preserve the existing price.
-        # If the tool name changed, update price to the default for the new name
-        # only if the supervisor changed it (keeps admin-set prices intact).
-        if current_user&.supervisor?
-          # If the tool name changed, use the default price for the new name
-          if tool.name != tool_attrs[:name]
-            update_attrs[:price] =
-              Tool.default_price_for_name(tool_attrs[:name]) || tool.price
-          end
-          # Otherwise keep existing price (don't include :price in update_attrs)
-        else
-          update_attrs[:price] = tool_attrs[:price] || 0
-        end
-
-        unless tool.update(update_attrs)
-          add_errors(tool.errors.full_messages)
-          raise ActiveRecord::Rollback
-        end
+        Tool.default_price_for_name(tool_attrs[:name]) || 0
       end
     end
 
-    # Price for new tools: supervisors get default price, others use submitted price.
-    def new_tool_price(tool_attrs)
-      if current_user&.supervisor?
-        Tool.default_price_for_name(tool_attrs[:name]) || 0
-      else
-        tool_attrs[:price] || 0
+    def destroy_tool?(tool_attrs)
+      tool_attrs[:_destroy] == '1'
+    end
+
+    def destroy_tool(tool)
+      tool.destroy
+    end
+
+    def update_tool_with_attributes(tool, tool_attrs)
+      update_attrs = { name: tool_attrs[:name] }
+      apply_price_update!(update_attrs, tool, tool_attrs)
+      return if tool.update(update_attrs)
+
+      add_errors(tool.errors.full_messages)
+      raise ActiveRecord::Rollback
+    end
+
+    def apply_price_update!(update_attrs, tool, tool_attrs)
+      # Only Admin can set prices. Everyone else: preserve existing or use default for new name.
+      if current_user&.role == 'admin'
+        update_attrs[:price] = tool_attrs[:price] || 0
+      elsif tool.name != tool_attrs[:name]
+        update_attrs[:price] = Tool.default_price_for_name(tool_attrs[:name]) || tool.price
       end
+      # else: keep existing price (omit :price)
     end
 
     def create_new_tool(window, tool_attrs)

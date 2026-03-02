@@ -48,19 +48,29 @@ module Invoices
       client&.email
     end
 
-    # rubocop:disable Metrics/AbcSize
     def send_to_freshbooks(email_address)
-      invoices_client = Freshbooks::Invoices.new
-      # Include lines so we preserve them when updating (API requires all lines in PUT)
-      current_invoice = invoices_client.get(freshbooks_invoice.freshbooks_id, includes: ['lines'])
-
-      raise StandardError, 'Could not retrieve invoice from FreshBooks' unless current_invoice
+      current_invoice = fetch_invoice_with_lines
 
       enable_online_payments(freshbooks_invoice.freshbooks_id)
 
       lines = build_lines(current_invoice)
 
-      updated_invoice = invoices_client.update(
+      updated_invoice = update_invoice_in_freshbooks(current_invoice, email_address, lines)
+
+      # Use update response to sync status immediately (FreshBooks marks as sent when email is sent)
+      sync_status_from_response(updated_invoice) if updated_invoice.present?
+    end
+
+    def fetch_invoice_with_lines
+      # Include lines so we preserve them when updating (API requires all lines in PUT)
+      invoice_data = invoices_client.get(freshbooks_invoice.freshbooks_id, includes: ['lines'])
+      raise StandardError, 'Could not retrieve invoice from FreshBooks' unless invoice_data
+
+      invoice_data
+    end
+
+    def update_invoice_in_freshbooks(current_invoice, email_address, lines)
+      invoices_client.update(
         freshbooks_invoice.freshbooks_id,
         client_id: current_invoice['customerid'] || invoice.freshbooks_client_id,
         date: current_invoice['create_date'] || invoice.created_at&.to_date&.to_s,
@@ -72,11 +82,7 @@ module Invoices
         email_recipients: [email_address],
         email_include_pdf: true
       )
-
-      # Use update response to sync status immediately (FreshBooks marks as sent when email is sent)
-      sync_status_from_response(updated_invoice) if updated_invoice.present?
     end
-    # rubocop:enable Metrics/AbcSize
 
     def build_lines(current_invoice)
       (current_invoice['lines'] || []).map do |line|
@@ -145,6 +151,10 @@ module Invoices
         Rails.logger.debug("Payment gateway #{gateway} not available: #{e.message}")
         false
       end
+    end
+
+    def invoices_client
+      @invoices_client ||= Freshbooks::Invoices.new
     end
   end
 end

@@ -8,7 +8,9 @@ module Freshbooks
 
     def check
       token = FreshbooksToken.current
-      access_token = token&.access_token || ENV['FRESHBOOKS_ACCESS_TOKEN'] || Rails.application.config.freshbooks[:access_token]
+      access_token = token&.access_token ||
+                     ENV['FRESHBOOKS_ACCESS_TOKEN'] ||
+                     Rails.application.config.freshbooks[:access_token]
 
       return { ok: false, error: 'No token configured' } if access_token.blank?
 

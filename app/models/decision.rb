@@ -1,8 +1,10 @@
 # frozen_string_literal: true
 
-class WorkOrderDecision < ApplicationRecord
+class Decision < ApplicationRecord
   include SoftDeletable
   include StatusMetadata
+
+  self.table_name = 'decisions'
 
   belongs_to :work_order, foreign_key: :work_order_id
 

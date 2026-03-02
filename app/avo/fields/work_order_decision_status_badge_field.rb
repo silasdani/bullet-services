@@ -6,9 +6,9 @@ module Avo
       def value
         return nil unless record
 
-        record.decision
+        decision_record = record.is_a?(::Decision) ? record : record.try(:decision)
+        decision_record&.decision
       end
     end
   end
 end
-

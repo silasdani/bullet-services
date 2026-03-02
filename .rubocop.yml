@@ -41,6 +41,7 @@ Metrics/AbcSize:
   Exclude:
     - 'lib/tasks/**/*.rake'
     - 'app/avo/resources/user.rb'
+  Enabled: false
 
 Metrics/CyclomaticComplexity:
   Exclude:

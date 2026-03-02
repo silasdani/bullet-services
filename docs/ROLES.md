@@ -37,24 +37,12 @@ Roles are defined as follows:
 
 ---
 
-## 4. WRS Subcontractors
+## 4. Contractors
 
-> Admin can select the users that will have access to the following:
-
-- Can see all projects
-- After choosing a project **and** checking in, can only see flats/work orders from that project
-- Cannot create/modify work orders and cannot see prices
-- Does not send work updates at all
-- Only sends check-in or check-out notifications, but only to Marius
-
----
-
-## 5. General Subcontractor
-
-- Can see all projects
-- Choose project + check-in
-- Upload photos
-- Check-out
+- Field workers who log time and upload photos.
+- Can see assigned projects and work orders; check in, add photos, check out.
+- Cannot create or modify work orders; cannot see prices.
+- Check-in and check-out notifications go to the designated contractor recipient (configurable).
 
 ---
 

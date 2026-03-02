@@ -60,12 +60,12 @@ module Dashboards
         total_users: User.count,
         total_work_orders: WorkOrder.count,
         total_buildings: Building.count,
-        active_work_sessions: count_active_work_sessions
+        active_time_entries: count_active_time_entries
       }
     end
 
-    def count_active_work_sessions
-      WorkSession.active.count
+    def count_active_time_entries
+      TimeEntry.clocked_in.count
     rescue StandardError => e
       log_error("Error counting active work sessions: #{e.message}")
       0

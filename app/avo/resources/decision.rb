@@ -2,8 +2,9 @@
 
 module Avo
   module Resources
-    class WorkOrderDecision < Avo::BaseResource
+    class Decision < Avo::BaseResource
       self.title = :decision
+      self.model_class = ::Decision
       self.includes = %i[work_order]
       self.search = {
         query: lambda {

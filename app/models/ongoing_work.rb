@@ -3,13 +3,13 @@
 class OngoingWork < ApplicationRecord
   belongs_to :work_order, foreign_key: :work_order_id
   belongs_to :user
-  has_many :work_sessions, dependent: :destroy
+  has_many :time_entries, dependent: :nullify
   has_many_attached :images
 
   validates :work_date, presence: true
-  validates :work_order_id, presence: true
+  validates :work_order_id, presence: true, uniqueness: true
   validates :user_id, presence: true
-  validate :images_or_description?, unless: :is_draft?
+  validate :has_publishable_content?, unless: :is_draft?
 
   scope :for_wrs, ->(wrs_id) { where(work_order_id: wrs_id) }
   scope :for_user, ->(user_id) { where(user_id: user_id) }
@@ -23,6 +23,10 @@ class OngoingWork < ApplicationRecord
   end
 
   def publish!
+    if time_entries.clocked_in.exists?
+      errors.add(:base, 'Check out from your active session before completing this entry.')
+      return false
+    end
     update!(is_draft: false)
   end
 
@@ -31,15 +35,15 @@ class OngoingWork < ApplicationRecord
   end
 
   def total_hours
-    work_sessions.completed.sum { |ws| ws.duration_hours || 0 }
+    time_entries.completed.sum { |te| te.duration_hours || 0 }
   end
 
   def active_session
-    work_sessions.active.first
+    time_entries.clocked_in.first
   end
 
   def checked_in?
-    work_sessions.active.exists?
+    time_entries.clocked_in.exists?
   end
 
   def image_urls
@@ -48,12 +52,20 @@ class OngoingWork < ApplicationRecord
     images.map { |img| Rails.application.routes.url_helpers.rails_blob_path(img, only_path: true) }
   end
 
+  # Used by Avo windows_info_field to render images grouped by work order windows
+  def images_with_windows
+    self
+  end
+
   private
 
-  def images_or_description?
+  def has_publishable_content?
     return true if images.attached? || description.present?
 
-    errors.add(:base, 'Must have at least images or description')
+    # Allow publishing if time was logged (contractors may not always add photos).
+    return true if time_entries.completed.exists?
+
+    errors.add(:base, 'Must have at least images, description, or time logged')
     false
   end
 end

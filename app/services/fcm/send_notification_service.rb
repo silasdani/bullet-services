@@ -84,7 +84,6 @@ module Fcm
       }
     end
 
-    # rubocop:disable Metrics/AbcSize
     def handle_response(response)
       return log_info("FCM sent to user #{user.id}") if response.success?
 
@@ -105,7 +104,6 @@ module Fcm
         add_error('FCM service error')
       end
     end
-    # rubocop:enable Metrics/AbcSize
 
     def parse_error_response(response)
       parsed = response.parsed_response

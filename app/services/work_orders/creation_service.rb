@@ -85,7 +85,7 @@ module WorkOrders
 
         tool = window.tools.build(
           name: tool_attrs[:name],
-          price: supervisor_tool_price(tool_attrs)
+          price: tool_price_from_params(tool_attrs)
         )
 
         unless tool.save
@@ -95,13 +95,12 @@ module WorkOrders
       end
     end
 
-    # Supervisors don't input prices — use the default price for the tool name.
-    # Non-supervisors use the price sent from the frontend.
-    def supervisor_tool_price(tool_attrs)
-      if user.supervisor?
-        Tool.default_price_for_name(tool_attrs[:name]) || 0
-      else
+    # Only Admin can set tool price. All other roles get default for the tool name.
+    def tool_price_from_params(tool_attrs)
+      if user.role == 'admin'
         tool_attrs[:price] || 0
+      else
+        Tool.default_price_for_name(tool_attrs[:name]) || 0
       end
     end
 

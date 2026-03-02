@@ -2,11 +2,11 @@
 
 class TimesheetPolicy < ApplicationPolicy
   def index?
-    user.present?
+    user.present? && (user.admin? || user.contract_manager?)
   end
 
   def export?
-    user.present?
+    user.present? && (user.admin? || user.contract_manager?)
   end
 
   class Scope < Scope

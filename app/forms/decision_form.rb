@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class WorkOrderDecisionForm
+class DecisionForm
   include ActiveModel::Model
   include ActiveModel::Attributes
 

@@ -30,23 +30,6 @@ module WorkOrderCalculations
     total_vat_included_price || 0
   end
 
-  # Snapshot current prices for historical record
-  def snapshot_prices!
-    return unless persisted?
-
-    price_snapshots.create!(
-      subtotal: total_vat_excluded_price || 0,
-      vat_rate: VAT_RATE,
-      vat_amount: vat_amount,
-      total: total_vat_included_price || 0,
-      snapshot_at: Time.current,
-      line_items: build_line_items_snapshot
-    )
-  rescue StandardError => e
-    Rails.logger.error "Error creating price snapshot: #{e.message}"
-    raise
-  end
-
   private
 
   def calculate_totals
@@ -74,23 +57,5 @@ module WorkOrderCalculations
   rescue StandardError => e
     Rails.logger.error "Error calculating subtotal: #{e.message}"
     0
-  end
-
-  def build_line_items_snapshot
-    {
-      windows: windows.map do |window|
-        {
-          window_id: window.id,
-          location: window.location,
-          tools: window.tools.map do |tool|
-            {
-              tool_id: tool.id,
-              name: tool.name,
-              price: tool.price.to_f
-            }
-          end
-        }
-      end
-    }
   end
 end

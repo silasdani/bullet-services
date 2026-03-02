@@ -7,6 +7,13 @@ module Api
 
       before_action :set_building, only: %i[show update destroy work_orders schedule_of_condition]
 
+      def assigned
+        authorize Building
+        collection = assigned_buildings_collection
+        serialized_data = serialize_buildings(collection)
+        render_success(data: serialized_data)
+      end
+
       def index
         authorize Building
 
@@ -31,9 +38,9 @@ module Api
       end
 
       def filter_buildings_with_work_orders(collection)
-        assigned_work_order_ids = assigned_work_order_ids_for_filter
-        building_ids = building_ids_from_work_order_filter(assigned_work_order_ids)
+        return collection if current_user.general_contractor?
 
+        building_ids = current_user.assigned_building_ids
         return collection.none if building_ids.empty?
 
         collection.where(id: building_ids)
@@ -42,23 +49,14 @@ module Api
         collection
       end
 
-      def assigned_work_order_ids_for_filter
-        return [] if current_user.general_contractor?
+      def assigned_buildings_collection
+        building_ids = Assignment.where(user_id: current_user.id).pluck(:building_id)
+        return Building.none if building_ids.empty?
 
-        WorkOrderAssignment.where(user_id: current_user.id).pluck(:work_order_id)
-      end
-
-      def building_ids_from_work_order_filter(assigned_work_order_ids)
-        scope = WorkOrder
-                .where(is_draft: false, deleted_at: nil)
-                .contractor_visible_status
-
-        scope = if assigned_work_order_ids.empty?
-                  scope.where.not(building_id: nil)
-                else
-                  scope.where(id: assigned_work_order_ids)
-                end
-        scope.distinct.pluck(:building_id)
+        visible = WorkOrder.where(building_id: building_ids, is_draft: false, deleted_at: nil)
+                           .contractor_visible_status
+                           .select(:building_id)
+        Building.where(id: building_ids).where(id: visible).distinct.order(name: :asc)
       end
 
       def apply_search_filter(collection)
@@ -151,7 +149,7 @@ module Api
       def schedule_of_condition
         authorize @building, :update?
 
-        if update_schedule_of_condition
+        if schedule_of_condition_updated?
           @building.reload
           @building.schedule_of_condition_images.reload if @building.schedule_of_condition_images.attached?
           render_success(
@@ -199,55 +197,19 @@ module Api
         )
       end
 
-      def update_schedule_of_condition
-        if building_params.key?(:schedule_of_condition_notes)
-          @building.schedule_of_condition_notes = building_params[:schedule_of_condition_notes]
-        end
-
-        if ['true', true].include?(building_params[:purge_all_images])
-          @building.schedule_of_condition_images.purge if @building.schedule_of_condition_images.attached?
-        else
-          # Purge specific images by ID if provided
-          purge_specific_images(building_params[:purge_image_ids]) if building_params[:purge_image_ids].present?
-
-          # Attach new images if provided
-          if building_params[:schedule_of_condition_images].present?
-            building_params[:schedule_of_condition_images].each do |image|
-              next unless image.present?
-              next if image.is_a?(String) && image.empty?
-
-              @building.schedule_of_condition_images.attach(image)
-            end
-          end
-        end
-
-        if @building.save
-          @building.schedule_of_condition_images.reload if @building.schedule_of_condition_images.attached?
-          true
-        else
-          false
-        end
-      end
-
-      def purge_specific_images(image_ids)
-        return unless @building.schedule_of_condition_images.attached?
-
-        # Convert string IDs to integers
-        ids_to_purge = Array(image_ids).map(&:to_i).compact
-        return if ids_to_purge.empty?
-
-        # Find and purge only the specified attachments
-        attachments_to_purge = @building.schedule_of_condition_images_attachments.where(id: ids_to_purge)
-        attachments_to_purge.each(&:purge)
+      def schedule_of_condition_updated?
+        Buildings::UpdateScheduleOfConditionService.new(
+          building: @building,
+          params: building_params.to_h
+        ).call
       end
 
       def should_show_all_work_orders?(user)
-        assigned_work_order_ids = WorkOrderAssignment.where(user_id: user.id).pluck(:work_order_id)
-
-        return true if assigned_work_order_ids.empty?
+        building_ids = Assignment.where(user_id: user.id).pluck(:building_id)
+        return true if building_ids.empty?
 
         non_completed_count = WorkOrder
-                              .where(id: assigned_work_order_ids)
+                              .where(building_id: building_ids)
                               .where(is_draft: false, is_archived: false)
                               .contractor_visible_status
                               .count

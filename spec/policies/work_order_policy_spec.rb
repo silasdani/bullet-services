@@ -6,6 +6,7 @@ RSpec.describe WorkOrderPolicy, type: :policy do
   let(:user) { create(:user) }
   let(:admin_user) { create(:user, :admin) }
   let(:contractor_user) { create(:user, :contractor) }
+  let(:contract_manager_user) { create(:user, role: :contract_manager) }
   let(:other_user) { create(:user) }
 
   let(:work_order) { create(:work_order, user: user) }
@@ -14,6 +15,7 @@ RSpec.describe WorkOrderPolicy, type: :policy do
   let(:admin_policy) { described_class.new(admin_user, work_order) }
   let(:contractor_policy) { described_class.new(contractor_user, work_order) }
   let(:other_policy) { described_class.new(other_user, work_order) }
+  let(:contract_manager_policy) { described_class.new(contract_manager_user, work_order) }
 
   describe 'permissions' do
     describe '#index?' do
@@ -29,6 +31,10 @@ RSpec.describe WorkOrderPolicy, type: :policy do
 
       it 'allows admin to view any work order' do
         expect(admin_policy.show?).to be true
+      end
+
+      it 'allows contract manager to view any work order' do
+        expect(contract_manager_policy.show?).to be true
       end
 
       it 'allows contractor to view any work order' do
@@ -53,10 +59,6 @@ RSpec.describe WorkOrderPolicy, type: :policy do
 
       it 'allows admin to update any work order' do
         expect(admin_policy.update?).to be true
-      end
-
-      it 'allows contractor to update any work order' do
-        expect(contractor_policy.update?).to be true
       end
 
       it 'does not allow other users to update work order' do

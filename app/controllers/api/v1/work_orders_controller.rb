@@ -2,6 +2,7 @@
 
 module Api
   module V1
+    # rubocop:disable Metrics/ClassLength
     class WorkOrdersController < Api::V1::BaseController
       include WorkOrderCheckInCheckOut
       include WorkOrderAssignmentHandling
@@ -118,7 +119,8 @@ module Api
 
       def check_in
         authorize @work_order, :show?
-        authorize WorkSession, :check_in?
+        authorize TimeEntry, :check_in?
+        @ongoing_work = find_or_create_my_ongoing_work_for_check_in
         service = build_check_in_service
         service.call
         if service.success?
@@ -131,7 +133,7 @@ module Api
 
       def check_out
         authorize @work_order, :show?
-        authorize WorkSession, :check_out?
+        authorize TimeEntry, :check_out?
         service = build_check_out_service
         service.call
         if service.success?
@@ -214,6 +216,17 @@ module Api
         end
       end
 
+      def find_or_create_my_ongoing_work_for_check_in
+        ongoing_work = OngoingWork.find_or_initialize_by(work_order_id: @work_order.id)
+        if ongoing_work.new_record?
+          ongoing_work.user_id = current_user.id
+          ongoing_work.work_date = Date.current
+          ongoing_work.is_draft = true
+          ongoing_work.save!
+        end
+        ongoing_work
+      end
+
       def set_work_order
         base = action_name == 'restore' ? WorkOrder.with_deleted : WorkOrder
         @work_order = base.includes(:user, :building, :windows, windows: [:tools, { images_attachments: :blob }])
@@ -244,5 +257,6 @@ module Api
         end
       end
     end
+    # rubocop:enable Metrics/ClassLength
   end
 end

@@ -1,0 +1,53 @@
+<div class="flex flex-col space-y-8">
+  <%= render Avo::PanelComponent.new(name: "Timesheets", description: "Users with at least one check-in/check-out per month") do |c| %>
+    <% c.with_body do %>
+      <div class="p-6">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <nav class="flex items-center gap-2" aria-label="Month navigation">
+            <%= link_to main_app.avo_timesheets_path(year: @prev.year, month: @prev.month), class: "rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700" do %>
+              ← <%= @prev.strftime("%b %Y") %>
+            <% end %>
+            <span class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-2 text-sm font-semibold text-gray-900 dark:text-white">
+              <%= @month_start.strftime("%B %Y") %>
+            </span>
+            <%= link_to main_app.avo_timesheets_path(year: @next.year, month: @next.month), class: "rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700" do %>
+              <%= @next.strftime("%b %Y") %> →
+            <% end %>
+          </nav>
+          <p class="text-sm text-gray-500 dark:text-gray-400">
+            <%= @rows.size %> user<%= "s" if @rows.size != 1 %> with completed sessions
+          </p>
+        </div>
+
+        <% if @rows.any? %>
+          <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead class="bg-gray-50 dark:bg-gray-800">
+                <tr>
+                  <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">User</th>
+                  <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Email</th>
+                  <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Sessions</th>
+                  <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Hours</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                <% @rows.each do |row| %>
+                  <tr class="hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
+                      <%= link_to row[:user].name, "#{Avo.configuration.root_path}/resources/users/#{row[:user].id}", class: "text-primary-600 dark:text-primary-400 hover:underline" %>
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400"><%= row[:user].email %></td>
+                    <td class="px-4 py-3 text-sm text-right text-gray-900 dark:text-white"><%= row[:sessions_count] %></td>
+                    <td class="px-4 py-3 text-sm text-right text-gray-900 dark:text-white"><%= number_with_precision(row[:total_hours], precision: 2) %></td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        <% else %>
+          <p class="text-sm text-gray-500 dark:text-gray-400 py-8 text-center">No completed check-ins for this month.</p>
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
+</div>

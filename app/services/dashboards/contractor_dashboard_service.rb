@@ -5,7 +5,7 @@ module Dashboards
     def build_dashboard_data
       {
         assigned_work_orders: load_assigned_work_orders,
-        active_work_session: load_active_work_session,
+        active_time_entry: load_active_time_entry,
         pending_photos: load_pending_photos,
         recent_activity: load_recent_activity
       }
@@ -15,10 +15,10 @@ module Dashboards
 
     def load_assigned_work_orders
       WorkOrder
-        .includes(:building, :windows)
-        .where(user: user)
+        .where(building_id: user.assigned_buildings.select(:id))
         .where(is_draft: false)
         .contractor_visible_status
+        .includes(:building, :windows)
         .order(created_at: :desc)
         .limit(10)
         .map { |work_order| serialize_work_order(work_order) }
@@ -27,19 +27,19 @@ module Dashboards
       []
     end
 
-    def load_active_work_session
-      session = WorkSession.active.for_user(user).includes(:work_order).first
-      return nil unless session
+    def load_active_time_entry
+      entry = TimeEntry.clocked_in.for_user(user).includes(:work_order).first
+      return nil unless entry
 
       {
-        id: session.id,
-        work_order_id: session.work_order_id,
-        work_order_name: session.work_order&.name || 'Unknown',
-        checked_in_at: session.checked_in_at,
-        address: session.address
+        id: entry.id,
+        work_order_id: entry.work_order_id,
+        work_order_name: entry.work_order&.name || 'Unknown',
+        starts_at: entry.starts_at,
+        start_address: entry.start_address
       }
     rescue StandardError => e
-      log_error("Error loading active work session: #{e.message}")
+      log_error("Error loading active time entry: #{e.message}")
       nil
     end
 
@@ -48,18 +48,18 @@ module Dashboards
     end
 
     def load_recent_activity
-      WorkSession
+      TimeEntry
         .where(user: user)
         .includes(:work_order)
-        .order(checked_in_at: :desc)
+        .order(starts_at: :desc)
         .limit(5)
-        .map do |session|
+        .map do |entry|
           {
-            id: session.id,
-            work_order_name: session.work_order&.name || 'Unknown',
-            checked_in_at: session.checked_in_at,
-            checked_out_at: session.checked_out_at,
-            active: session.active?
+            id: entry.id,
+            work_order_name: entry.work_order&.name || 'Unknown',
+            starts_at: entry.starts_at,
+            ends_at: entry.ends_at,
+            active: entry.clocked_in?
           }
         end
     rescue StandardError => e

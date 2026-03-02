@@ -23,10 +23,7 @@ module BuildingsWorkOrderListing
   end
 
   def contractor_assigned_to_building_work_order?
-    WorkOrderAssignment
-      .joins(:work_order)
-      .where(user_id: current_user.id, work_orders: { building_id: @building.id })
-      .exists?
+    Assignment.exists?(user_id: current_user.id, building_id: @building.id)
   end
 
   def supervisor_can_access_building_work_orders?
@@ -37,7 +34,7 @@ module BuildingsWorkOrderListing
   end
 
   def contractor_active_building_id
-    active = WorkSession.active.for_user(current_user).includes(:work_order).first
+    active = TimeEntry.clocked_in.for_user(current_user).includes(:work_order).first
     active&.work_order&.building_id
   end
 

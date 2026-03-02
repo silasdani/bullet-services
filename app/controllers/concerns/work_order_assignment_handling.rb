@@ -13,9 +13,9 @@ module WorkOrderAssignmentHandling
       )
     end
 
-    assignment = WorkOrderAssignment.find_or_initialize_by(
+    assignment = Assignment.find_or_initialize_by(
       user: target_user,
-      work_order: @work_order
+      building: @work_order.building
     )
     assignment.assigned_by_user = current_user
 
@@ -23,7 +23,7 @@ module WorkOrderAssignmentHandling
       render_assign_success(target_user)
     else
       render_error(
-        message: 'Failed to assign to work order',
+        message: 'Failed to assign to project',
         details: assignment.errors.full_messages
       )
     end
@@ -39,7 +39,7 @@ module WorkOrderAssignmentHandling
       )
     end
 
-    assignment = WorkOrderAssignment.find_by(user: target_user, work_order: @work_order)
+    assignment = Assignment.find_by(user: target_user, building: @work_order.building)
     assignment&.destroy
 
     render_success(
@@ -48,7 +48,7 @@ module WorkOrderAssignmentHandling
         work_order_id: @work_order.id,
         assigned: false
       },
-      message: 'Successfully unassigned from work order'
+      message: 'Successfully unassigned from project'
     )
   end
 

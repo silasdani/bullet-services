@@ -13,7 +13,8 @@ module Avo
       def fields
         field :id, as: :id, link_to_resource: true
         field :reconnect_link, as: :text, only_on: [:show], as_html: true do
-          if Rails.application.config.freshbooks[:client_id].present? && Rails.application.config.freshbooks[:redirect_uri].present?
+          fb = Rails.application.config.freshbooks
+          if fb[:client_id].present? && fb[:redirect_uri].present?
             link_to 'Reconnect FreshBooks', main_app.freshbooks_reconnect_path,
                     class: 'text-blue-600 hover:underline', data: { turbo: false }
           else

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_18_000001) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_02_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -40,6 +40,18 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_18_000001) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "assignments", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "building_id", null: false
+    t.bigint "assigned_by_user_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["assigned_by_user_id"], name: "index_assignments_on_assigned_by_user_id"
+    t.index ["building_id"], name: "index_assignments_on_building_id"
+    t.index ["user_id", "building_id"], name: "index_assignments_on_user_id_and_building_id", unique: true
+    t.index ["user_id"], name: "index_assignments_on_user_id"
   end
 
   create_table "buildings", force: :cascade do |t|
@@ -79,6 +91,23 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_18_000001) do
     t.index ["user_id"], name: "index_check_ins_on_user_id"
     t.index ["work_order_id", "action", "timestamp"], name: "index_check_ins_on_wrs_action_timestamp"
     t.index ["work_order_id"], name: "index_check_ins_on_work_order_id"
+  end
+
+  create_table "decisions", force: :cascade do |t|
+    t.bigint "work_order_id", null: false
+    t.string "decision", null: false
+    t.datetime "decision_at", null: false
+    t.string "client_email"
+    t.string "client_name"
+    t.datetime "terms_accepted_at"
+    t.string "terms_version"
+    t.jsonb "decision_metadata"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "deleted_at"
+    t.index ["decision_at"], name: "index_decisions_on_decision_at"
+    t.index ["deleted_at"], name: "index_decisions_on_deleted_at"
+    t.index ["work_order_id"], name: "index_decisions_on_work_order_id", unique: true
   end
 
   create_table "freshbooks_clients", force: :cascade do |t|
@@ -210,25 +239,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_18_000001) do
     t.index ["user_id"], name: "index_ongoing_works_on_user_id"
     t.index ["work_order_id", "work_date", "user_id"], name: "index_ongoing_works_on_wrs_date_user"
     t.index ["work_order_id", "work_date"], name: "index_ongoing_works_on_work_order_id_and_work_date"
-    t.index ["work_order_id"], name: "index_ongoing_works_on_work_order_id"
-  end
-
-  create_table "price_snapshots", force: :cascade do |t|
-    t.string "priceable_type", null: false
-    t.bigint "work_order_id", null: false
-    t.decimal "subtotal", precision: 10, scale: 2
-    t.decimal "vat_rate", precision: 5, scale: 4
-    t.decimal "vat_amount", precision: 10, scale: 2
-    t.decimal "total", precision: 10, scale: 2
-    t.datetime "snapshot_at", null: false
-    t.jsonb "line_items"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.datetime "deleted_at"
-    t.index ["deleted_at"], name: "index_price_snapshots_on_deleted_at"
-    t.index ["priceable_type", "work_order_id", "snapshot_at"], name: "index_price_snapshots_on_priceable_and_time"
-    t.index ["priceable_type", "work_order_id"], name: "index_price_snapshots_on_priceable"
-    t.index ["snapshot_at"], name: "index_price_snapshots_on_snapshot_at"
+    t.index ["work_order_id"], name: "index_ongoing_works_on_work_order_id", unique: true
   end
 
   create_table "status_definitions", force: :cascade do |t|
@@ -242,6 +253,28 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_18_000001) do
     t.datetime "updated_at", null: false
     t.index ["entity_type", "is_active", "display_order"], name: "index_status_definitions_on_entity_active_order"
     t.index ["entity_type", "status_key"], name: "index_status_definitions_on_entity_and_key", unique: true
+  end
+
+  create_table "time_entries", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "work_order_id", null: false
+    t.datetime "starts_at", null: false
+    t.datetime "ends_at"
+    t.decimal "start_lat", precision: 10, scale: 7
+    t.decimal "start_lng", precision: 10, scale: 7
+    t.decimal "end_lat", precision: 10, scale: 7
+    t.decimal "end_lng", precision: 10, scale: 7
+    t.string "start_address"
+    t.string "end_address"
+    t.bigint "ongoing_work_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["ends_at"], name: "index_time_entries_on_ends_at", where: "(ends_at IS NOT NULL)"
+    t.index ["ongoing_work_id"], name: "index_time_entries_on_ongoing_work_id"
+    t.index ["user_id", "starts_at"], name: "index_time_entries_on_user_id_and_starts_at"
+    t.index ["user_id"], name: "index_time_entries_on_user_id"
+    t.index ["work_order_id", "starts_at"], name: "index_time_entries_on_work_order_id_and_starts_at"
+    t.index ["work_order_id"], name: "index_time_entries_on_work_order_id"
   end
 
   create_table "tools", force: :cascade do |t|
@@ -301,35 +334,6 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_18_000001) do
     t.index ["work_order_id"], name: "index_windows_on_work_order_id"
   end
 
-  create_table "work_order_assignments", force: :cascade do |t|
-    t.bigint "user_id", null: false
-    t.bigint "work_order_id", null: false
-    t.bigint "assigned_by_user_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["assigned_by_user_id"], name: "index_work_order_assignments_on_assigned_by_user_id"
-    t.index ["user_id", "work_order_id"], name: "index_work_order_assignments_on_user_id_and_work_order_id", unique: true
-    t.index ["user_id"], name: "index_work_order_assignments_on_user_id"
-    t.index ["work_order_id"], name: "index_work_order_assignments_on_work_order_id"
-  end
-
-  create_table "work_order_decisions", force: :cascade do |t|
-    t.bigint "work_order_id", null: false
-    t.string "decision", null: false
-    t.datetime "decision_at", null: false
-    t.string "client_email"
-    t.string "client_name"
-    t.datetime "terms_accepted_at"
-    t.string "terms_version"
-    t.jsonb "decision_metadata"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.datetime "deleted_at"
-    t.index ["decision_at"], name: "index_work_order_decisions_on_decision_at"
-    t.index ["deleted_at"], name: "index_work_order_decisions_on_deleted_at"
-    t.index ["work_order_id"], name: "index_work_order_decisions_on_work_order_id", unique: true
-  end
-
   create_table "work_orders", force: :cascade do |t|
     t.string "name", null: false
     t.string "slug"
@@ -361,45 +365,24 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_18_000001) do
     t.check_constraint "total_vat_included_price >= 0::numeric", name: "wrs_total_vat_included_non_negative"
   end
 
-  create_table "work_sessions", force: :cascade do |t|
-    t.bigint "user_id", null: false
-    t.bigint "work_order_id", null: false
-    t.datetime "checked_in_at", null: false
-    t.datetime "checked_out_at"
-    t.decimal "latitude", precision: 10, scale: 7
-    t.decimal "longitude", precision: 10, scale: 7
-    t.string "address"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.datetime "deleted_at"
-    t.bigint "ongoing_work_id"
-    t.index ["checked_in_at"], name: "index_work_sessions_on_checked_in_at"
-    t.index ["deleted_at"], name: "index_work_sessions_on_deleted_at"
-    t.index ["ongoing_work_id"], name: "index_work_sessions_on_ongoing_work_id"
-    t.index ["user_id", "work_order_id", "checked_out_at"], name: "index_work_sessions_on_user_wrs_checked_out"
-    t.index ["user_id"], name: "index_work_sessions_on_user_id"
-    t.index ["work_order_id", "checked_in_at"], name: "index_work_sessions_on_work_order_id_and_checked_in_at"
-    t.index ["work_order_id"], name: "index_work_sessions_on_work_order_id"
-  end
-
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "assignments", "buildings"
+  add_foreign_key "assignments", "users"
+  add_foreign_key "assignments", "users", column: "assigned_by_user_id"
   add_foreign_key "check_ins", "users"
   add_foreign_key "check_ins", "work_orders"
+  add_foreign_key "decisions", "work_orders"
   add_foreign_key "invoices", "work_orders"
   add_foreign_key "notifications", "users"
   add_foreign_key "notifications", "work_orders"
   add_foreign_key "ongoing_works", "users"
   add_foreign_key "ongoing_works", "work_orders"
+  add_foreign_key "time_entries", "ongoing_works"
+  add_foreign_key "time_entries", "users"
+  add_foreign_key "time_entries", "work_orders"
   add_foreign_key "tools", "windows"
   add_foreign_key "windows", "work_orders"
-  add_foreign_key "work_order_assignments", "users"
-  add_foreign_key "work_order_assignments", "users", column: "assigned_by_user_id"
-  add_foreign_key "work_order_assignments", "work_orders"
-  add_foreign_key "work_order_decisions", "work_orders"
   add_foreign_key "work_orders", "buildings"
   add_foreign_key "work_orders", "users"
-  add_foreign_key "work_sessions", "ongoing_works"
-  add_foreign_key "work_sessions", "users"
-  add_foreign_key "work_sessions", "work_orders"
 end

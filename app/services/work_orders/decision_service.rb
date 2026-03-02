@@ -46,12 +46,12 @@ module WorkOrders
     def handle_accept
       with_error_handling do
         # Prevent duplicate decisions / invoice creation
-        if work_order.work_order_decision.present?
+        if work_order.decision.present?
           add_error('A decision has already been recorded for this work order.')
           return
         end
 
-        # Create WorkOrderDecision first in its own transaction so it's never lost
+        # Create Decision first in its own transaction so it's never lost
         # even if later steps (invoice, background job) fail
         record_decision!('approved')
 
@@ -76,12 +76,12 @@ module WorkOrders
 
     def handle_decline
       with_error_handling do
-        if work_order.work_order_decision.present?
+        if work_order.decision.present?
           add_error('A decision has already been recorded for this work order.')
           return
         end
 
-        # Create WorkOrderDecision first in its own transaction so it's never lost
+        # Create Decision first in its own transaction so it's never lost
         record_decision!('rejected')
 
         ActiveRecord::Base.transaction do
@@ -93,7 +93,7 @@ module WorkOrders
     end
 
     def record_decision!(resolved_decision)
-      WorkOrderDecision.create!(
+      Decision.create!(
         work_order: work_order,
         decision: resolved_decision,
         decision_at: Time.current,

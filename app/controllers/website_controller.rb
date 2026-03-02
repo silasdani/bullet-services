@@ -31,7 +31,7 @@ class WebsiteController < ApplicationController
     load_wrs
     return unless @wrs
 
-    @decision_form = WorkOrderDecisionForm.new
+    @decision_form = DecisionForm.new
   end
 
   def wrs_decision
@@ -45,7 +45,7 @@ class WebsiteController < ApplicationController
       return
     end
 
-    @decision_form = WorkOrderDecisionForm.new(wrs_decision_params)
+    @decision_form = DecisionForm.new(wrs_decision_params)
 
     return render_invalid_wrs_decision unless @decision_form.valid?
 

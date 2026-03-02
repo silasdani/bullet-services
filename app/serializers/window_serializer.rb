@@ -11,7 +11,7 @@ class WindowSerializer < ActiveModel::Serializer
              :effective_image_urls, # array of all effective image URLs
              :image_name
 
-  # Hide prices for contractors, but allow tools (needed for work descriptions)
+  # Tools always included (work descriptions); total_price only for Admin
   attribute :tools
   attribute :total_price, if: :show_prices?
 
@@ -61,7 +61,7 @@ class WindowSerializer < ActiveModel::Serializer
   end
 
   def show_prices?
-    !scope&.contractor? && !scope&.general_contractor? && !scope&.supervisor?
+    scope&.role == 'admin'
   end
 
   private
