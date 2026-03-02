@@ -4,6 +4,7 @@ module Api
   module V1
     class DashboardsController < BaseController
       before_action :authorize_dashboard
+      before_action :refresh_freshbooks_token_if_needed
 
       def show
         service = Dashboards::DashboardFactory.build(current_user)
@@ -19,6 +20,10 @@ module Api
 
       def authorize_dashboard
         authorize :dashboard, :show?
+      end
+
+      def refresh_freshbooks_token_if_needed
+        Freshbooks::ProactiveTokenRefreshService.call
       end
 
       def render_dashboard(service)

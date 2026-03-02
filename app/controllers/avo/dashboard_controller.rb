@@ -6,6 +6,8 @@ module Avo
   class DashboardController < Avo::ApplicationController
     layout 'avo/application'
 
+    before_action :refresh_freshbooks_token_if_needed
+
     def index
       @resource = nil
       @page_title = 'Dashboard'
@@ -21,6 +23,10 @@ module Avo
     end
 
     private
+
+    def refresh_freshbooks_token_if_needed
+      Freshbooks::ProactiveTokenRefreshService.call
+    end
 
     def outstanding_scope
       @outstanding_scope ||= Invoice.where(is_draft: false)

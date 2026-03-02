@@ -209,6 +209,8 @@ module Api
 
       def serialize_ongoing_work(ongoing_work)
         entries = ongoing_work.time_entries.reload.recent
+        windows = windows_payload_for(ongoing_work)
+        windows_with_before_after = decorate_windows_with_before_after(windows, ongoing_work)
         {
           id: ongoing_work.id,
           work_order_id: ongoing_work.work_order_id,
@@ -221,6 +223,7 @@ module Api
           time_entries: entries.map { |te| serialize_time_entry(te) },
           total_hours: ongoing_work.total_hours,
           checked_in: ongoing_work.checked_in?,
+          windows: windows_with_before_after,
           created_at: ongoing_work.created_at,
           updated_at: ongoing_work.updated_at
         }
@@ -286,12 +289,27 @@ module Api
       end
 
       def build_notification_metadata(ongoing_work)
+        windows = windows_payload_for(ongoing_work)
         {
           contractor_id: current_user.id,
           contractor_name: current_user.name || current_user.email,
           ongoing_work_id: ongoing_work.id,
-          images_count: ongoing_work.images.count
+          images_count: ongoing_work.images.count,
+          windows: windows,
+          windows_json: windows.to_json
         }
+      end
+
+      def windows_payload_for(ongoing_work)
+        work_order = ongoing_work.work_order
+        return [] unless work_order
+
+        WorkOrderSerializer
+          .new(work_order, scope: current_user)
+          .serializable_hash[:windows] || []
+      rescue StandardError => e
+        Rails.logger.error "Error building windows payload for ongoing work #{ongoing_work.id}: #{e.message}"
+        []
       end
 
       def render_create_success(ongoing_work)
@@ -333,6 +351,65 @@ module Api
           message: 'Failed to update ongoing work',
           details: @ongoing_work.errors.full_messages
         )
+      end
+
+      # For each work order window, expose:
+      # - before_images: source WRS/window images
+      # - after_images: images uploaded on this ongoing_work that are tagged for the window
+      #
+      # Tagging convention: client sends filenames containing "window_{id}_",
+      # e.g. "window_12_1700000000.jpg". We group attachments by that id.
+      def decorate_windows_with_before_after(windows, ongoing_work)
+        return windows if windows.blank?
+
+        after_by_window_id = window_after_images_for(ongoing_work)
+
+        windows.map do |win|
+          window_id = win[:id]
+          # Prefer explicit effective_image_urls; fall back to images array
+          before =
+            if win.key?(:effective_image_urls) && win[:effective_image_urls].respond_to?(:to_a)
+              Array(win[:effective_image_urls]).compact
+            elsif win.key?(:images) && win[:images].respond_to?(:to_a)
+              Array(win[:images]).compact
+            else
+              []
+            end
+
+          after = window_id ? Array(after_by_window_id[window_id]).compact : []
+
+          win.merge(
+            before_images: before,
+            after_images: after
+          )
+        end
+      rescue StandardError => e
+        Rails.logger.error "Error decorating windows with before/after for ongoing work #{ongoing_work.id}: #{e.message}"
+        windows
+      end
+
+      def window_after_images_for(ongoing_work)
+        return {} unless ongoing_work.images.attached?
+
+        url_helpers = Rails.application.routes.url_helpers
+        groups = Hash.new { |h, k| h[k] = [] }
+
+        ongoing_work.images.each do |img|
+          filename = img.blob.filename.to_s
+          # Extract window id from filename pattern "window_{id}_..."
+          window_id_str = filename[/window_(\d+)_/, 1]
+          next unless window_id_str
+
+          window_id = window_id_str.to_i
+          next if window_id.zero?
+
+          url = url_helpers.rails_blob_path(img, only_path: true)
+          groups[window_id] << url
+        rescue StandardError => e
+          Rails.logger.error "Error grouping ongoing work image #{img.id} for ongoing work #{ongoing_work.id}: #{e.message}"
+        end
+
+        groups
       end
     end
     # rubocop:enable Metrics/ClassLength, Metrics/AbcSize

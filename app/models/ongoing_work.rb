@@ -9,7 +9,7 @@ class OngoingWork < ApplicationRecord
   validates :work_date, presence: true
   validates :work_order_id, presence: true
   validates :user_id, presence: true
-  validate :images_or_description?, unless: :is_draft?
+  validate :has_publishable_content?, unless: :is_draft?
 
   scope :for_wrs, ->(wrs_id) { where(work_order_id: wrs_id) }
   scope :for_user, ->(user_id) { where(user_id: user_id) }
@@ -59,10 +59,13 @@ class OngoingWork < ApplicationRecord
 
   private
 
-  def images_or_description?
+  def has_publishable_content?
     return true if images.attached? || description.present?
 
-    errors.add(:base, 'Must have at least images or description')
+    # Allow publishing if time was logged (contractors may not always add photos).
+    return true if time_entries.completed.exists?
+
+    errors.add(:base, 'Must have at least images, description, or time logged')
     false
   end
 end
