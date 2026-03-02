@@ -7,7 +7,7 @@ class OngoingWork < ApplicationRecord
   has_many_attached :images
 
   validates :work_date, presence: true
-  validates :work_order_id, presence: true
+  validates :work_order_id, presence: true, uniqueness: true
   validates :user_id, presence: true
   validate :has_publishable_content?, unless: :is_draft?
 

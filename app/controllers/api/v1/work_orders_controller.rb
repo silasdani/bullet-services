@@ -217,11 +217,9 @@ module Api
       end
 
       def find_or_create_my_ongoing_work_for_check_in
-        ongoing_work = OngoingWork.find_or_initialize_by(
-          work_order_id: @work_order.id,
-          user_id: current_user.id
-        )
+        ongoing_work = OngoingWork.find_or_initialize_by(work_order_id: @work_order.id)
         if ongoing_work.new_record?
+          ongoing_work.user_id = current_user.id
           ongoing_work.work_date = Date.current
           ongoing_work.is_draft = true
           ongoing_work.save!

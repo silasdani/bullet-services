@@ -39,11 +39,9 @@ module Api
         authorize @work_order, :show?
         authorize OngoingWork, :create? if current_user.contractor? || current_user.general_contractor?
 
-        ongoing_work = OngoingWork.find_or_initialize_by(
-          work_order_id: @work_order.id,
-          user_id: current_user.id
-        )
+        ongoing_work = OngoingWork.find_or_initialize_by(work_order_id: @work_order.id)
         if ongoing_work.new_record?
+          ongoing_work.user_id = current_user.id
           ongoing_work.work_date = params[:work_date].presence&.then { |d| Time.zone.parse(d) } || Date.current
           ongoing_work.is_draft = true
           ongoing_work.save!
@@ -191,11 +189,9 @@ module Api
       def find_or_create_my_ongoing_work
         authorize OngoingWork, :create? if current_user.contractor? || current_user.general_contractor?
 
-        ongoing_work = OngoingWork.find_or_initialize_by(
-          work_order_id: @work_order.id,
-          user_id: current_user.id
-        )
+        ongoing_work = OngoingWork.find_or_initialize_by(work_order_id: @work_order.id)
         if ongoing_work.new_record?
+          ongoing_work.user_id = current_user.id
           ongoing_work.work_date = params[:work_date].presence&.then { |d| Time.zone.parse(d) } || Date.current
           ongoing_work.is_draft = true
           ongoing_work.save!

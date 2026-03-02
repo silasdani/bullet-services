@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_02_27_000005) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_02_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -239,7 +239,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_02_27_000005) do
     t.index ["user_id"], name: "index_ongoing_works_on_user_id"
     t.index ["work_order_id", "work_date", "user_id"], name: "index_ongoing_works_on_wrs_date_user"
     t.index ["work_order_id", "work_date"], name: "index_ongoing_works_on_work_order_id_and_work_date"
-    t.index ["work_order_id"], name: "index_ongoing_works_on_work_order_id"
+    t.index ["work_order_id"], name: "index_ongoing_works_on_work_order_id", unique: true
   end
 
   create_table "status_definitions", force: :cascade do |t|
