@@ -19,7 +19,7 @@ module FreshbooksWebhookVerification
   end
 
   def extract_callback_id
-    params[:callback_id] || params[:id]
+    params[:callback_id] || params[:id] || params[:object_id]
   end
 
   def extract_verification_code
