@@ -64,7 +64,7 @@ namespace :freshbooks do
     task register_all: :environment do
       callback_url = ENV['WEBHOOK_URL'] || ask_for_webhook_url
 
-      events = ['payment.create', 'payment.updated', 'invoice.create', 'invoice.updated']
+      events = ['payment.create', 'payment.update', 'invoice.create', 'invoice.update']
 
       puts "\nRegistering webhooks..."
       puts "  Base URL: #{callback_url}\n"

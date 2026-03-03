@@ -32,9 +32,9 @@ module Api
         log_webhook_received(event_type, object_id)
 
         case event_type
-        when 'payment.create', 'payment.updated'
+        when 'payment.create', 'payment.update'
           handle_payment_webhook_by_id(object_id)
-        when 'invoice.create', 'invoice.updated'
+        when 'invoice.create', 'invoice.update'
           handle_invoice_webhook_by_id(object_id)
         else
           Rails.logger.info "Unhandled FreshBooks webhook event: #{event_type}"

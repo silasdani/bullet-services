@@ -475,9 +475,9 @@ POST /api/v1/webhooks/freshbooks
 ### Webhook Events Handled
 
 - `payment.create` - Invoice was paid
-- `payment.updated` - Payment was updated
+- `payment.update` - Payment was updated
 - `invoice.create` - New invoice created
-- `invoice.updated` - Invoice was updated
+- `invoice.update` - Invoice was updated
 
 ### What Happens
 
@@ -528,9 +528,9 @@ WEBHOOK_URL=https://yourdomain.com/api/v1/webhooks/freshbooks rails freshbooks:w
 
 This registers webhooks for:
 - `payment.create`
-- `payment.updated`
+- `payment.update`
 - `invoice.create`
-- `invoice.updated`
+- `invoice.update`
 
 #### Option 3: List Registered Webhooks
 

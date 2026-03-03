@@ -52,14 +52,9 @@ module FreshbooksWebhookHandling
   def handle_invoice_webhook_by_id(invoice_id)
     return unless invoice_id
 
-    # Use lifecycle service for bulletproof invoice sync
-    freshbooks_invoice = FreshbooksInvoice.find_by(freshbooks_id: invoice_id)
-    return unless freshbooks_invoice
-
-    lifecycle_service = Freshbooks::InvoiceLifecycleService.new(freshbooks_invoice)
-    lifecycle_service.sync_from_freshbooks
-
-    Rails.logger.info "Invoice webhook processed: #{invoice_id}"
+    # Enqueue background sync for this invoice to keep webhook fast and resilient
+    Freshbooks::SyncInvoicesJob.perform_later(invoice_id)
+    Rails.logger.info "Invoice webhook enqueued for sync: #{invoice_id}"
   rescue FreshbooksError => e
     Rails.logger.error "Failed to fetch invoice #{invoice_id}: #{e.message}"
   rescue StandardError => e

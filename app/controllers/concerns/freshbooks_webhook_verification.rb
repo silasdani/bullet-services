@@ -92,9 +92,17 @@ module FreshbooksWebhookVerification
   end
 
   def compute_expected_signature(webhook_secret)
-    data = request.form_data? ? request.form_data.to_json : request.raw_post
-    Base64.strict_encode64(
-      OpenSSL::HMAC.digest('sha256', webhook_secret, data)
-    )
+    payload =
+      if request.form_data?
+        # FreshBooks signs a JSON string of the form data where all values are cast to strings
+        # and JSON uses spaces after ":" and "," (Python json.dumps default).
+        stringified = request.request_parameters.to_h.transform_values(&:to_s)
+        JSON.generate(stringified, space: ' ', object_nl: '', array_nl: '')
+      else
+        request.raw_post.to_s
+      end
+
+    digest = OpenSSL::HMAC.digest('sha256', webhook_secret, payload)
+    Base64.strict_encode64(digest)
   end
 end
