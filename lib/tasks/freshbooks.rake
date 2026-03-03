@@ -426,6 +426,62 @@ namespace :freshbooks do
       end
     end
 
+    desc 'Reconcile only FreshBooks invoices that are linked to local Invoice records'
+    task reconcile_linked: :environment do
+      puts 'Reconciling FreshBooks invoices linked to local Invoice records...'
+      puts '=' * 80
+
+      stats = {
+        total: 0,
+        synced: 0,
+        reconciled: 0,
+        failed: 0,
+        errors: []
+      }
+
+      FreshbooksInvoice.joins(:invoice).find_each do |fb_invoice|
+        stats[:total] += 1
+        print "Invoice #{fb_invoice.freshbooks_id} (local ##{fb_invoice.invoice_id})... "
+
+        begin
+          lifecycle_service = Freshbooks::InvoiceLifecycleService.new(fb_invoice)
+          lifecycle_service.sync_from_freshbooks
+          lifecycle_service.reconcile_payments
+
+          if lifecycle_service.success?
+            stats[:synced] += 1
+            stats[:reconciled] += 1
+            puts '✅ Synced & Reconciled'
+          else
+            stats[:failed] += 1
+            error_msg = lifecycle_service.errors.join(', ')
+            puts "❌ Failed: #{error_msg}"
+            stats[:errors] << { id: fb_invoice.freshbooks_id, errors: lifecycle_service.errors }
+          end
+        rescue StandardError => e
+          stats[:failed] += 1
+          error_msg = e.message
+          puts "❌ Error: #{error_msg}"
+          stats[:errors] << ({ id: fb_invoice.freshbooks_id, errors: [error_msg] })
+        end
+      end
+
+      puts "\n#{'=' * 80}"
+      puts 'Summary:'
+      puts "  Total linked invoices: #{stats[:total]}"
+      puts "  ✅ Synced & Reconciled: #{stats[:synced]}"
+      puts "  ❌ Failed: #{stats[:failed]}"
+      puts '=' * 80
+
+      if stats[:errors].any?
+        puts "\nErrors encountered:"
+        stats[:errors].first(10).each do |error|
+          puts "  Invoice #{error[:id]}: #{error[:errors].join(', ')}"
+        end
+        puts "  ... and #{stats[:errors].length - 10} more" if stats[:errors].length > 10
+      end
+    end
+
     desc 'Reconcile a specific invoice by FreshBooks ID'
     task :reconcile, [:freshbooks_id] => :environment do |_t, args|
       freshbooks_id = args[:freshbooks_id]
