@@ -7,48 +7,99 @@
   <%= render HeroCarouselComponent.new %>
 </section>
 
+<!-- What We Do / Services Overview -->
+<section class="py-20 bg-white">
+  <div class="container mx-auto px-6">
+    <div class="max-w-3xl mb-12">
+      <h2 class="text-4xl md:text-5xl font-light mb-4 text-gray-800">
+        What we do.
+      </h2>
+      <p class="text-lg md:text-xl text-gray-600">
+        We focus on the exterior envelope of buildings – from façades and windows to stonework and
+        ongoing maintenance programmes for residential blocks, museums, and commercial properties.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+      <% @services.each do |service| %>
+        <div class="bg-gray-50 border border-gray-100 rounded-xl p-6 shadow-sm">
+          <h3 class="text-xl font-semibold text-gray-900 mb-2">
+            <%= service[:name] %>
+          </h3>
+          <p class="text-sm text-gray-600">
+            <%= service[:short_description] %>
+          </p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</section>
+
 <!-- Projects Section -->
 <section class="py-20 bg-white">
   <div class="container mx-auto px-6">
-    <h2 class="text-4xl md:text-5xl font-light mb-12 text-gray-800">
-      our projects.
+    <h2 class="text-4xl md:text-5xl font-light mb-4 text-gray-800">
+      Selected projects.
     </h2>
+    <p class="text-lg text-gray-600 mb-10 max-w-2xl">
+      A sample of recent exterior projects across London, from heritage landmarks to residential
+      blocks.
+    </p>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      <!-- Project 1: Egerton Gardens -->
-      <div class="relative group cursor-pointer overflow-hidden">
-        <%= image_tag "Timber Cill Replacement 1.jpeg", alt: "Egerton Gardens", class: "w-full h-64 object-cover transition-transform duration-300 group-hover:scale-105" %>
-        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-opacity duration-300 flex items-center justify-center">
-          <h3 class="text-white text-2xl font-light opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            Egerton Gardens
-          </h3>
+      <% @featured_projects.each do |project| %>
+        <div class="relative group cursor-pointer overflow-hidden rounded-xl shadow-sm">
+          <div class="aspect-w-16 aspect-h-12 overflow-hidden">
+            <%= image_tag project[:image],
+                          alt: "#{project[:name]} – #{project[:description]}",
+                          class: "w-full h-64 object-cover transition-transform duration-300 group-hover:scale-105" %>
+          </div>
+          <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-opacity duration-300 flex items-end">
+            <div class="p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <h3 class="text-white text-2xl font-light">
+                <%= project[:name] %>
+              </h3>
+              <p class="text-sm text-gray-200">
+                <%= project[:description] %>
+              </p>
+            </div>
+          </div>
         </div>
-      </div>
-
-      <!-- Project 2 -->
-      <div class="relative group cursor-pointer">
-        <div class="aspect-w-16 aspect-h-12 overflow-hidden">
-          <%= image_tag "black-white-exterior-building.jpg", alt: "Project", class: "w-full h-64 object-cover transition-transform duration-300 group-hover:scale-105" %>
-        </div>
-        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity duration-300 flex items-center justify-center">
-          <h3 class="text-white text-xl font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            Christchurch Castle Street
-          </h3>
-        </div>
-      </div>
-
-      <!-- Project 3 -->
-      <div class="relative group cursor-pointer">
-        <div class="aspect-w-16 aspect-h-12 overflow-hidden">
-          <%= image_tag "abstract-glass-window-roof-architecture-exterior (2).jpg", alt: "Project", class: "w-full h-64 object-cover transition-transform duration-300 group-hover:scale-105" %>
-        </div>
-        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity duration-300 flex items-center justify-center">
-          <h3 class="text-white text-xl font-semibold opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            Victoria and Albert Museum
-          </h3>
-        </div>
-      </div>
+      <% end %>
     </div>
+  </div>
+</section>
+
+<!-- Trust & Credentials Strip -->
+<section class="py-12 bg-gray-900 text-white">
+  <div class="container mx-auto px-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-8">
+    <div class="max-w-xl">
+      <h2 class="text-2xl md:text-3xl font-light mb-2">
+        Trusted exterior specialists for London buildings.
+      </h2>
+      <p class="text-sm md:text-base text-gray-300">
+        Working with managing agents, freeholders, and building owners to protect and enhance
+        their assets.
+      </p>
+    </div>
+    <dl class="grid grid-cols-2 gap-6 text-sm md:text-base">
+      <div>
+        <dt class="text-3xl md:text-4xl font-light">2020</dt>
+        <dd class="text-gray-400">Operating since</dd>
+      </div>
+      <div>
+        <dt class="text-3xl md:text-4xl font-light">London</dt>
+        <dd class="text-gray-400">Focused region</dd>
+      </div>
+      <div>
+        <dt class="text-3xl md:text-4xl font-light">Heritage</dt>
+        <dd class="text-gray-400">Historic &amp; modern assets</dd>
+      </div>
+      <div>
+        <dt class="text-3xl md:text-4xl font-light">Safety</dt>
+        <dd class="text-gray-400">Works planned around occupants</dd>
+      </div>
+    </dl>
   </div>
 </section>
 
@@ -56,58 +107,51 @@
 <section id="contact" class="py-20 bg-gray-50">
   <div class="container mx-auto px-6 max-w-2xl">
     <h2 class="text-4xl md:text-5xl font-light mb-4 text-gray-800">
-      Hi there !
+      Tell us about your project.
     </h2>
     <p class="text-xl text-gray-600 mb-8">
-      Got a project to discuss ?<br>
-      Fill out the form and we'll get back to you as soon as we can!
+      Share a few details about your building and the exterior works you have in mind.
+      We’ll come back to you with next steps.
     </p>
 
     <%= form_with url: contact_submit_path, method: :post, local: true, class: "space-y-6" do |f| %>
       <div>
-        <%= f.text_field :name, placeholder: "Your Name", required: true, class: "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-800 focus:border-transparent" %>
+        <label class="sr-only" for="contact_name">Full name</label>
+        <%= f.text_field :name,
+                         id: "contact_name",
+                         placeholder: "Full name",
+                         required: true,
+                         class: "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-800 focus:border-transparent" %>
       </div>
 
       <div>
-        <%= f.email_field :email, placeholder: "Your Email", required: true, class: "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-800 focus:border-transparent" %>
+        <label class="sr-only" for="contact_email">Email address</label>
+        <%= f.email_field :email,
+                          id: "contact_email",
+                          placeholder: "Email address",
+                          required: true,
+                          class: "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-800 focus:border-transparent" %>
       </div>
 
       <div>
-        <%= f.text_area :message, placeholder: "Your Message", required: true, rows: 6, class: "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-800 focus:border-transparent" %>
+        <label class="sr-only" for="contact_message">Tell us about your project</label>
+        <%= f.text_area :message,
+                        id: "contact_message",
+                        placeholder: "Tell us about your building, timings, and any specific requirements.",
+                        required: true,
+                        rows: 6,
+                        class: "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-800 focus:border-transparent" %>
       </div>
 
-      <div>
-        <%= f.submit "Send Message", class: "w-full bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors duration-200 font-semibold" %>
+      <div class="space-y-3">
+        <%= f.submit "Request a quotation",
+                     class: "w-full bg-black text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors duration-200 font-semibold" %>
+        <p class="text-sm text-gray-500">
+          We typically respond within one business day. Your details are kept confidential and are
+          only used to respond to your enquiry.
+        </p>
       </div>
     <% end %>
-  </div>
-</section>
-
-<!-- What We Do Section -->
-<section class="py-20 bg-white">
-  <div class="container mx-auto px-6 text-center">
-    <h2 class="text-4xl md:text-5xl font-light mb-8 text-gray-800">
-      # what we do
-    </h2>
-    <a href="#contact" class="inline-block bg-black text-white px-8 py-4 rounded-lg hover:bg-gray-800 transition-colors duration-200 font-semibold">
-      Find out more
-    </a>
-  </div>
-</section>
-
-<!-- Consult Section -->
-<section class="py-20 bg-gray-900 text-white">
-  <div class="container mx-auto px-6 text-center">
-    <h2 class="text-4xl md:text-5xl font-light mb-4 italic">
-      _Consult_<br>
-      with us!
-    </h2>
-    <p class="text-2xl mb-8">
-      Bring YOUR dream home to life!
-    </p>
-    <a href="#contact" class="inline-block bg-white text-black px-8 py-4 rounded-lg hover:bg-gray-100 transition-colors duration-200 font-semibold">
-      Get a quotation
-    </a>
   </div>
 </section>
 

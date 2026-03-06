@@ -16,15 +16,48 @@
 
 <!-- Services Content Section -->
 <section class="py-12 bg-gray-50">
-  <div class="container mx-auto px-6 max-w-4xl">
-    <div class="prose prose-lg max-w-none text-gray-700 space-y-6">
-      <p class="text-lg leading-relaxed">
-        At Bullet Services, we specialize in exterior building restoration and construction services. Our comprehensive range of services is designed to restore and enhance London's architectural heritage while meeting the highest standards of quality and craftsmanship.
+  <div class="container mx-auto px-6 max-w-5xl">
+    <div class="mb-10 max-w-3xl">
+      <p class="text-lg md:text-xl text-gray-700">
+        Bullet Services focuses exclusively on the exterior envelope of buildings. Below is an overview
+        of our core services – if you are unsure where your project fits, we are happy to advise.
       </p>
+    </div>
 
-      <p class="text-lg leading-relaxed">
-        From window restoration and repair to complete exterior renovations, we bring decades of expertise and a passion for excellence to every project. Our team is equipped to handle projects of all scales, ensuring that each building receives the care and attention it deserves.
-      </p>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <% @services.each do |service| %>
+        <article class="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
+          <h2 class="text-2xl font-semibold text-gray-900 mb-3">
+            <%= service[:name] %>
+          </h2>
+          <p class="text-sm text-gray-700 mb-4">
+            <%= service[:short_description] %>
+          </p>
+          <% if service[:examples].present? %>
+            <ul class="text-sm text-gray-500 space-y-1 list-disc list-inside">
+              <% service[:examples].each do |example| %>
+                <li><%= example %></li>
+              <% end %>
+            </ul>
+          <% end %>
+        </article>
+      <% end %>
+    </div>
+
+    <div class="mt-12 border-t border-gray-200 pt-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+      <div>
+        <h2 class="text-2xl font-light text-gray-900 mb-2">
+          Not sure where your project fits?
+        </h2>
+        <p class="text-sm text-gray-600">
+          Tell us about your building and we’ll help you understand the scope of works and next steps.
+        </p>
+      </div>
+      <div>
+        <%= link_to "Discuss a project",
+                    root_path(anchor: "contact"),
+                    class: "inline-flex items-center justify-center px-8 py-3 rounded-lg bg-black text-white text-sm md:text-base font-semibold hover:bg-gray-800 transition-colors duration-200" %>
+      </div>
     </div>
   </div>
 </section>

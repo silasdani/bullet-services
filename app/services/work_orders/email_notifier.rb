@@ -11,6 +11,10 @@ module WorkOrders
     end
 
     def send_accept_email(invoice, fb_client_data)
+      Rails.logger.info(
+        "Sending work order ACCEPT email for work_order_id=#{work_order.id}, " \
+        "client_email=#{email}, invoice_id=#{invoice.id}"
+      )
       WorkOrderMailer.with(
         work_order: work_order,
         first_name: first_name,
@@ -22,6 +26,10 @@ module WorkOrders
     end
 
     def send_decline_email
+      Rails.logger.info(
+        "Sending work order DECLINE email for work_order_id=#{work_order.id}, " \
+        "client_email=#{email}"
+      )
       WorkOrderMailer.with(
         work_order: work_order,
         first_name: first_name,

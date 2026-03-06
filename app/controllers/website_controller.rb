@@ -8,15 +8,12 @@ class WebsiteController < ApplicationController
   before_action :verify_wrs_decision_request, only: [:wrs_decision]
 
   def home
-    # Homepage
-  end
-
-  def about
-    # About page
+    @services = marketing_services
+    @featured_projects = featured_projects
   end
 
   def services
-    # Services page
+    @services = marketing_services
   end
 
   def terms
@@ -66,6 +63,55 @@ class WebsiteController < ApplicationController
   end
 
   private
+
+  def marketing_services
+    [
+      {
+        key: :facade_restoration,
+        name: 'Façade restoration',
+        short_description: 'Cleaning, repairs, and full refurbishment of brick, stone, and rendered façades.',
+        examples: ['Masonry repairs', 'Repointing', 'Render and coating systems']
+      },
+      {
+        key: :windows_and_cills,
+        name: 'Windows & cills',
+        short_description: 'Timber and metal window repairs, cill replacements, and detailing.',
+        examples: ['Timber cill replacement', 'Sash window repairs', 'Metal window refurbishment']
+      },
+      {
+        key: :exterior_maintenance,
+        name: 'Exterior maintenance',
+        short_description: 'Planned programmes and one-off works to keep exteriors safe and watertight.',
+        examples: ['Planned maintenance programmes', 'Leak investigation', 'Minor repairs']
+      },
+      {
+        key: :access_and_safety,
+        name: 'Access & safety',
+        short_description: 'Safe access solutions for complex exterior projects in busy environments.',
+        examples: ['Scaffolding coordination', 'Specialist access methods', 'Safety-led project planning']
+      }
+    ]
+  end
+
+  def featured_projects
+    [
+      {
+        name: 'Egerton Gardens',
+        image: 'Timber Cill Replacement 1.jpeg',
+        description: 'Timber cill replacement and external repairs to a London residential block.'
+      },
+      {
+        name: 'Christchurch Castle Street',
+        image: 'black-white-exterior-building.jpg',
+        description: 'Exterior refurbishment and detailing to protect a historic city-centre building.'
+      },
+      {
+        name: 'Victoria and Albert Museum',
+        image: 'abstract-glass-window-roof-architecture-exterior (2).jpg',
+        description: 'Specialist exterior works delivered in a live museum environment.'
+      }
+    ]
+  end
 
   def load_wrs
     # Find work order by slug — must be published (not draft, not archived) and not soft-deleted
