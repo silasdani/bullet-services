@@ -16,7 +16,7 @@ module Avo
         work_orders_count: WorkOrder.count,
         ongoing_works_count: OngoingWork.count,
         outstanding_invoices_count: outstanding_scope.count,
-        outstanding_amount: outstanding_scope.sum { |inv| (inv.total_amount || 0).to_f }.round(2),
+        outstanding_amount: outstanding_amount.round(2),
         overdue_invoices_count: overdue_count,
         overdue_amount: overdue_amount.round(2)
       }
@@ -33,6 +33,15 @@ module Avo
                                     .where.not(final_status: ['paid', 'voided', 'voided + email sent'])
     end
 
+    def outstanding_amount
+      outstanding_scope.includes(:freshbooks_invoices).sum do |invoice|
+        fb_invoice = invoice.primary_freshbooks_invoice
+        outstanding = fb_invoice&.amount_outstanding
+
+        (outstanding.nil? ? invoice.total_amount : outstanding).to_f
+      end
+    end
+
     def overdue_count
       today = Date.current
       outstanding_scope.includes(:freshbooks_invoices).count do |inv|
@@ -43,11 +52,12 @@ module Avo
 
     def overdue_amount
       today = Date.current
-      outstanding_scope.includes(:freshbooks_invoices).sum do |inv|
-        fb = inv.freshbooks_invoices.first
-        next 0 unless fb&.due_date && fb.due_date < today
+      outstanding_scope.includes(:freshbooks_invoices).sum do |invoice|
+        fb_invoice = invoice.primary_freshbooks_invoice
+        next 0 unless fb_invoice&.due_date && fb_invoice.due_date < today
 
-        (inv.total_amount || 0).to_f
+        outstanding = fb_invoice.amount_outstanding
+        (outstanding.nil? ? invoice.total_amount : outstanding).to_f
       end
     end
   end

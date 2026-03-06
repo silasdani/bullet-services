@@ -42,8 +42,13 @@ module RailsAdmin
             today = Date.current
             all_outstanding = outstanding_scope.includes(:freshbooks_invoices).to_a
 
-            # Calculate outstanding amount
-            @outstanding_amount = all_outstanding.sum { |invoice| (invoice.total_amount || 0).to_f }
+            # Calculate outstanding amount (prefer FreshBooks outstanding balance when available)
+            @outstanding_amount = all_outstanding.sum do |invoice|
+              fb_invoice = invoice.primary_freshbooks_invoice
+              outstanding = fb_invoice&.amount_outstanding
+
+              (outstanding.nil? ? invoice.total_amount : outstanding).to_f
+            end
 
             # Calculate overdue invoices
             overdue_invoices = all_outstanding.select do |invoice|
@@ -52,7 +57,12 @@ module RailsAdmin
             end
 
             @overdue_count = overdue_invoices.count
-            @overdue_amount = overdue_invoices.sum { |invoice| (invoice.total_amount || 0).to_f }
+            @overdue_amount = overdue_invoices.sum do |invoice|
+              fb_invoice = invoice.primary_freshbooks_invoice
+              outstanding = fb_invoice&.amount_outstanding
+
+              (outstanding.nil? ? invoice.total_amount : outstanding).to_f
+            end
 
             # Ensure all variables have default values
             @outstanding_invoices ||= []

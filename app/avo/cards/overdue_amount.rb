@@ -15,9 +15,12 @@ module Avo
         outstanding = Invoice.where(is_draft: false)
                              .where.not(final_status: ['paid', 'voided', 'voided + email sent'])
                              .includes(:freshbooks_invoices)
-        amount = outstanding.sum do |inv|
-          fb = inv.freshbooks_invoices.first
-          fb&.due_date && fb.due_date < today ? (inv.total_amount || 0).to_f : 0
+        amount = outstanding.sum do |invoice|
+          fb_invoice = invoice.primary_freshbooks_invoice
+          next 0 unless fb_invoice&.due_date && fb_invoice.due_date < today
+
+          outstanding_amount = fb_invoice.amount_outstanding
+          (outstanding_amount.nil? ? invoice.total_amount : outstanding_amount).to_f
         end
         result amount.round(2)
       end

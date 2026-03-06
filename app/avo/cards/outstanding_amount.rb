@@ -13,7 +13,15 @@ module Avo
       def query
         scope = Invoice.where(is_draft: false)
                        .where.not(final_status: ['paid', 'voided', 'voided + email sent'])
-        amount = scope.sum { |inv| (inv.total_amount || 0).to_f }
+                       .includes(:freshbooks_invoices)
+
+        amount = scope.sum do |invoice|
+          fb_invoice = invoice.primary_freshbooks_invoice
+          outstanding = fb_invoice&.amount_outstanding
+
+          (outstanding.nil? ? invoice.total_amount : outstanding).to_f
+        end
+
         result amount.round(2)
       end
     end
