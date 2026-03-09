@@ -42,8 +42,6 @@ RSpec.describe User, type: :model do
   end
 
   describe 'role helper methods' do
-    let(:user) { create(:user) }
-
     context 'when user is admin' do
       let(:admin_user) { create(:user, :admin) }
 
@@ -93,6 +91,8 @@ RSpec.describe User, type: :model do
     end
 
     context 'when user is client' do
+      let(:user) { create(:user, role: :client) }
+
       it 'returns false for is_admin?' do
         expect(user.is_admin?).to be false
       end
@@ -129,13 +129,13 @@ RSpec.describe User, type: :model do
   end
 
   describe 'default role assignment' do
-    it 'assigns client role by default' do
+    it 'assigns contractor role by default' do
       user = User.new(
         email: 'test@example.com', password: 'password123',
         first_name: 'Test', last_name: 'User'
       )
       user.save!
-      expect(user.role).to eq('client')
+      expect(user.role).to eq('contractor')
     end
   end
 

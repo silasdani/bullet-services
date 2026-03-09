@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_02_120000) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_09_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -307,7 +307,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_02_120000) do
     t.json "tokens"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.integer "role", default: 0, null: false
+    t.integer "role", default: 1, null: false
     t.boolean "webflow_access", default: false
     t.datetime "deleted_at"
     t.boolean "blocked", default: false, null: false
