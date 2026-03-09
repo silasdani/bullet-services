@@ -69,6 +69,8 @@ module WorkOrders
             fb_client_data: fb_client
           )
 
+          send_admin_accept_email!(invoice, fb_client)
+
           self.result = { invoice_id: invoice.id }
         end
       end
@@ -169,6 +171,10 @@ module WorkOrders
 
     def send_admin_decline_email!
       email_notifier.send_decline_email
+    end
+
+    def send_admin_accept_email!(invoice, fb_client_data)
+      email_notifier.send_accept_email(invoice, fb_client_data)
     end
 
     def email_notifier

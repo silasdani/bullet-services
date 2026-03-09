@@ -31,13 +31,6 @@ module Freshbooks
       return unless result
 
       attach_pdf_to_invoice(invoice, result) if result.is_a?(Hash)
-      send_admin_accept_email(
-        invoice,
-        fb_client_id,
-        client_params[:first_name],
-        client_params[:last_name],
-        client_params[:email]
-      )
     end
 
     def update_invoice_client_id(invoice, fb_client_id)
@@ -202,47 +195,6 @@ module Freshbooks
     rescue StandardError => e
       Rails.logger.error("Failed to attach PDF to invoice #{invoice.id}: #{e.message}")
       # Don't raise - PDF attachment failure shouldn't fail the job
-    end
-
-    def send_admin_accept_email(invoice, client_id, first_name, last_name, email)
-      work_order = invoice.work_order
-      return unless work_order
-
-      fb_client = FreshbooksClient.find_by(freshbooks_id: client_id)
-      return unless fb_client
-
-      client_attrs = extract_client_attributes_for_email(fb_client, first_name, last_name, email)
-      client_data = build_client_data_for_email(client_id, client_attrs)
-      send_email_notification(work_order, invoice, client_data, client_attrs)
-    rescue StandardError => e
-      Rails.logger.error("Failed to send admin accept email for invoice #{invoice.id}: #{e.message}")
-      # Don't raise - email failure shouldn't fail the job
-    end
-
-    def extract_client_attributes_for_email(fb_client, first_name, last_name, email)
-      {
-        first_name: first_name || fb_client.first_name,
-        last_name: last_name || fb_client.last_name,
-        email: email || fb_client.email
-      }
-    end
-
-    def build_client_data_for_email(client_id, client_attrs)
-      {
-        'id' => client_id,
-        'email' => client_attrs[:email],
-        'fname' => client_attrs[:first_name],
-        'lname' => client_attrs[:last_name]
-      }
-    end
-
-    def send_email_notification(work_order, invoice, client_data, client_attrs)
-      WorkOrders::EmailNotifier.new(
-        work_order,
-        client_attrs[:first_name],
-        client_attrs[:last_name],
-        client_attrs[:email]
-      ).send_accept_email(invoice, client_data)
     end
 
     def deserialize_lines(lines_data)
