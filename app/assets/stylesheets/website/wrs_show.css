@@ -224,3 +224,20 @@ body {
     width: auto;
   }
 }
+
+/* ============================================
+   Window Number Badge
+   ============================================ */
+.wrs-window-number-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 9999px;
+  border: 1px solid #bfdbfe; /* light blue border */
+  background-color: #eff6ff; /* very light blue background */
+  color: #2563eb; /* link-like blue text */
+  font-size: 0.75rem;
+  font-weight: 600;
+}

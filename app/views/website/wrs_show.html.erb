@@ -71,7 +71,12 @@
               <div class="grid grid-cols-1 md:grid-cols-12 gap-6 p-6 items-start">
                 <!-- Location & Image -->
                 <div class="md:col-span-4">
-                  <div class="font-bold text-sm mb-3 text-[var(--color-primary-text)]"><%= window.location %></div>
+                  <div class="font-bold text-sm mb-3 text-[var(--color-primary-text)] flex items-center gap-2">
+                    <span class="wrs-window-number-badge">
+                      <%= index + 1 %>
+                    </span>
+                    <span><%= window.location %></span>
+                  </div>
                   <% if window.effective_image_url.present? %>
                     <div class="relative overflow-hidden border border-[var(--color-border-divider)] rounded cursor-zoom-in image-zoom-container">
                       <img
@@ -357,11 +362,11 @@
 
         </main>
 
-        <!-- Floating Decision Form (appears between schedule and approval sections) -->
+        <!-- Floating Decision Form (always visible, collapsible) -->
         <% unless @wrs.decision? %>
           <div id="floating-decision-form">
             <div class="bg-[var(--color-surface)] border-t border-[var(--color-border-divider)] shadow-[0_-8px_30px_rgba(0,0,0,0.12)]">
-              <details class="group wrs-decision-collapsible" open>
+              <details class="group wrs-decision-collapsible">
                 <summary class="flex justify-between items-center cursor-pointer px-4 sm:px-6 lg:px-8 py-4 list-none hover:bg-gray-50/50 transition-colors select-none">
                   <h3 class="font-semibold text-[var(--color-primary-text)]">Confirm your decision</h3>
                   <span class="material-symbols-outlined text-[var(--color-secondary-text)] group-open:rotate-180 transition-transform duration-200">expand_more</span>
@@ -451,10 +456,13 @@
 
         <script>
           document.addEventListener('DOMContentLoaded', () => {
-            const scheduleSection = document.getElementById('schedule-section');
             const floatingForm = document.getElementById('floating-decision-form');
             const decisionField = document.getElementById('decision-field');
             const form = document.getElementById('wrs-decision-form');
+            const approvalSection = document.getElementById('approval-section');
+            const decisionDetails = floatingForm
+              ? floatingForm.querySelector('.wrs-decision-collapsible')
+              : null;
 
             // Handle image zoom on click (runs regardless of floating form)
             document.querySelectorAll('.image-zoom-container').forEach(container => {
@@ -494,6 +502,11 @@
               });
             });
 
+            // Make sure the floating form is always visible (collapsed by default)
+            if (floatingForm) {
+              floatingForm.classList.add('is-visible');
+            }
+
             // Handle Accept/Decline button clicks (only when form exists)
             if (floatingForm) {
               document.querySelectorAll('[data-decision]').forEach(button => {
@@ -506,49 +519,33 @@
               });
             }
 
-            // Show/hide floating form based on scroll position
-            if (scheduleSection && floatingForm) {
-              const updateFormVisibility = () => {
-                const scheduleRect = scheduleSection.getBoundingClientRect();
-                const viewportHeight = window.innerHeight;
+            // Auto-expand/collapse decision form based on Approval of Works visibility,
+            // but stop auto behavior once the user manually toggles the details.
+            if (approvalSection && decisionDetails) {
+              let userOverrodeDecision = false;
 
-                // Show form when we're near the end of the table (bottom is approaching or just past viewport)
-                // Hide when we scroll back up to the top/middle of the table
-                const scheduleBottom = scheduleRect.bottom;
-                const scheduleTop = scheduleRect.top;
-
-                // Show when: schedule bottom is near or past the viewport bottom (within 200px threshold)
-                // This means we're at the end of the table or just past it
-                const threshold = 200; // pixels from viewport bottom
-                const isNearEnd = scheduleBottom <= viewportHeight + threshold;
-
-                // Hide when: we're at the top/middle of the table (top is well above viewport)
-                const isAtTop = scheduleTop > threshold;
-
-                // Show if we're near the end AND not at the top
-                if (isNearEnd && !isAtTop) {
-                  floatingForm.classList.add('is-visible');
-                } else {
-                  floatingForm.classList.remove('is-visible');
+              decisionDetails.addEventListener('toggle', (event) => {
+                if (event.isTrusted) {
+                  userOverrodeDecision = true;
                 }
-              };
-
-              // Use IntersectionObserver for better performance
-              const observer = new IntersectionObserver((entries) => {
-                updateFormVisibility();
-              }, {
-                threshold: [0, 1],
-                rootMargin: "0px"
               });
 
-              observer.observe(scheduleSection);
+              const updateDecisionOpenState = () => {
+                if (userOverrodeDecision) return;
 
-              // Scroll event listener for real-time updates
+                const approvalRect = approvalSection.getBoundingClientRect();
+                const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+
+                // Open when the bottom of the screen reaches or passes the top of the approval section
+                const shouldOpen = approvalRect.top <= viewportHeight;
+                decisionDetails.open = shouldOpen;
+              };
+
               let ticking = false;
               const handleScroll = () => {
                 if (!ticking) {
                   window.requestAnimationFrame(() => {
-                    updateFormVisibility();
+                    updateDecisionOpenState();
                     ticking = false;
                   });
                   ticking = true;
@@ -556,12 +553,7 @@
               };
 
               window.addEventListener('scroll', handleScroll, { passive: true });
-              window.addEventListener('resize', updateFormVisibility, { passive: true });
-
-              // Initial check
-              updateFormVisibility();
-            } else {
-              console.warn('Schedule section not found, form visibility not managed');
+              window.addEventListener('resize', updateDecisionOpenState, { passive: true });
             }
           });
         </script>
