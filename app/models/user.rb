@@ -113,6 +113,10 @@ class User < ApplicationRecord
     [first_name, last_name].compact_blank.join(' ').presence
   end
 
+  def project_role_for(building)
+    ProjectRoleResolver.new(user: self, building: building)
+  end
+
   private
 
   # Allow updating user details without requiring password,

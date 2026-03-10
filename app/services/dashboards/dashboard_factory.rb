@@ -6,6 +6,8 @@ module Dashboards
       'contractor' => ContractorDashboardService,
       'general_contractor' => GeneralContractorDashboardService,
       'admin' => AdminDashboardService,
+      'contract_manager' => AdminDashboardService,
+      'surveyor' => AdminDashboardService,
       'supervisor' => SupervisorDashboardService
     }.freeze
 

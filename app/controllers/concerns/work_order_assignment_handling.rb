@@ -18,6 +18,7 @@ module WorkOrderAssignmentHandling
       building: @work_order.building
     )
     assignment.assigned_by_user = current_user
+    assignment.role = params[:role] if params[:role].present? && current_user.admin?
 
     if assignment.save
       render_assign_success(target_user)

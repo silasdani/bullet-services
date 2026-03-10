@@ -5,13 +5,16 @@ class BuildingPolicy < ApplicationPolicy
     user.present?
   end
 
-  # GET /buildings/assigned — list buildings where user has work order assignments
   def assigned?
     user.present?
   end
 
   def show?
     return false unless user.present?
+    return true if user.admin?
+
+    resolver = project_resolver
+    return true if resolver&.assigned?
 
     if (user.contractor? || user.general_contractor?) && !record.work_orders
                                                                 .where(is_draft: false, deleted_at: nil)
@@ -28,10 +31,13 @@ class BuildingPolicy < ApplicationPolicy
   end
 
   def update?
-    # Contractors and general contractors cannot update buildings
-    return false if user&.contractor? || user&.general_contractor?
+    return false unless user.present?
+    return true if user.admin?
 
-    user.present? && user.admin?
+    resolver = project_resolver
+    return resolver.can_edit_building? if resolver&.assigned?
+
+    false
   end
 
   def destroy?
@@ -40,7 +46,6 @@ class BuildingPolicy < ApplicationPolicy
 
   class Scope < Scope
     def resolve
-      # Contractors see buildings with at least one visible (non-draft) work order
       if user.contractor? || user.general_contractor?
         scope.joins(:work_orders)
              .where(work_orders: {
@@ -53,5 +58,11 @@ class BuildingPolicy < ApplicationPolicy
         scope.all
       end
     end
+  end
+
+  private
+
+  def project_resolver
+    @project_resolver ||= ProjectRoleResolver.new(user: user, building: record)
   end
 end

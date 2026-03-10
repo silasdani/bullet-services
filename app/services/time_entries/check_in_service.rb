@@ -46,17 +46,23 @@ module TimeEntries
     end
 
     def validate_contractor_assignment
-      return self unless user&.contractor?
       return self unless work_order
 
-      unless Assignment.exists?(user_id: user.id, building_id: work_order.building_id)
+      resolver = ProjectRoleResolver.new(user: user, building: work_order.building_id)
+
+      return self if user.admin?
+      return self if resolver.field_worker?
+      return self if user.general_contractor?
+
+      unless resolver.assigned? && resolver.can_check_in?
         add_error('You are not assigned to this project. Please get assigned to the building first.')
       end
       self
     end
 
     def validate_work_order_status
-      if (user.contractor? || user.general_contractor?) && work_order.status != 'approved'
+      resolver = ProjectRoleResolver.new(user: user, building: work_order.building_id)
+      if resolver.field_worker? && work_order.status != 'approved'
         add_error('You can only check in to approved works.')
         return self
       end

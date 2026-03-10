@@ -7,10 +7,8 @@ class WorkOrderPolicy < ApplicationPolicy
 
   def show?
     return false unless user.present?
-    # Contractors and general contractors can view work orders,
-    # but with additional visibility constraints enforced via scope and serializers.
+    return true if user.admin?
     return true if contractor_or_general_contractor?
-    # Supervisors can view work orders they created or in buildings they're assigned to.
     return true if user.supervisor? && supervisor_can_show?
 
     admin_or_employee_or_owner?
@@ -40,18 +38,25 @@ class WorkOrderPolicy < ApplicationPolicy
   end
 
   def create?
-    # Contractors and general contractors cannot create work orders
-    return false if user&.contractor? || user&.general_contractor?
+    return false unless user.present?
 
-    user.present?
+    resolver = project_resolver
+    return resolver.can_create_work_order? if resolver&.assigned?
+
+    # Fallback to global role when no building context yet
+    return false if user.contractor? || user.general_contractor?
+
+    true
   end
 
   def update?
     return false unless user.present?
-    # Contractors and general contractors cannot update work orders.
+    return true if user.admin?
+
+    resolver = project_resolver
+    return resolver.can_edit_work_order?(record) if resolver&.assigned?
+
     return false if contractor_or_general_contractor?
-    # Supervisors can update work orders they created or in buildings they're assigned to,
-    # but price editing is enforced at the service/serializer layer.
     return supervisor_can_show? if user.supervisor?
 
     admin_or_employee_or_owner?
@@ -59,19 +64,34 @@ class WorkOrderPolicy < ApplicationPolicy
 
   def publish?
     return false unless user.present?
-    # Contractors and general contractors cannot publish/unpublish
+    return true if user.admin?
+
+    resolver = project_resolver
+    return resolver.can_publish_work_order? if resolver&.assigned?
+
     return false if contractor_or_general_contractor?
-    # Supervisors can publish/unpublish work orders they created or in assigned buildings
     return supervisor_can_show? if user.supervisor?
 
     user.is_admin? || record.user == user
   end
 
   def destroy?
-    user.present? && (user.is_admin? || record.user == user)
+    return false unless user.present?
+    return true if user.admin?
+
+    resolver = project_resolver
+    return resolver.can_delete_work_order?(record) if resolver&.assigned?
+
+    user.is_admin? || record.user == user
   end
 
   private
+
+  def project_resolver
+    return nil unless record&.building_id
+
+    @project_resolver ||= ProjectRoleResolver.new(user: user, building: record.building_id)
+  end
 
   def contractor_or_general_contractor?
     user.contractor? || user.general_contractor?
@@ -107,7 +127,6 @@ class WorkOrderPolicy < ApplicationPolicy
         .contractor_visible_status
     end
 
-    # General contractors see all visible (non-draft) work orders
     def general_contractor_scope
       scope.where(is_draft: false).contractor_visible_status
     end

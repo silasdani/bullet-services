@@ -42,6 +42,7 @@ module Avo
         field :check_ins, as: :has_many, hide_on: [:index]
         field :time_entries, as: :has_many, hide_on: [:index]
         field :notifications, as: :has_many, hide_on: [:index]
+        field :assignments, as: :has_many, hide_on: [:index]
         field :assigned_buildings, as: :has_many, through: :assignments, hide_on: [:index]
         field :created_at, as: :date_time, readonly: true, sortable: true, filterable: true
         field :updated_at, as: :date_time, readonly: true, sortable: true

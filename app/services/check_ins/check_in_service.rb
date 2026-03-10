@@ -41,20 +41,30 @@ module CheckIns
     end
 
     def validate_contractor_assignment
-      # General contractors can check into any project; only contractors need assignment
-      return self unless user&.contractor?
-
       return self unless work_order
 
-      unless Assignment.exists?(user_id: user.id, building_id: work_order.building_id)
+      resolver = ProjectRoleResolver.new(user: user, building: work_order.building_id)
+
+      # Global admins bypass; project field-workers need an assignment
+      return self if user.admin?
+
+      if resolver.field_worker?
+        # Assigned as field worker -- OK
+        return self
+      end
+
+      # General contractors with no assignment can still check in (legacy behavior)
+      return self if user.general_contractor?
+
+      unless resolver.assigned? && resolver.can_check_in?
         add_error('You are not assigned to this project. Please get assigned to the building first.')
       end
       self
     end
 
     def validate_wrs_status
-      # Contractors and general contractors can only check in to approved WRS
-      if (user.contractor? || user.general_contractor?) && work_order.status != 'approved'
+      resolver = ProjectRoleResolver.new(user: user, building: work_order.building_id)
+      if resolver.field_worker? && work_order.status != 'approved'
         add_error('You can only check in to approved works.')
         return self
       end
