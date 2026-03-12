@@ -87,6 +87,9 @@ gem 'googleauth' # Google authentication library for service accounts (FCM)
 gem 'mailersend-ruby'
 gem 'ruby-progressbar'
 
+# Structured logging — one line per request, JSON in production
+gem 'lograge'
+
 # Error tracking with Better Stack (Sentry-compatible)
 gem 'sentry-rails'
 gem 'sentry-ruby'

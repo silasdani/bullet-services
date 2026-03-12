@@ -52,7 +52,7 @@ module TimeEntries
 
       return self if user.admin?
       return self if resolver.field_worker?
-      return self if user.general_contractor?
+      return self if user.contractor? || user.general_contractor?
 
       unless resolver.assigned? && resolver.can_check_in?
         add_error('You are not assigned to this project. Please get assigned to the building first.')
@@ -62,24 +62,40 @@ module TimeEntries
 
     def validate_work_order_status
       resolver = ProjectRoleResolver.new(user: user, building: work_order.building_id)
-      if resolver.field_worker? && work_order.status != 'approved'
-        add_error('You can only check in to approved works.')
+      allowed_statuses = %w[approved pending]
+      if resolver.field_worker? && allowed_statuses.exclude?(work_order.status)
+        add_error('You can only check in to approved or pending works.')
         return self
       end
       self
     end
 
     def validate_proximity
-      return self unless proximity_checkable?
+      # Managers and admins can bypass proximity checks.
+      if work_order && (user.admin? || ProjectRoleResolver.new(user: user, building: work_order.building_id).manager?)
+        return self
+      end
+
+      return self unless building_has_coordinates?
+
+      unless client_has_coordinates?
+        add_error('Location is required to check in at this project.')
+        return self
+      end
+
       return self if within_proximity?
 
       add_proximity_errors
       self
     end
 
-    def proximity_checkable?
+    def building_has_coordinates?
       building = work_order.building
-      building&.latitude.present? && building.longitude.present? && latitude.present? && longitude.present?
+      building&.latitude.present? && building.longitude.present?
+    end
+
+    def client_has_coordinates?
+      latitude.present? && longitude.present?
     end
 
     def within_proximity?
@@ -87,9 +103,9 @@ module TimeEntries
     end
 
     def add_proximity_errors
-      add_error('Check-in must be within 50m of the project site.')
       distance = work_order.building.distance_to(latitude, longitude)
-      add_error("Current distance: #{distance.round(1)} meters. Please move closer.") if distance
+      add_error('Wrong location! You must be at the project site to check in.')
+      add_error("Current distance: #{distance.round(1)} meters.") if distance
     end
 
     def create_time_entry

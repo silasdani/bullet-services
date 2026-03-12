@@ -39,6 +39,37 @@ module Api
         end
       end
 
+      # POST /api/v1/time_entries/check_out — complete the current user's active TimeEntry (set ends_at, end coords).
+      # Use this for contractor checkout; no work_order or ongoing_work in the path.
+      def check_out
+        authorize TimeEntry, :check_out?
+
+        active_entry = TimeEntry.clocked_in.for_user(current_user).includes(:work_order, :ongoing_work).first
+        unless active_entry
+          return render_error(message: 'No active time entry to check out.', status: :unprocessable_entity)
+        end
+
+        service = TimeEntries::CheckOutService.new(
+          user: current_user,
+          work_order: active_entry.work_order,
+          ongoing_work: active_entry.ongoing_work,
+          latitude: params[:latitude],
+          longitude: params[:longitude],
+          address: params[:address]
+        )
+        service.call
+
+        if service.success?
+          render_success(
+            data: serialize_time_entry(service.time_entry).merge(hours_worked: service.hours_worked),
+            message: 'Checked out successfully',
+            status: :created
+          )
+        else
+          render_error(message: 'Failed to check out', details: service.errors, status: :unprocessable_entity)
+        end
+      end
+
       private
 
       def build_time_entries_collection
@@ -67,7 +98,8 @@ module Api
           end_lng: entry.end_lng,
           active: entry.clocked_in?,
           duration_hours: entry.duration_hours,
-          duration_minutes: entry.duration_minutes
+          duration_minutes: entry.duration_minutes,
+          auto_checkout: entry.auto_checkout
         }
       end
 

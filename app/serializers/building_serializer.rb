@@ -30,6 +30,16 @@ class BuildingSerializer < ActiveModel::Serializer
 
   attribute :schedule_of_condition_notes
 
+  # CASL-compatible permission rules scoped to this project + current user.
+  # Only included when the serializer receives scope (current_user).
+  attribute :permissions do
+    if scope
+      ::Authorization::ProjectPermissionContract.new(user: scope, building: object).as_json
+    else
+      []
+    end
+  end
+
   attribute :schedule_of_condition_images do
     next [] unless object.schedule_of_condition_images.attached?
 

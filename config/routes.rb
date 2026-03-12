@@ -105,6 +105,7 @@ Rails.application.routes.draw do
       resources :time_entries, only: [ :index, :show ] do
         collection do
           get :active
+          post :check_out
         end
       end
       resources :ongoing_works, only: [ :show, :update, :destroy ] do

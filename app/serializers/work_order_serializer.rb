@@ -5,7 +5,8 @@ class WorkOrderSerializer < ActiveModel::Serializer
              :total_vat_included_price, :total_vat_excluded_price,
              :status, :status_color, :work_type, :total, :created_at, :updated_at,
              :deleted_at, :deleted?, :active?, :is_draft, :is_archived,
-             :published?, :draft?, :archived?
+             :published?, :draft?, :archived?,
+             :decision_outcome, :decision_at, :decision_client_name, :building_id
 
   def address
     building = load_building_obj
@@ -15,7 +16,7 @@ class WorkOrderSerializer < ActiveModel::Serializer
     address_fallback
   end
 
-  # Prices visible only to Admin role
+  # Prices visible to Admin or users with project-level price permission (e.g. contract_manager)
   def total_vat_included_price
     return nil if hide_prices?
 
@@ -40,6 +41,24 @@ class WorkOrderSerializer < ActiveModel::Serializer
     computed_total
   rescue StandardError => e
     Rails.logger.error "Error getting total: #{e.message}"
+    nil
+  end
+
+  def decision_outcome
+    object.decision_outcome
+  rescue StandardError
+    nil
+  end
+
+  def decision_at
+    object.decision_at
+  rescue StandardError
+    nil
+  end
+
+  def decision_client_name
+    object.decision&.client_name
+  rescue StandardError
     nil
   end
 
@@ -118,7 +137,12 @@ class WorkOrderSerializer < ActiveModel::Serializer
   private
 
   def hide_prices?
-    scope&.role != 'admin'
+    return false if scope&.role == 'admin'
+
+    building = load_building_obj
+    return true unless building && scope
+
+    !ProjectRoleResolver.new(user: scope, building: building).can_view_prices?
   end
 
   def computed_total

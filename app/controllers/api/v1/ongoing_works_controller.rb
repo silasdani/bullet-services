@@ -37,7 +37,7 @@ module Api
       # GET /api/v1/work_orders/:id/my_ongoing_work — one ongoing work per user per work order (find or create)
       def my_ongoing_work
         authorize @work_order, :show?
-        authorize OngoingWork, :create? if current_user.contractor? || current_user.general_contractor?
+        ensure_project_field_worker!
 
         ongoing_work = OngoingWork.find_or_initialize_by(work_order_id: @work_order.id)
         if ongoing_work.new_record?
@@ -78,7 +78,7 @@ module Api
 
       # POST /api/v1/work_orders/:work_order_id/ongoing_works — find or create one per user per work order
       def create
-        authorize OngoingWork, :create?
+        ensure_project_field_worker!
         authorize @work_order, :show?
 
         ongoing_work = OngoingWork.find_or_initialize_by(
@@ -187,7 +187,7 @@ module Api
       end
 
       def find_or_create_my_ongoing_work
-        authorize OngoingWork, :create? if current_user.contractor? || current_user.general_contractor?
+        ensure_project_field_worker!
 
         ongoing_work = OngoingWork.find_or_initialize_by(work_order_id: @work_order.id)
         if ongoing_work.new_record?
@@ -197,6 +197,16 @@ module Api
           ongoing_work.save!
         end
         OngoingWork.includes(:user, time_entries: []).find(ongoing_work.id)
+      end
+
+      def ensure_project_field_worker!
+        building = @work_order&.building
+        return unless building
+
+        resolver = ProjectRoleResolver.new(user: current_user, building: building)
+        return if resolver.can_check_in?
+
+        raise Pundit::NotAuthorizedError, 'You do not have permission to start work on this project'
       end
 
       def set_ongoing_work
@@ -267,7 +277,19 @@ module Api
                        else
                          Array(params[:images])
                        end
-        ongoing_work.images.attach(images_array) if images_array.any?
+        return unless images_array.any?
+
+        uploader_id = current_user&.id
+        images_array.each do |file|
+          ongoing_work.images.attach(file)
+          next unless uploader_id
+
+          # has_many_attached.attach returns the proxy, not the new attachment; get the one we just added
+          att = ongoing_work.images.attachments.reorder(created_at: :desc).first
+          next unless att
+
+          att.blob.update(metadata: (att.blob.metadata || {}).merge('uploaded_by_user_id' => uploader_id))
+        end
       end
 
       def create_work_update_notification(ongoing_work)
@@ -363,38 +385,21 @@ module Api
         # Fallback: if there is exactly one window and we have images attached to the ongoing work
         # but none of them are tagged with a window id, treat all images as "after" for that window.
         if after_by_window_id.empty? && windows.size == 1 && ongoing_work.images.attached?
-          urls = ongoing_work.image_urls
+          after_entries = ongoing_work.image_entries.map { |e| e.merge(created_at: e[:created_at]&.iso8601) }
+          after_entries = enrich_image_entries_with_uploader_names(after_entries)
           return windows.map.with_index do |win, idx|
-            # Prefer explicit effective_image_urls; fall back to images array
-            before =
-              if win.key?(:effective_image_urls) && win[:effective_image_urls].respond_to?(:to_a)
-                Array(win[:effective_image_urls]).compact
-              elsif win.key?(:images) && win[:images].respond_to?(:to_a)
-                Array(win[:images]).compact
-              else
-                []
-              end
-
+            before = before_image_entries_for(win)
             win.merge(
               before_images: before,
-              after_images: idx.zero? ? urls : []
+              after_images: idx.zero? ? after_entries : []
             )
           end
         end
 
         windows.map do |win|
           window_id = win[:id]
-          # Prefer explicit effective_image_urls; fall back to images array
-          before =
-            if win.key?(:effective_image_urls) && win[:effective_image_urls].respond_to?(:to_a)
-              Array(win[:effective_image_urls]).compact
-            elsif win.key?(:images) && win[:images].respond_to?(:to_a)
-              Array(win[:images]).compact
-            else
-              []
-            end
-
-          after = window_id ? Array(after_by_window_id[window_id]).compact : []
+          before = before_image_entries_for(win)
+          after = window_id ? enrich_image_entries_with_uploader_names(Array(after_by_window_id[window_id]).compact) : []
 
           win.merge(
             before_images: before,
@@ -404,6 +409,48 @@ module Api
       rescue StandardError => e
         Rails.logger.error "Error decorating windows with before/after for ongoing work #{ongoing_work.id}: #{e.message}"
         windows
+      end
+
+      def before_image_entries_for(win)
+        if win.key?(:effective_image_entries) && win[:effective_image_entries].respond_to?(:to_a)
+          entries = Array(win[:effective_image_entries]).compact
+          return entries if entries.any?
+        end
+        # Fallback: build entries from URL arrays (no timestamp)
+        urls = if win.key?(:effective_image_urls) && win[:effective_image_urls].respond_to?(:to_a)
+                 Array(win[:effective_image_urls]).compact
+               elsif win.key?(:images) && win[:images].respond_to?(:to_a)
+                 Array(win[:images]).compact
+               else
+                 []
+               end
+        urls.map { |u| { url: u, created_at: nil } }
+      end
+
+      def enrich_image_entries_with_uploader_names(entries)
+        return entries if entries.blank?
+
+        user_ids = entries.filter_map { |e| e[:uploaded_by_user_id] }.uniq
+        if user_ids.empty?
+          return entries.map { |e| e.merge(uploaded_by: nil, uploaded_by_avatar_url: nil) }
+        end
+
+        url_helpers = Rails.application.routes.url_helpers
+        users_data = User.where(id: user_ids).includes(image_attachment: :blob).each_with_object({}) do |u, h|
+          h[u.id] = {
+            name: (u.name.presence || u.email).to_s,
+            avatar_url: u.image.attached? ? url_helpers.rails_blob_path(u.image, only_path: true) : nil
+          }
+        end
+
+        entries.map do |e|
+          uid = e[:uploaded_by_user_id]
+          data = users_data[uid]
+          e.merge(
+            uploaded_by: data&.dig(:name).presence || 'Unknown',
+            uploaded_by_avatar_url: data&.dig(:avatar_url)
+          )
+        end
       end
 
       def window_after_images_for(ongoing_work)
@@ -430,8 +477,9 @@ module Api
           window_id = window_id_str.to_i
           next if window_id.zero?
 
+          uploader_id = img.blob.metadata&.dig('uploaded_by_user_id')
           url = url_helpers.rails_blob_path(img, only_path: true)
-          groups[window_id] << url
+          groups[window_id] << { url: url, created_at: img.created_at&.iso8601, uploaded_by_user_id: uploader_id }
         rescue StandardError => e
           Rails.logger.error "Error grouping ongoing work image #{img.id} for ongoing work #{ongoing_work.id}: #{e.message}"
         end

@@ -52,6 +52,21 @@ class OngoingWork < ApplicationRecord
     images.map { |img| Rails.application.routes.url_helpers.rails_blob_path(img, only_path: true) }
   end
 
+  # Returns array of { url:, created_at:, uploaded_by_user_id: } for each attached image
+  def image_entries
+    return [] unless images.attached?
+
+    url_helpers = Rails.application.routes.url_helpers
+    images.map do |img|
+      uploader_id = img.blob.metadata&.dig('uploaded_by_user_id')
+      {
+        url: url_helpers.rails_blob_path(img, only_path: true),
+        created_at: img.created_at,
+        uploaded_by_user_id: uploader_id
+      }
+    end
+  end
+
   # Used by Avo windows_info_field to render images grouped by work order windows
   def images_with_windows
     self

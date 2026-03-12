@@ -65,7 +65,8 @@ module Timesheets
         hours_worked_minutes: (hours_worked * 60).to_i,
         hourly_rate: hourly_rate,
         total_amount: total_amount,
-        location: build_location_string(entry)
+        location: build_location_string(entry),
+        auto_checkout: entry.auto_checkout
       }
     end
 

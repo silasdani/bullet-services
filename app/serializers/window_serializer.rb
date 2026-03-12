@@ -5,13 +5,14 @@ class WindowSerializer < ActiveModel::Serializer
              :location,
              :created_at,
              :updated_at,
-             :image,                # backwards-compatible field (first image)
-             :images,               # array of all image URLs
-             :effective_image_url,  # preferred URL (ActiveStorage if present)
-             :effective_image_urls, # array of all effective image URLs
+             :image,                   # backwards-compatible field (first image)
+             :images,                  # array of all image URLs
+             :effective_image_url,     # preferred URL (ActiveStorage if present)
+             :effective_image_urls,    # array of all effective image URLs
+             :effective_image_entries, # array of { url:, created_at: } for each image
              :image_name
 
-  # Tools always included (work descriptions); total_price only for Admin
+  # Tools always included (work descriptions); total_price when user can view prices
   attribute :tools
   attribute :total_price, if: :show_prices?
 
@@ -56,12 +57,21 @@ class WindowSerializer < ActiveModel::Serializer
     safe_call { object.effective_image_urls }
   end
 
+  def effective_image_entries
+    safe_call { object.image_entries.map { |e| e.merge(created_at: e[:created_at]&.iso8601) } }
+  end
+
   def image_name
     safe_call { object.image_name }
   end
 
   def show_prices?
-    scope&.role == 'admin'
+    return true if scope&.role == 'admin'
+
+    building = object.respond_to?(:work_order) && object.work_order&.building
+    return false unless building && scope
+
+    ProjectRoleResolver.new(user: scope, building: building).can_view_prices?
   end
 
   private

@@ -38,14 +38,6 @@ module Api
       end
 
       def filter_buildings_with_work_orders(collection)
-        return collection if current_user.general_contractor?
-
-        building_ids = current_user.assigned_building_ids
-        return collection.none if building_ids.empty?
-
-        collection.where(id: building_ids)
-      rescue StandardError => e
-        Rails.logger.error "Error filtering buildings with work orders: #{e.message}"
         collection
       end
 
@@ -68,14 +60,14 @@ module Api
       end
 
       def serialize_buildings(buildings)
-        buildings.map { |building| BuildingSerializer.new(building).serializable_hash }
+        buildings.map { |building| BuildingSerializer.new(building, scope: current_user).serializable_hash }
       end
 
       def show
         authorize @building
 
         render_success(
-          data: BuildingSerializer.new(@building).serializable_hash
+          data: BuildingSerializer.new(@building, scope: current_user).serializable_hash
         )
       end
 
@@ -87,7 +79,7 @@ module Api
 
         if building.save
           render_success(
-            data: BuildingSerializer.new(building.reload).serializable_hash,
+            data: BuildingSerializer.new(building.reload, scope: current_user).serializable_hash,
             message: 'Building created successfully',
             status: :created
           )
@@ -117,7 +109,7 @@ module Api
 
         if @building.update(building_params)
           render_success(
-            data: BuildingSerializer.new(@building.reload).serializable_hash,
+            data: BuildingSerializer.new(@building.reload, scope: current_user).serializable_hash,
             message: 'Building updated successfully'
           )
         else
@@ -153,7 +145,7 @@ module Api
           @building.reload
           @building.schedule_of_condition_images.reload if @building.schedule_of_condition_images.attached?
           render_success(
-            data: BuildingSerializer.new(@building).serializable_hash,
+            data: BuildingSerializer.new(@building, scope: current_user).serializable_hash,
             message: 'Schedule of Condition updated successfully'
           )
         else

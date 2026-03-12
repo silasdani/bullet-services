@@ -4,3 +4,9 @@ production:
   cleanup_deleted_users:
     class: CleanupDeletedUsersJob
     schedule: "0 2 * * *"  # 2am daily (cron: min hour day month dow)
+  checkout_reminder:
+    class: CheckoutReminderJob
+    schedule: "30 16 * * 1-5"  # 16:30 weekdays — "Did you check out?"
+  auto_checkout:
+    class: AutoCheckoutJob
+    schedule: "59 23 * * *"  # 23:59 daily — force-close stale sessions

@@ -34,6 +34,7 @@ module Dashboards
       {
         id: entry.id,
         work_order_id: entry.work_order_id,
+        ongoing_work_id: entry.ongoing_work_id,
         work_order_name: entry.work_order&.name || 'Unknown',
         starts_at: entry.starts_at,
         start_address: entry.start_address

@@ -48,6 +48,11 @@ module TimeEntries
     end
 
     def validate_photos_uploaded
+      # Managers and admins can check out without photo requirements.
+      if work_order && (user.admin? || ProjectRoleResolver.new(user: user, building: work_order.building_id).manager?)
+        return self
+      end
+
       unless photos_ok?
         add_error('Cannot check out. Please upload work photos first.')
         add_error('At least one photo is required to document completed work.')
@@ -59,7 +64,9 @@ module TimeEntries
 
     def photos_ok?
       if ongoing_work.present?
-        ongoing_work.images.attached?
+        # Reload to pick up images attached in a recent PATCH (e.g. from app auto-save).
+        ongoing_work.reload
+        ongoing_work.images.attached? || photos_uploaded?
       else
         photos_uploaded?
       end

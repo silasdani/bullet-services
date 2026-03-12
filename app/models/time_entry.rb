@@ -44,12 +44,13 @@ class TimeEntry < ApplicationRecord
     ((ends_at - starts_at) / 3600).round(2)
   end
 
-  def check_out!(ends_at_time: Time.current, latitude: nil, longitude: nil, address: nil)
+  def check_out!(ends_at_time: Time.current, latitude: nil, longitude: nil, address: nil, auto: false)
     update!(
       ends_at: ends_at_time,
       end_lat: latitude,
       end_lng: longitude,
-      end_address: address
+      end_address: address,
+      auto_checkout: auto
     )
   end
 
@@ -87,7 +88,7 @@ class TimeEntry < ApplicationRecord
     private
 
     def ransackable_attributes(_auth_object = nil)
-      %w[user_id work_order_id ongoing_work_id starts_at ends_at start_address end_address created_at updated_at]
+      %w[user_id work_order_id ongoing_work_id starts_at ends_at start_address end_address auto_checkout created_at updated_at]
     end
 
     def ransackable_associations(_auth_object = nil)

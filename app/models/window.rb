@@ -99,6 +99,16 @@ class Window < ApplicationRecord
     []
   end
 
+  # Returns array of { url:, created_at: } for each attached image (for serialization with timestamps)
+  def image_entries
+    return [] unless images.attached?
+
+    images.map { |img| { url: img.url, created_at: img.created_at } }
+  rescue StandardError => e
+    Rails.logger.error "Window ##{id}: Error in image_entries: #{e.message}"
+    []
+  end
+
   def self.ransackable_attributes(_auth_object = nil)
     %w[location work_order_id created_at updated_at]
   end

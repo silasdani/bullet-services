@@ -88,7 +88,8 @@ class WorkOrderPolicy < ApplicationPolicy
   private
 
   def project_resolver
-    return nil unless record&.building_id
+    return nil unless record.respond_to?(:building_id)
+    return nil if record.building_id.nil?
 
     @project_resolver ||= ProjectRoleResolver.new(user: user, building: record.building_id)
   end

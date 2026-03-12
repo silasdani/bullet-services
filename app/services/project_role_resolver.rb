@@ -53,7 +53,7 @@ class ProjectRoleResolver
   def can_edit_work_order?(work_order)
     return true if user.admin?
     return true if effective_role == 'contract_manager'
-    return true if effective_role == 'supervisor' && work_order.user_id == user.id
+    return true if effective_role == 'supervisor'
 
     false
   end
@@ -73,7 +73,7 @@ class ProjectRoleResolver
   end
 
   def can_check_in?
-    field_worker? || user.admin?
+    field_worker? || manager? || user.admin?
   end
 
   def can_edit_building?

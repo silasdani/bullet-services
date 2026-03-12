@@ -18,7 +18,7 @@ class OngoingWorkPolicy < ApplicationPolicy
   end
 
   def update?
-    user.present? && (user.admin? || record.user == user)
+    user.present?
   end
 
   def destroy?

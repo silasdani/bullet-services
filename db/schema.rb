@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_03_10_120001) do
+ActiveRecord::Schema[8.0].define(version: 2026_03_11_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -270,6 +270,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_03_10_120001) do
     t.bigint "ongoing_work_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "auto_checkout", default: false, null: false
     t.index ["ends_at"], name: "index_time_entries_on_ends_at", where: "(ends_at IS NOT NULL)"
     t.index ["ongoing_work_id"], name: "index_time_entries_on_ongoing_work_id"
     t.index ["user_id", "starts_at"], name: "index_time_entries_on_user_id_and_starts_at"

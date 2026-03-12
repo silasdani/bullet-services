@@ -11,8 +11,8 @@ module BuildingsWorkOrderListing
   end
 
   def contractor_can_access_building_work_orders?
-    # General contractors can access any building with visible work orders
-    return true if current_user.general_contractor?
+    # Contractors and general contractors can access any building's work orders (restricted by location at check-in)
+    return true if current_user.contractor? || current_user.general_contractor?
 
     active_building_id = contractor_active_building_id
     return true if active_building_id == @building.id
