@@ -113,6 +113,7 @@ module TimeEntries
         user: user,
         work_order: work_order,
         ongoing_work: ongoing_work,
+        building: work_order&.building,
         starts_at: starts_at,
         start_lat: latitude,
         start_lng: longitude,

@@ -29,17 +29,17 @@ module Authorization
 
     def rules
       [
-        (Rule.new(action: "read",   subject: "Project")   if building_policy.show?),
-        (Rule.new(action: "update", subject: "Project")   if resolver.can_edit_building?),
-        (Rule.new(action: "read",   subject: "WorkOrder") if building_policy.show?),
-        (Rule.new(action: "create", subject: "WorkOrder") if resolver.can_create_work_order?),
-        (Rule.new(action: "update", subject: "WorkOrder") if resolver.manager?),
-        (Rule.new(action: "publish", subject: "WorkOrder") if resolver.can_publish_work_order?),
-        (Rule.new(action: "delete", subject: "WorkOrder") if resolver.can_delete_work_order?(sentinel_work_order)),
-        (Rule.new(action: "read",   subject: "Price")     if resolver.can_view_prices?),
-        (Rule.new(action: "update", subject: "ScheduleOfCondition") if resolver.can_edit_schedule_of_condition?),
-        (Rule.new(action: "checkin", subject: "WorkOrder") if resolver.can_check_in?),
-        (Rule.new(action: "assign", subject: "User")      if resolver.can_assign_users?)
+        (Rule.new(action: 'read',   subject: 'Project')   if building_policy.show?),
+        (Rule.new(action: 'update', subject: 'Project')   if resolver.can_edit_building?),
+        (Rule.new(action: 'read',   subject: 'WorkOrder') if building_policy.show?),
+        (Rule.new(action: 'create', subject: 'WorkOrder') if resolver.can_create_work_order?),
+        (Rule.new(action: 'update', subject: 'WorkOrder') if resolver.manager?),
+        (Rule.new(action: 'publish', subject: 'WorkOrder') if resolver.can_publish_work_order?),
+        (Rule.new(action: 'delete', subject: 'WorkOrder') if resolver.can_delete_work_order?(sentinel_work_order)),
+        (Rule.new(action: 'read',   subject: 'Price')     if resolver.can_view_prices?),
+        (Rule.new(action: 'update', subject: 'ScheduleOfCondition') if resolver.can_edit_schedule_of_condition?),
+        (Rule.new(action: 'checkin', subject: 'WorkOrder') if resolver.can_check_in?),
+        (Rule.new(action: 'assign', subject: 'User') if resolver.can_assign_users?)
       ]
     end
 

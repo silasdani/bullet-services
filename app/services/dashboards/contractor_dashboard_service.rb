@@ -28,11 +28,13 @@ module Dashboards
     end
 
     def load_active_time_entry
-      entry = TimeEntry.clocked_in.for_user(user).includes(:work_order).first
+      entry = TimeEntry.clocked_in.for_user(user).includes(:work_order, :building).first
       return nil unless entry
 
       {
         id: entry.id,
+        building_id: entry.building_id,
+        building_name: entry.building&.name,
         work_order_id: entry.work_order_id,
         ongoing_work_id: entry.ongoing_work_id,
         work_order_name: entry.work_order&.name || 'Unknown',
@@ -51,7 +53,7 @@ module Dashboards
     def load_recent_activity
       TimeEntry
         .where(user: user)
-        .includes(:work_order)
+        .includes(:work_order, :building)
         .order(starts_at: :desc)
         .limit(5)
         .map do |entry|

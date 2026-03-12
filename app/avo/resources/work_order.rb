@@ -22,8 +22,6 @@ module Avo
         end
         field :building, as: :belongs_to, required: true, filterable: true
         field :user, as: :belongs_to, required: true, filterable: true
-        field :user_status_badge, as: :user_status_badge, association: :user, only_on: %i[index show],
-                                  name: 'User Status'
         field :status_badge, as: :status_badge, only_on: %i[index show], name: 'Status'
         field :work_type, as: :select, enum: ::WorkOrder.work_types, required: true, filterable: true,
                           only_on: %i[index show new edit]

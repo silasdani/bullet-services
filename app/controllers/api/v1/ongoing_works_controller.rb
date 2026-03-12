@@ -238,6 +238,7 @@ module Api
       def serialize_time_entry(entry)
         {
           id: entry.id,
+          building_id: entry.building_id,
           work_order_id: entry.work_order_id,
           ongoing_work_id: entry.ongoing_work_id,
           starts_at: entry.starts_at,
@@ -431,9 +432,7 @@ module Api
         return entries if entries.blank?
 
         user_ids = entries.filter_map { |e| e[:uploaded_by_user_id] }.uniq
-        if user_ids.empty?
-          return entries.map { |e| e.merge(uploaded_by: nil, uploaded_by_avatar_url: nil) }
-        end
+        return entries.map { |e| e.merge(uploaded_by: nil, uploaded_by_avatar_url: nil) } if user_ids.empty?
 
         url_helpers = Rails.application.routes.url_helpers
         users_data = User.where(id: user_ids).includes(image_attachment: :blob).each_with_object({}) do |u, h|

@@ -4,8 +4,10 @@ class TimeEntry < ApplicationRecord
   belongs_to :user
   belongs_to :work_order
   belongs_to :ongoing_work, optional: true
+  belongs_to :building
 
   before_validation :set_work_order_from_ongoing_work
+  before_validation :set_building_from_context
 
   validates :starts_at, presence: true
   validate :ends_at_after_starts_at, if: -> { ends_at.present? }
@@ -16,6 +18,10 @@ class TimeEntry < ApplicationRecord
   scope :for_user, ->(user) { where(user: user) }
   scope :for_work_order, ->(work_order) { where(work_order: work_order) }
   scope :for_ongoing_work, ->(ongoing_work) { where(ongoing_work: ongoing_work) }
+  scope :for_building, lambda { |building|
+    building_id = building.is_a?(Building) ? building.id : building
+    where(building_id: building_id)
+  }
   scope :recent, -> { order(starts_at: :desc) }
 
   scope :in_month, lambda { |year, month|
@@ -62,6 +68,14 @@ class TimeEntry < ApplicationRecord
     self.work_order_id = ongoing_work.work_order_id
   end
 
+  def set_building_from_context
+    if work_order.present?
+      self.building_id ||= work_order.building_id
+    elsif ongoing_work.present? && ongoing_work.work_order.present?
+      self.building_id ||= ongoing_work.work_order.building_id
+    end
+  end
+
   def ends_at_after_starts_at
     return unless ends_at && starts_at
 
@@ -88,11 +102,12 @@ class TimeEntry < ApplicationRecord
     private
 
     def ransackable_attributes(_auth_object = nil)
-      %w[user_id work_order_id ongoing_work_id starts_at ends_at start_address end_address auto_checkout created_at updated_at]
+      %w[user_id work_order_id ongoing_work_id building_id starts_at ends_at start_address end_address auto_checkout
+         created_at updated_at]
     end
 
     def ransackable_associations(_auth_object = nil)
-      %w[user work_order ongoing_work]
+      %w[user work_order ongoing_work building]
     end
   end
 end

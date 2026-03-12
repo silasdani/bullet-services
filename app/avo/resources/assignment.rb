@@ -9,7 +9,14 @@ module Avo
 
       def fields
         field :id, as: :id, link_to_resource: true
-        field :user, as: :belongs_to, required: true, filterable: true, searchable: true
+        field :user,
+              as: :belongs_to,
+              required: true,
+              filterable: true,
+              searchable: true,
+              attach_scope: lambda {
+                query.where.not(role: %w[admin contract_manager])
+              }
         field :role_badge, as: :role_badge, only_on: %i[index show], name: 'Role'
         field :role,
               as: :select,
@@ -19,8 +26,25 @@ module Avo
               display_with_value: true,
               hide_on: %i[index show],
               help: 'Project role for this user. Defaults to the user\'s global role (admin defaults to Contract Manager).'
-        field :building, as: :belongs_to, required: true, filterable: true, searchable: true
-        field :assigned_by_user, as: :belongs_to, filterable: true, name: 'Assigned by'
+        field :building,
+              as: :belongs_to,
+              required: true,
+              filterable: true,
+              searchable: true,
+              attach_scope: lambda {
+                query
+                  .joins(:work_orders)
+                  .merge(::WorkOrder.wrs_only)
+                  .joins(work_orders: :decision)
+                  .merge(::Decision.approved)
+                  .distinct
+              }
+        field :assigned_by_user,
+              as: :belongs_to,
+              name: 'Assigned by',
+              filterable: true,
+              readonly: true,
+              default: -> { current_user }
         field :created_at, as: :date_time, readonly: true, sortable: true, filterable: true
         field :updated_at, as: :date_time, readonly: true, sortable: true
       end

@@ -30,7 +30,7 @@ module Api
       def active
         authorize TimeEntry
 
-        active_entry = TimeEntry.clocked_in.for_user(current_user).includes(:work_order).first
+        active_entry = TimeEntry.clocked_in.for_user(current_user).includes(:work_order, :building).first
 
         if active_entry
           render_success(data: serialize_time_entry(active_entry))
@@ -73,7 +73,8 @@ module Api
       private
 
       def build_time_entries_collection
-        collection = policy_scope(TimeEntry).includes(:user, :work_order)
+        collection = policy_scope(TimeEntry).includes(:user, :work_order, :building)
+        collection = collection.for_building(params[:building_id]) if params[:building_id].present?
         collection = collection.ransack(params[:q]).result if params[:q].present?
         collection.order(starts_at: :desc)
       end
@@ -85,6 +86,8 @@ module Api
       def serialize_time_entry(entry)
         {
           id: entry.id,
+          building_id: entry.building_id,
+          building_name: entry.building&.name,
           work_order_id: entry.work_order_id,
           ongoing_work_id: entry.ongoing_work_id,
           work_order_name: entry.work_order&.name || 'Unknown',

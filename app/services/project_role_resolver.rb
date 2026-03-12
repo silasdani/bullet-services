@@ -50,7 +50,7 @@ class ProjectRoleResolver
     %w[supervisor contract_manager].include?(effective_role)
   end
 
-  def can_edit_work_order?(work_order)
+  def can_edit_work_order?(_work_order)
     return true if user.admin?
     return true if effective_role == 'contract_manager'
     return true if effective_role == 'supervisor'

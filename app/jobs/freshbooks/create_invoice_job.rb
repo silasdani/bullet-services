@@ -24,7 +24,7 @@ module Freshbooks
       client_info.slice(:client_id, :first_name, :last_name, :email, :building_id)
     end
 
-    def process_invoice_creation(invoice, fb_client_id, lines, client_params)
+    def process_invoice_creation(invoice, fb_client_id, lines, _client_params)
       update_invoice_client_id(invoice, fb_client_id)
 
       result = create_freshbooks_invoice(invoice, fb_client_id, lines)

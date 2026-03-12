@@ -41,7 +41,7 @@ module Timesheets
         .completed
         .where(user: user)
         .where(starts_at: start_date.beginning_of_day..end_date.end_of_day)
-        .includes(:work_order)
+        .includes(:work_order, :building)
         .order(starts_at: :asc)
     end
 
@@ -56,6 +56,8 @@ module Timesheets
     def build_entry_hash(entry, hours_worked, hourly_rate, total_amount)
       {
         time_entry_id: entry.id,
+        building_id: entry.building_id,
+        building_name: entry.building&.name,
         work_order_id: entry.work_order_id,
         work_order_name: entry.work_order&.name,
         date: entry.starts_at.to_date,
