@@ -4,7 +4,7 @@ class AutoCheckoutJob < ApplicationJob
   queue_as :default
 
   def perform
-    active_entries = TimeEntry.clocked_in.includes(:user, :work_order)
+    active_entries = TimeEntry.clocked_in.includes(:user, :building)
 
     active_entries.find_each do |entry|
       checkout_entry(entry)
@@ -25,13 +25,12 @@ class AutoCheckoutJob < ApplicationJob
 
     Notifications::CreateService.new(
       user: entry.user,
-      work_order: entry.work_order,
       notification_type: :auto_checkout,
       title: 'Automatic check-out',
       message: 'You have been automatically checked out.',
       metadata: {
         time_entry_id: entry.id,
-        work_order_name: entry.work_order&.name,
+        building_name: entry.building&.name,
         auto_checkout: true
       }
     ).call
