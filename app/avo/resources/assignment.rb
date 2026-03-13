@@ -44,7 +44,7 @@ module Avo
               name: 'Assigned by',
               filterable: true,
               readonly: true,
-              default: -> { current_user }
+              default: -> { current_user&.id }
         field :created_at, as: :date_time, readonly: true, sortable: true, filterable: true
         field :updated_at, as: :date_time, readonly: true, sortable: true
       end
