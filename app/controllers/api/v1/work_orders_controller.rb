@@ -195,8 +195,6 @@ module Api
                      .includes(:user, :building, :windows, windows: [:tools, { images_attachments: :blob }])
                      .order(created_at: :desc)
 
-        Rails.logger.info "Collection: #{collection.inspect}"
-
         # Filter by work_type if provided (e.g. ?work_type=wrs or ?work_type=general)
         collection = collection.where(work_type: params[:work_type]) if params[:work_type].present?
 
