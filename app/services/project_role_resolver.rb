@@ -67,6 +67,7 @@ class ProjectRoleResolver
   def can_delete_work_order?(work_order)
     return true if user.admin?
     return true if effective_role == 'contract_manager'
+    return true if effective_role == 'supervisor'
     return true if work_order.user_id == user.id && manager?
 
     false

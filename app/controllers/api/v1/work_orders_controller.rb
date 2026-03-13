@@ -41,7 +41,9 @@ module Api
       end
 
       def create
-        authorize WorkOrder
+        # Authorize with building context so project membership (e.g. manager) is considered
+        auth_record = WorkOrder.new(building_id: work_order_params[:building_id])
+        authorize auth_record
 
         service = WorkOrders::CreationService.new(
           user: current_user,
@@ -193,13 +195,54 @@ module Api
                      .includes(:user, :building, :windows, windows: [:tools, { images_attachments: :blob }])
                      .order(created_at: :desc)
 
+        Rails.logger.info "Collection: #{collection.inspect}"
+
         # Filter by work_type if provided (e.g. ?work_type=wrs or ?work_type=general)
         collection = collection.where(work_type: params[:work_type]) if params[:work_type].present?
 
         # Apply Ransack filters if present (but policy scope restrictions remain)
-        collection = collection.ransack(params[:q]).result if params[:q].present?
+        # Supervisors always see draft/pending work orders — ignore client is_draft filter
+        ransack_params = work_order_ransack_params
+        collection = collection.ransack(ransack_params).result if ransack_params.present?
 
         collection
+      end
+
+      def work_order_ransack_params
+        return nil unless params[:q].present?
+
+        q = params[:q].respond_to?(:to_unsafe_h) ? params[:q].to_unsafe_h : params[:q].to_h
+        return nil if q.empty?
+
+        # Supervisors see all work orders in their projects including drafts — strip is_draft at any nesting level
+        q = strip_is_draft_from_ransack(q) if current_user.supervisor?
+        q.presence
+      end
+
+      # Recursively remove any Ransack key that filters on is_draft so supervisors always see drafts
+      def strip_is_draft_from_ransack(hash)
+        return hash unless hash.is_a?(Hash)
+
+        hash.each_with_object({}) do |(k, v), out|
+          next if k.to_s.match?(/is_draft/)
+
+          out[k] = v.is_a?(Hash) || v.is_a?(Array) ? strip_is_draft_from_ransack_deep(v) : v
+        end
+      end
+
+      def strip_is_draft_from_ransack_deep(val)
+        case val
+        when Hash
+          val.each_with_object({}) do |(k, v), out|
+            next if k.to_s.match?(/is_draft/)
+
+            out[k] = strip_is_draft_from_ransack_deep(v)
+          end
+        when Array
+          val.map { |el| strip_is_draft_from_ransack_deep(el) }
+        else
+          val
+        end
       end
 
       def serialize_work_order_collection(collection)

@@ -54,6 +54,12 @@ class BuildingPolicy < ApplicationPolicy
                       status: WorkOrder.statuses.values_at(:pending, :approved, :rejected)
                     })
              .distinct
+      elsif user.supervisor?
+        # Supervisors see only projects (buildings) they have membership in
+        assigned_building_ids = Assignment.where(user_id: user.id).pluck(:building_id)
+        return scope.none if assigned_building_ids.empty?
+
+        scope.where(id: assigned_building_ids)
       else
         scope.all
       end

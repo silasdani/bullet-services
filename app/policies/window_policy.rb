@@ -49,8 +49,20 @@ class WindowPolicy < ApplicationPolicy
   class Scope < Scope
     def resolve
       return scope.all if user.admin?
+      return supervisor_scope if user.supervisor?
 
       scope.joins(:work_order).where(work_orders: { user_id: user.id })
+    end
+
+    def supervisor_scope
+      assigned_building_ids = Assignment.where(user_id: user.id).pluck(:building_id)
+      base = scope.joins(:work_order)
+      if assigned_building_ids.any?
+        base.where(work_orders: { user_id: user.id })
+            .or(base.where(work_orders: { building_id: assigned_building_ids }))
+      else
+        base.where(work_orders: { user_id: user.id })
+      end
     end
   end
 end

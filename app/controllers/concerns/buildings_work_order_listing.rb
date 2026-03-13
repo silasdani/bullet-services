@@ -29,8 +29,7 @@ module BuildingsWorkOrderListing
   def supervisor_can_access_building_work_orders?
     return false unless current_user.supervisor?
 
-    WorkOrder.where(building_id: @building.id, user_id: current_user.id).exists? ||
-      contractor_assigned_to_building_work_order?
+    contractor_assigned_to_building_work_order?
   end
 
   def contractor_active_building_id
@@ -56,10 +55,18 @@ module BuildingsWorkOrderListing
     scope = @building.work_orders
                      .includes(:user, :windows, windows: [:tools, { images_attachments: :blob }])
                      .order(created_at: :desc)
-    if current_user.contractor? || current_user.general_contractor?
-      scope = scope.where(is_draft: false).contractor_visible_status
-    end
-    scope
+
+    return scope unless field_worker_for_building?
+
+    scope.where(is_draft: false).contractor_visible_status
+  end
+
+  # True when user's project role is contractor/general_contractor — they see only published work orders.
+  # Managers (supervisor/contract_manager/surveyor) and admins see all including drafts.
+  def field_worker_for_building?
+    return false if current_user.admin?
+
+    ProjectRoleResolver.new(user: current_user, building: @building).field_worker?
   end
 
   def serialize_work_order_page(collection)

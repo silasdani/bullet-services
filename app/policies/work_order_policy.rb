@@ -121,11 +121,24 @@ class WorkOrderPolicy < ApplicationPolicy
       scope.where(user: user)
     end
 
+    # Contractors see work orders in assigned buildings. Visibility depends on project assignment role:
+    # managers (supervisor/contract_manager/surveyor) see all including drafts;
+    # field workers (contractor/general_contractor) see only published.
     def contractor_scope
-      scope
-        .where(building_id: user.assigned_buildings.select(:id))
-        .where(is_draft: false)
-        .contractor_visible_status
+      manager_ids = building_ids_for_role(ProjectRoleResolver::MANAGEMENT_ROLES)
+      field_worker_ids = building_ids_for_role(ProjectRoleResolver::FIELD_WORKER_ROLES)
+
+      scopes = []
+      scopes << scope.where(building_id: manager_ids) if manager_ids.any?
+      if field_worker_ids.any?
+        scopes << scope.where(building_id: field_worker_ids).where(is_draft: false).contractor_visible_status
+      end
+
+      scopes.any? ? scopes.reduce(:or) : scope.none
+    end
+
+    def building_ids_for_role(roles)
+      Assignment.where(user_id: user.id, role: roles).pluck(:building_id)
     end
 
     def general_contractor_scope
